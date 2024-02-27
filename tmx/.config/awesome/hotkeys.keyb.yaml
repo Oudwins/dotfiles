@@ -1,0 +1,29 @@
+- name: System (Super)
+  keybinds:
+    - name: Launch app (R)unner
+      key: Super + r
+    - name: Launch (T)erminal
+    - name: Window Focus Change by direction (up,right,down,left)
+      key: Super + {h,j,k,l}
+    - name: Window (Q)uit
+      key: Super + q
+    - name: Window Toggle (F)ull Screen
+      key: Super + f
+    - name: Window Toggle (F)loating
+      key: Super + Ctrl + f
+    - name: Window Floating move
+      key: Super + right click
+    - name: Window switch current by direction (up,right,down,left)
+      key: Super + shift + {h,j,k,l}
+    - name: Window Upgrade to Master (TODO)
+      key: Super + Ctrl + Enter
+    - name: Workspace Change Current 
+      key: Super + {1,2,3...}
+    - name: Worspace Toggle Merge With Current (view windows from another)
+      key: Super + Ctrl + {1,2,3...}
+    - name: WM (R)eload
+      key: Super + Ctrl + r
+- name: Utils
+  keybinds:
+    - name: Take a screen shot
+      key: Print
