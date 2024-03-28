@@ -280,6 +280,19 @@ local dmenu_picker_keys = leader.bind_actions({
         end,
         "Dmenu Scripts picker"
     },
+    {
+        "w",
+        function()
+            awful.spawn.with_shell("$HOME/.dotfiles/tmx/.local/bin/dscripts/rofi-nm.sh")
+        end,
+    },
+    {
+        "p",
+        function()
+            awful.spawn.with_shell("$HOME/.dotfiles/tmx/.local/bin/dscripts/powermenu.sh")
+        end,
+        "[D]menu [P]ower Picker"
+    }
 })
 local dmenu_picker_leader = leader.leader(dmenu_picker_keys)
 
@@ -425,6 +438,15 @@ clientkeys = gears.table.join(
     awful.key({ modkey, "Shift"   }, "h", function () awful.client.swap.bydirection("left")    end,
               {description = "swap with client by direction left", group = "client"}),
     awful.key({ modkey, "Shift"   }, "l", function () awful.client.swap.bydirection("right")    end,
+              {description = "swap with client by direction right", group = "client"}),
+-- screen manipulation -> switching between screens
+    awful.key({ modkey, "Control"   }, "j", function () awful.screen.focus_bydirection("down", _screen)    end,
+              {description = "swap with client by direction left", group = "client"}),
+    awful.key({ modkey, "Control"   }, "k", function () awful.screen.focus_bydirection("up", _screen)    end,
+              {description = "swap with client by direction right", group = "client"}),
+    awful.key({ modkey, "Control"   }, "h", function () awful.screen.focus_bydirection("left", _screen)    end,
+              {description = "swap with client by direction left", group = "client"}),
+    awful.key({ modkey, "Control"   }, "l", function () awful.screen.focus_bydirection("right", _screen)    end,
               {description = "swap with client by direction right", group = "client"})
     --awful.key({ modkey,           }, "o",      function (c) c:move_to_screen()               end,
               --{description = "move to screen", group = "client"}),

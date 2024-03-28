@@ -8,5 +8,10 @@
   "svelte.enable-ts-plugin": true,
   "editor.wordWrap": "on",
   "explorer.confirmDelete": false,
-  "git.suggestSmartCommit": false
+  "git.suggestSmartCommit": false,
+  "[go]": {
+    "editor.defaultFormatter": "golang.go"
+  },
+  "diffEditor.ignoreTrimWhitespace": false,
+  "window.zoomLevel": 1
 }
