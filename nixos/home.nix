@@ -61,6 +61,8 @@
     libreoffice-qt
     obs-studio # screen recorder
     libsForQt5.ark # Ark, zips, archive
+    qbittorrent
+    gimp
     # books
     calibre
     # browsers
@@ -78,13 +80,16 @@
     stow # manager dotfiles
     gnumake # use makefiles
     fzf # fuzzy finding
+    bc # basic calculator (used for bash scripts)
     neovim
     vscode-fhs
     bruno # postman alternative
     git
     git-crypt
     gnupg
-    jetbrains.idea-community
+    jetbrains.idea-community # Intellij
+    awscli2 # aws cli
+    bluej # UNED BULLSHIT
     # languages
     go
     gotools
@@ -94,6 +99,9 @@
     # jdk11
     jdk21
     maven
+    # IaC
+    terraform
+    terraformer
     # compilers
     gcc
   ];

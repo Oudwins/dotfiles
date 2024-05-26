@@ -13,5 +13,17 @@
     "editor.defaultFormatter": "golang.go"
   },
   "diffEditor.ignoreTrimWhitespace": false,
-  "window.zoomLevel": 1
+  "github.copilot.enable": {
+    "*": false,
+    "plaintext": false,
+    "markdown": false,
+    "scminput": false
+  },
+  "files.associations": {
+    "*.ts": "typescript"
+  },
+  "[astro]": {
+    "editor.defaultFormatter": "astro-build.astro-vscode"
+  },
+  "github.copilot.editor.enableAutoCompletions": true
 }

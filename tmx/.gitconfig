@@ -1,3 +1,5 @@
 [user]
 	email = tm@tristanmayo.com
 	name = oudwins
+[core]
+	autocrlf = input

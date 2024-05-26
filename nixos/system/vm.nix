@@ -18,6 +18,7 @@
     win-spice
     gnome.adwaita-icon-theme
     qemu
+    libvirt-glib
   ];
 
   # Manage the virtualisation services

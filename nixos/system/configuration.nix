@@ -9,7 +9,6 @@
     [ # Include the results of the hardware scan.
       ./vm.nix
       ./hardware-configuration.nix
-      
     ];
   
   nix.settings.experimental-features = ["nix-command" "flakes"];
@@ -23,6 +22,11 @@
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
+  # IDK WHAT THIS DOES, FOR WORK PROGRAM TO CONNECT TO COMMAND LINE
+  boot.kernelParams = [
+    "console=ttyS0,115200"
+    "console=tty1"
+  ];
 
   networking.hostName = "nixos"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
@@ -53,6 +57,7 @@
   };
 
 
+
   # Enable the X11 windowing system.
   services.xserver = {
     enable = true;
@@ -61,9 +66,13 @@
   #services.xserver.displayManager.lightdm.enable = true;
   #services.xserver.desktopManager.xfce.enable = true;
 
+
+
+
   # Enable awesome wm
   displayManager = {
-        sddm.enable = true;
+        sddm.enable = true; # displayManager & lock screen
+	# sddm.theme = ; screen lock theme
         defaultSession = "none+awesome";
     };
 
@@ -92,7 +101,16 @@
   # required for phone to work auto mount
   services.gvfs.enable = true;
 
+  # TEAMVIEWER REMOVE THIS EVENTUALLY
+  services.teamviewer.enable = true;
 
+  # Flatpak
+  services.flatpak.enable = true;
+  # Required for flatpak
+  xdg.portal = {
+    enable = true;
+    extraPortals = [ pkgs.xdg-desktop-portal-gtk];
+  };
   # Enable CUPS to print documents.
   #services.printing.enable = true;
 
@@ -121,13 +139,12 @@
     isNormalUser = true;
     description = "tmx";
     initialPassword = "pass";
-    extraGroups = [ "networkmanager" "wheel" "libvirtd" "video" ]; #libvirtd = vm, video = light (screen brightness)
+    extraGroups = [ "networkmanager" "wheel" "libvirtd" "docker" "video" ]; #libvirtd = vm, video = light (screen brightness)
     packages = with pkgs; [
       firefox
       nitrogen # wallpaper
     ];
   };
-
 
 
   # List packages installed in system profile. To search, run:
@@ -136,7 +153,7 @@
    vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
    wget 
    awesome
-   # mounting usbs
+   # where-is-my-sddm-theme # lock screen theme (pure black) -> https://github.com/stepanzubkov/where-is-my-sddm-theme
    # VMS
     virt-manager
     virt-viewer
@@ -148,7 +165,9 @@
     qemu
   ];
 
+
   virtualisation = {
+    # VMs -> Virt manager & QEMU
     libvirtd = {
       enable = true;
       qemu = {
@@ -158,6 +177,14 @@
       };
     };
     spiceUSBRedirection.enable = true;
+    # Docker
+    docker = {
+      enable = true;
+      rootless = {
+	enable = true;
+	setSocketVariable = true;
+      };
+    };
   };
   services.spice-vdagentd.enable = true;
   programs.virt-manager.enable = true;
@@ -207,15 +234,14 @@
   # services.openssh.enable = true;
 
   # Open ports in the firewall.
-  # warpinator
   networking.firewall = {
-  allowedTCPPorts = [
-    42000
-    42001
-  ];
-  allowedUDPPorts = [
-    5353
-  ];
+  # allowedTCPPorts = [
+  #   42000
+  #   42001
+  # ];
+  # allowedUDPPorts = [
+  #   5353
+  # ];
 };
   #networking.firewall.allowedTCPPorts = [ ... ];
   # networking.firewall.allowedUDPPorts = [ ... ];

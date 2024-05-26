@@ -447,7 +447,10 @@ clientkeys = gears.table.join(
     awful.key({ modkey, "Control"   }, "h", function () awful.screen.focus_bydirection("left", _screen)    end,
               {description = "swap with client by direction left", group = "client"}),
     awful.key({ modkey, "Control"   }, "l", function () awful.screen.focus_bydirection("right", _screen)    end,
-              {description = "swap with client by direction right", group = "client"})
+              {description = "swap with client by direction right", group = "client"}),
+    -- TODO make this work by direction
+    awful.key({modkey, "Control", "Shift"}, "k", function (c) c:move_to_screen() end,
+              {description = "Move client to new screen", group = "client"})
     --awful.key({ modkey,           }, "o",      function (c) c:move_to_screen()               end,
               --{description = "move to screen", group = "client"}),
     --awful.key({ modkey,           }, "t",      function (c) c.ontop = not c.ontop            end,
