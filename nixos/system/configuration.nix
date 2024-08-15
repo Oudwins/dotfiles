@@ -86,8 +86,10 @@
     };
 
     # Configure keymap in X11
-    layout = "us,es";
-    xkbVariant = "";
+    xkb = {
+      layout = "us,es";
+      variant = "";
+    };
   };
 
   
@@ -112,7 +114,12 @@
     extraPortals = [ pkgs.xdg-desktop-portal-gtk];
   };
   # Enable CUPS to print documents.
-  #services.printing.enable = true;
+  services.printing.enable = true;
+  services.avahi = {
+    enable = true;
+    nssmdns = true;
+    openFirewall = true;
+  };
 
   # Enable sound with pipewire.
   sound.enable = true;

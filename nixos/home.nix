@@ -90,6 +90,7 @@
     jetbrains.idea-community # Intellij
     awscli2 # aws cli
     bluej # UNED BULLSHIT
+    beekeeper-studio # sql gui & database gui
     # languages
     go
     gotools
@@ -173,7 +174,7 @@
     };
 
   qt.enable = true;
-  qt.platformTheme = "gtk";
+  qt.platformTheme.name = "gtk";
   qt.style.name = "adwaita-dark";
   qt.style.package = pkgs.adwaita-qt;
 

@@ -660,3 +660,42 @@ end)
 client.connect_signal("focus", function(c) c.border_color = beautiful.border_focus end)
 client.connect_signal("unfocus", function(c) c.border_color = beautiful.border_normal end)
 -- }}}
+
+
+-- 
+-- screen.connect_signal("added", function()
+--     awful.spawn.with_shell("xrandr --output eDP-1 --off")
+-- --     -- turn off laptop screen: xrandr --output eDP-1 --off
+-- --     -- turn it on: xrandr --output eDP-1 --auto
+-- --     -- xrandr --output HDMI1 --auto --primary
+-- end)
+
+-- screen.connect_signal("removed", function()
+--     awful.spawn.with_shell("xrandr --output eDP-1 --auto")
+-- end)
+
+-- When screen is remove, move clients to another screen
+-- Move them to the same tag
+-- See: https://github.com/awesomeWM/awesome/issues/1382
+tag.connect_signal("request::screen",
+  function(t)
+    local fallback_tag = nil
+
+    -- find tag with same name on any other screen
+    for other_screen in screen do
+      if other_screen ~= t.screen then
+        fallback_tag = awful.tag.find_by_name(other_screen, t.name)
+        if fallback_tag ~= nil then
+          break
+        end
+      end
+    end
+
+    -- no tag with same name exists, chose random one
+    if fallback_tag == nil then
+      fallback_tag = awful.tag.find_fallback()
+    end
+
+    -- delete the tag and move it to other screen
+    t:delete(fallback_tag, true)
+  end)
