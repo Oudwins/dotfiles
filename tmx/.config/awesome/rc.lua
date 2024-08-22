@@ -407,7 +407,13 @@ clientkeys = gears.table.join(
         end,
         {description = "toggle fullscreen", group = "client"}),
     awful.key({ modkey,}, "q",      function (c) c:kill()                         end,
-              {description = "close", group = "client"}),
+              {description = "close client", group = "client"}),
+    awful.key({ modkey, "Shift"}, "q", function()
+        for _, c in ipairs(mouse.screen.selected_tag:clients()) do
+            c:kill()
+        end
+     end,
+    {description = "close all clients in tag", group = "client"}),
     awful.key({ modkey, "Control" }, "f",  awful.client.floating.toggle                     ,
               {description = "toggle floating", group = "client"}),
     awful.key({ modkey, "Control" }, "Return", function (c) c:swap(awful.client.getmaster()) end,
