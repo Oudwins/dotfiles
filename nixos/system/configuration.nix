@@ -92,7 +92,8 @@
     };
   };
 
-  
+  # Autorandr. Switch display profiles when plugging & unplugging hdmi
+  services.autorandr.enable = true;
   # make gtk (themes & colors) work on home manager:
   programs.dconf.enable = true;
 
@@ -160,7 +161,7 @@
    vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
    wget 
    awesome # window manager
-   autorandr # automatically turn screens on & off. It sets up profiles
+   # autorandr # automatically turn screens on & off. It sets up profiles
    # where-is-my-sddm-theme # lock screen theme (pure black) -> https://github.com/stepanzubkov/where-is-my-sddm-theme
    # VMS
     virt-manager
