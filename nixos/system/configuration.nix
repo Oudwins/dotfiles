@@ -159,7 +159,8 @@
   environment.systemPackages = with pkgs; [
    vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
    wget 
-   awesome
+   awesome # window manager
+   autorandr # automatically turn screens on & off. It sets up profiles
    # where-is-my-sddm-theme # lock screen theme (pure black) -> https://github.com/stepanzubkov/where-is-my-sddm-theme
    # VMS
     virt-manager

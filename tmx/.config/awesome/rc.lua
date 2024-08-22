@@ -178,12 +178,20 @@ local function set_wallpaper(s)
     awful.spawn.with_shell("nitrogen --restore &");
 end
 
+-- Remap capslock to esc. ! ONLY WORKS on X11 (Won't work on wayland)
+local function set_capslock_remap(s) 
+    awful.spawn.with_shell('setxkbmap -option "caps:escape"');
+end
+
 -- Re-set wallpaper when a screen's geometry changes (e.g. different resolution)
 screen.connect_signal("property::geometry", set_wallpaper)
 
 awful.screen.connect_for_each_screen(function(s)
     -- Wallpaper
     set_wallpaper(s)
+    
+    -- remap
+    set_capslock_remap();
 
     -- Each screen has its own tag table.
     awful.tag({ "1", "2", "3", "4", "5", "6", "7", "8", "9" }, s, awful.layout.layouts[1])
