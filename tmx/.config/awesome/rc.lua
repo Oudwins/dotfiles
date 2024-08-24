@@ -182,6 +182,10 @@ end
 local function set_capslock_remap(s) 
     awful.spawn.with_shell('setxkbmap -option "caps:escape"');
 end
+-- Execute autorandr on startup 
+local function run_autorandr(s) 
+    awful.spawn.with_shell('autorandr --change');
+end
 
 -- Re-set wallpaper when a screen's geometry changes (e.g. different resolution)
 screen.connect_signal("property::geometry", set_wallpaper)
@@ -192,6 +196,8 @@ awful.screen.connect_for_each_screen(function(s)
     
     -- remap
     set_capslock_remap();
+    -- run autorandr
+    run_autorandr()
 
     -- Each screen has its own tag table.
     awful.tag({ "1", "2", "3", "4", "5", "6", "7", "8", "9" }, s, awful.layout.layouts[1])
