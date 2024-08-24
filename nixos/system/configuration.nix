@@ -260,6 +260,16 @@
   # Or disable the firewall altogether.
   # networking.firewall.enable = false;
 
+
+  # ! OPTIMIZE NIX. GC
+  nix.gc = {
+    automatic = true;
+    dates = "weekly";
+    options = "--delete-older-than 60d";
+  };
+  # optimize store in every build
+  nix.settings.auto-optimise-store = true;
+
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
   # on your system were taken. It‘s perfectly fine and recommended to leave
