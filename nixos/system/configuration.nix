@@ -62,23 +62,13 @@
 
 
   # Enable the X11 windowing system.
+  services.displayManager = {
+    sddm.enable = true;
+  # Enable awesome wm
+    defaultSession = "none+awesome";
+  };
   services.xserver = {
     enable = true;
-
-  # Enable the XFCE Desktop Environment.
-  #services.xserver.displayManager.lightdm.enable = true;
-  #services.xserver.desktopManager.xfce.enable = true;
-
-
-
-
-  # Enable awesome wm
-  displayManager = {
-        sddm.enable = true; # displayManager & lock screen
-	# sddm.theme = ; screen lock theme
-        defaultSession = "none+awesome";
-    };
-
     windowManager.awesome = {
       enable = true;
       luaModules = with pkgs.luaPackages; [
@@ -116,12 +106,13 @@
   xdg.portal = {
     enable = true;
     extraPortals = [ pkgs.xdg-desktop-portal-gtk];
+    config.common.default = "*";
   };
   # Enable CUPS to print documents.
   services.printing.enable = true;
   services.avahi = {
     enable = true;
-    nssmdns = true;
+    nssmdns4 = true;
     openFirewall = true;
   };
 
