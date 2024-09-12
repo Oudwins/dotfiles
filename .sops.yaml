@@ -1,0 +1,11 @@
+keys:
+  - &users
+    - &tmx age1vt966zv3c79xh875u0ywvrvfvqxeg0ny74wvuxasd5xq9akvwf9q3l56sc
+  - &hosts
+    - &simone age1uzf3wh75kzlxc6h4sgvzw453xnkkx0wmyr8yhnfuwmn3mgal0pus7mkk9v
+creation_rules:
+  - path_regex: secrets.yaml$
+    key_groups:
+      - age:
+        - *tmx
+        - *simone
