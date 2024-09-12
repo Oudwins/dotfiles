@@ -34,8 +34,16 @@
     "editor.defaultFormatter": "svelte.svelte-vscode"
   },
   "supermaven.enable": {
-    "*": true
+    "*": false
   },
   "terminal.integrated.commandsToSkipShell": ["language-julia.interrupt"],
-  "julia.symbolCacheDownload": true
+  "julia.symbolCacheDownload": true,
+  "[python]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "ms-python.black-formatter",
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    }
+  },
+  "isort.args": ["--profile", "black"]
 }
