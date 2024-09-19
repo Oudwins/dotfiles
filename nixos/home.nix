@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, pkgs, ... }@args:
 {
   # No longer needed bc its used as module now
   # nixpkgs.config = {
@@ -83,11 +83,13 @@
     bc # basic calculator (used for bash scripts)
     neovim
     vscode-fhs
+    #unstable.code-cursor
     bruno # postman alternative
     git
     git-crypt
     gnupg
     jetbrains.idea-community # Intellij
+    jetbrains.goland # golang IDE
     awscli2 # aws cli
     bluej # UNED BULLSHIT
     beekeeper-studio # sql gui & database gui
@@ -165,6 +167,15 @@
     # '';
   };
 
+  # THEMES
+  dconf.settings = {
+      "org/gnome/desktop/background" = {
+        picture-uri-dark = "file://${pkgs.nixos-artwork.wallpapers.nineish-dark-gray.src}";
+      };
+      "org/gnome/desktop/interface" = {
+        color-scheme = "prefer-dark";
+      };
+    };
   gtk = {
       enable = true;
       theme = {
@@ -184,6 +195,16 @@
     syncthing = {
       enable = true;
       extraOptions = ["--home=/home/tmx/.config/syncthing" "--no-default-folder"];
+    };
+    redshift = {
+      enable = true;
+      temperature = {
+        day = 5700;
+        night = 3500;
+      };
+      tray = true;
+      dawnTime = "05:00";
+      duskTime = "21:00";
     };
     # auto mount disks
     udiskie = {

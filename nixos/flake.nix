@@ -3,79 +3,55 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-24.05";
+    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+
     home-manager.url = "github:nix-community/home-manager/release-24.05";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
-    unstable = {
-      url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-      flake = false;
-    };
     # sops-nix = {
     #   url = "github:mic92/sops-nix";
     #   inputs.nixpkgs.follows = "nixpkgs";
     # };
   };
 
-  outputs = { nixpkgs, home-manager, nixos-hardware, unstable, ... }: 
+  outputs = { nixpkgs, home-manager, nixos-hardware, ... }@inputs: 
   let 
-  #  forAllSystems = lib.genAttrs [
-  #       "x86_64-linux"
-  #       #"aarch64-darwin"
-  #   ];
-    system = "x86_64-linux";
-    overlay_freetube = final: prev: {
-      # Override a specific package, e.g., "example-package"
-      freetube = unstable.lib.freetube;
-    };
-    overlay_golang = final: prev: {
-      go = unstable.lib.go;
-    };
-    overlays = [overlay_golang overlay_freetube];
-    inherit unstable;
-    # pkgs = import nixpkgs {
-    # config = {
-    # allowUnfree = true;
-    # permittedInsecurePackages = [
-    #   "electron-25.9.0" # for obsidian
-    # ];
-    # };
-    # # Apply patches, set a pkgs to an older version... (here you can do this)
-    # };
-
+  
+   forAllSystems = lib.genAttrs [
+        "x86_64-linux"
+        #"aarch64-darwin"
+    ];
+    system = "x86_64-linux"; # defines the system. Should be replaced with forAllSystems in the future
     lib = nixpkgs.lib;
+    # overlay to add unstable to pkgs.unstable
   in {
    ################### DevShell ####################
       #
       # Custom shell for bootstrapping on new hosts, modifying nix-config, and secrets management
+       devShells = forAllSystems (
+         system:
+         let
+           pkgs = nixpkgs.legacyPackages.${system};
+         in
+         {
+           default = pkgs.mkShell {
+             NIX_CONFIG = "extra-experimental-features = nix-command flakes repl-flake";
+             nativeBuildInputs = builtins.attrValues {
+               inherit (pkgs)
 
-      # devShells = forAllSystems (
-      #   system:
-      #   let
-      #     pkgs = nixpkgs.legacyPackages.${system};
-      #   in
-      #   {
-      #     default = pkgs.mkShell {
-      #       NIX_CONFIG = "extra-experimental-features = nix-command flakes repl-flake";
+                 nix
+                 home-manager
+                 git
+                 just
 
-      #       inherit (self.checks.${system}.pre-commit-check) shellHook;
-      #       buildInputs = self.checks.${system}.pre-commit-check.enabledPackages;
-
-      #       nativeBuildInputs = builtins.attrValues {
-      #         inherit (pkgs)
-
-      #           nix
-      #           home-manager
-      #           git
-      #           just
-
-      #           age
-      #           ssh-to-age
-      #           sops
-      #           ;
-      #       };
-      #     };
-      #   }
-      # );
+                 age
+                 ssh-to-age
+                 sops
+                 ;
+             };
+           };
+         }
+       );
 
     # SYSTEMS
     nixosConfigurations = {
@@ -91,8 +67,7 @@
             imports = [ ./home.nix ];
             };
             home-manager.extraSpecialArgs = {
-              inherit unstable;
-          };
+            };
           }
         ];
         # specialArgs = {
