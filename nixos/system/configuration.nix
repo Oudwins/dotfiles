@@ -2,22 +2,27 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{ config, pkgs, ... }:
+{ config, pkgs, ... }@args:
 
 {
   imports =
     [ # Include the results of the hardware scan.
       ./vm.nix
       ./hardware-configuration.nix
+      # tutorial -> https://www.youtube.com/watch?v=UPWkQ3LUDOU
+      args.inputs.xremap-flake.nixosModules.default # makes remap service available
     ];
   
   nix.settings.experimental-features = ["nix-command" "flakes"];
 
-  nixpkgs.config = {
-    allowUnfree = true;
-    permittedInsecurePackages = [
-      "electron-25.9.0" # for obsidian
-    ];
+  nixpkgs = {
+    overlays = builtins.attrValues args.outputs.overlays;
+    config = {
+      allowUnfree = true;
+    };
+    # permittedInsecurePackages = [
+    #   "electron-25.9.0" # for obsidian
+    # ];
   };
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
@@ -59,7 +64,22 @@
     LC_TIME = "es_ES.UTF-8";
   };
 
-
+  # Key remapping. Only available because of xremap import above (see imports)
+  services.xremap = {
+    withX11 = true;
+    watch = true; # watches for new devices that connect
+    userName = "tmx";
+    yamlConfig = ''
+modmap:
+  - name: CapsLock to Esc
+    remap:
+      CapsLock: Esc
+keymap:
+  - name: Control-y to tab for cursor
+    remap:
+      C-y: Tab
+    '';
+  };
 
   # Enable the X11 windowing system.
   services.displayManager = {

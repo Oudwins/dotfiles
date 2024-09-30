@@ -83,7 +83,7 @@
     bc # basic calculator (used for bash scripts)
     neovim
     vscode-fhs
-    #unstable.code-cursor
+    unstable.code-cursor
     bruno # postman alternative
     git
     git-crypt
