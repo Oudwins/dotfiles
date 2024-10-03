@@ -66,6 +66,7 @@
     # books
     calibre
     # browsers
+    librewolf
     brave
     google-chrome
     freetube
