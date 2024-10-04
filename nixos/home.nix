@@ -276,6 +276,7 @@ home.sessionVariables = let
     "personal"
     "projects"
   ];
+  obsidianDirs = [ "notes" ];
 in {
   TERMINAL = "alacritty";
   EDITOR = "nvim";
@@ -283,6 +284,7 @@ in {
   # this creates a string of "/home/tmx/projects:/home/tmx/{other_project_dir}"
   # This is used by a rofi script to open the code editor in that project
   CODE_PROJECT_DIRS = builtins.concatStringsSep ":" (map (dir: "${home}/${dir}") projectDirs);
+  OBSIDIAN_VAULT_DIRS = builtins.concatStringsSep ":" (map (dir: "${home}/${dir}") obsidianDirs);
   LAUNCHER = "rofi -show drun";
   DMENU = "rofi -dmenu";
   SCREENSHOT = "flameshot gui";

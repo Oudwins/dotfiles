@@ -301,14 +301,21 @@ local dmenu_picker_keys = leader.bind_actions({
         function()
             awful.spawn.with_shell("$HOME/.dotfiles/tmx/.local/bin/dscripts/powermenu.sh")
         end,
-        "[D]menu [P]ower Picker"
+        "[D]menu Power [O]n off"
     },
     {
         "p",
         function()
             awful.spawn.with_shell("$HOME/.dotfiles/tmx/.config/dmscripts-custom/dmenu-projects.sh")
         end,
-        "[D]menu [Space] Project Finder"
+        "[D]menu open [P]rojects"
+    },
+    {
+        "n",
+        function()
+            awful.spawn.with_shell("$HOME/.dotfiles/tmx/.config/dmscripts-custom/dmenu-obsidian-vaults.sh")
+        end,
+        "[D]menu [n]otes"
     }
 })
 local dmenu_picker_leader = leader.leader(dmenu_picker_keys)
