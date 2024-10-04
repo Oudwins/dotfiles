@@ -15,14 +15,13 @@ done
 selected=$(echo "$directories" | $DMENU -i -l 15 -p "Select directory:")
 
 if [ -n "$selected" ]; then
-    # Extract the child directory name and parent directory
-    child_dir=$(echo "$selected" | cut -f1)
-    parent_dir=$(echo "$selected" | cut -f2)
-    
-    # Construct the full path of the selected directory
-    full_path="$parent_dir/$child_dir"
+    # Extract the child directory name
+     child_dir=$(echo "$selected" | cut -f1)
     
     # Encoding path
-    encoded_path=$(perl -MURI::Escape -e 'print uri_escape($ARGV[0]);' "$full_path")
-    xdg-open "obsidian://open?path=$encoded_path"
+    #encoded_path=$(perl -MURI::Escape -e 'print uri_escape($ARGV[0]);' "$full_path")
+    #xdg-open "obsidian://open?path=$encoded_path"
+    #echo "$encoded_path"
+    #obsidian "obsidian://open?path=$encoded_path"
+    obsidian "obsidian://open?vault=$child_dir"
 fi
