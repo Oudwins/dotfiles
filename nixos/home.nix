@@ -120,8 +120,27 @@
     '';
   };
   programs.neovim.extraPackages = ["gcc"];
-  programs.rofi.enable = true;
-  programs.rofi.theme = config.home.homeDirectory + "/.dotfiles/tmx/.config/rofi/themes/erebus.rasi";
+  programs.rofi = {
+    enable = true;
+    theme = config.home.homeDirectory + "/.dotfiles/tmx/.config/rofi/themes/erebus.rasi";
+    # to find keybindings use `rofi -show keys`
+    # Options -> https://davatorium.github.io/rofi/1.7.3/rofi-keys.5/#kb-mode-complete
+    extraConfig = {
+      kb-clear-line = "Control+c,Control+u"; # like i do in the terminal
+      kb-row-up = "Up,Control+k,Shift+Tab";
+      kb-row-down = "Down,Control+j,Tab";
+      kb-accept-entry = "Return,KP_Enter,Control+y";
+
+      # don't use this and they conflict
+      kb-element-next = "";
+      kb-remove-to-sol = "";
+      kb-remove-to-eol = "";
+      # I have keybingings for the modes I want to use so disable all this
+      kb-mode-previous = "";
+      kb-mode-next = "";
+      kb-mode-complete = "";
+    };
+  };
   # couldn't get this to work, need to rethink it
   # home.activationScripts = {
   #   setUpSymlinks = {
@@ -239,13 +258,36 @@
   #
   #  /etc/profiles/per-user/tmx/etc/profile.d/hm-session-vars.sh
   #
-  home.sessionVariables = {
-    TERMINAL = "alacritty";
-    EDITOR = "nvim";
-    LAUNCHER = "rofi -show drun";
-    SCREENSHOT = "flameshot gui";
-    GTK_THEME= "Adwaita:dark";
-  };
+  # home.sessionVariables = {
+  #   TERMINAL = "alacritty";
+  #   EDITOR = "nvim";
+  #   CODE_EDITOR = "cursor";
+  #   CODE_PROJECT_DIRS="${config.home.homeDirectory}/open_source:${config.home.homeDirectory}/work:${config.home.homeDirectory}/personal:${config.home.homeDirectory}/projects";
+  #   LAUNCHER = "rofi -show drun";
+  #   DMENU = "rofi -dmenu";
+  #   SCREENSHOT = "flameshot gui";
+  #   GTK_THEME= "Adwaita:dark";
+  # };
+home.sessionVariables = let
+  home = config.home.homeDirectory;
+  projectDirs = [
+    "open_source"
+    "work"
+    "personal"
+    "projects"
+  ];
+in {
+  TERMINAL = "alacritty";
+  EDITOR = "nvim";
+  CODE_EDITOR = "cursor";
+  # this creates a string of "/home/tmx/projects:/home/tmx/{other_project_dir}"
+  # This is used by a rofi script to open the code editor in that project
+  CODE_PROJECT_DIRS = builtins.concatStringsSep ":" (map (dir: "${home}/${dir}") projectDirs);
+  LAUNCHER = "rofi -show drun";
+  DMENU = "rofi -dmenu";
+  SCREENSHOT = "flameshot gui";
+  GTK_THEME = "Adwaita:dark";
+};
 
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
