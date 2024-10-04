@@ -16,8 +16,6 @@ for dir in "${PARENT_DIRS[@]}"; do
     directories+=$'\n'  # Add a newline between parent directories
 done
 
-echo directories
-
 # Use dmenu to fuzzy find and select a directory
 selected=$(echo "$directories" | $DMENU -i -l 15 -p "Select directory:")
 
