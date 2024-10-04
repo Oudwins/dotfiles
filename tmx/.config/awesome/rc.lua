@@ -275,29 +275,40 @@ local language_keys = leader.bind_actions({
      end,
      "Change keyboard language to spanish"
     },
-})
+}) 
+-- these are behind a alt+l + key
 local language_leader = leader.leader(language_keys)
 
--- TODO
+-- These are behind super+d (super + dmenu)
 local dmenu_picker_keys = leader.bind_actions({
     {"d",
         function()
+            -- TODO
 
         end,
         "Dmenu Scripts picker"
     },
     {
+        -- WIFI -> Network Manager
         "w",
         function()
             awful.spawn.with_shell("$HOME/.dotfiles/tmx/.local/bin/dscripts/rofi-nm.sh")
         end,
     },
     {
-        "p",
+        -- POWER [O]n 
+        "o",
         function()
             awful.spawn.with_shell("$HOME/.dotfiles/tmx/.local/bin/dscripts/powermenu.sh")
         end,
         "[D]menu [P]ower Picker"
+    },
+    {
+        "p",
+        function()
+            awful.spawn.with_shell("$HOME/.dotfiles/tmx/.config/dmscripts-custom/dmenu-projects.sh")
+        end,
+        "[D]menu [Space] Project Finder"
     }
 })
 local dmenu_picker_leader = leader.leader(dmenu_picker_keys)
