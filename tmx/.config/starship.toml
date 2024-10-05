@@ -1,6 +1,7 @@
 # NOTES
 # Container module is maybe interesting
 # Direnv
+
 format = """
 $username\
 $hostname\
@@ -8,21 +9,33 @@ ${custom.separator}\
 $directory\
 $git_branch\
 $git_status\
-$fill\
-$python\
-$lua\
-$nodejs\
-$golang\
-$haskell\
-$rust\
-$ruby\
-$package\
-$aws\
-$docker_context\
 $jobs\
 $cmd_duration\
-$line_break\
 $character"""
+
+# PREVIOUS FORMAT
+# format = """
+# $username\
+# $hostname\
+# ${custom.separator}\
+# $directory\
+# $git_branch\
+# $git_status\
+# $fill\
+# $python\
+# $lua\
+# $nodejs\
+# $golang\
+# $haskell\
+# $rust\
+# $ruby\
+# $package\
+# $aws\
+# $docker_context\
+# $jobs\
+# $cmd_duration\
+# $line_break\
+# $character"""
 
 add_newline = true
 palette = 'nord'
@@ -129,7 +142,7 @@ format = '[$symbol]($style)'
 [cmd_duration]
 min_time = 500
 style = 'fg:gray'
-format = '[$duration]($style)'
+format = '[($duration)]($style)'
 
 [palettes.nord]
 dark_blue = '#5E81AC'
