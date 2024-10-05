@@ -92,7 +92,6 @@
     jetbrains.idea-community # Intellij
     jetbrains.goland # golang IDE
     awscli2 # aws cli
-    bluej # UNED BULLSHIT
     beekeeper-studio # sql gui & database gui
     # languages
     go
@@ -109,7 +108,7 @@
     # compilers
     gcc
   ];
-  # basics
+  # BASH
   programs.bash = {
     enable = true;
     bashrcExtra = ''
@@ -119,7 +118,15 @@
       bind '"\C-l": clear-screen'
     '';
   };
+  programs.direnv = {
+    enable = true;
+    nix-direnv.enable = true;
+  };
+  programs.starship = {
+    enable = true;
+  };
   programs.neovim.extraPackages = ["gcc"];
+  # LAUNCHER
   programs.rofi = {
     enable = true;
     theme = config.home.homeDirectory + "/.dotfiles/tmx/.config/rofi/themes/erebus.rasi";
