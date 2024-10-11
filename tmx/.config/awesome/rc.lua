@@ -621,7 +621,7 @@ awful.rules.rules = {
      { rule = { class = "obsidian" },
      properties = { tag = "3" } },
      { rule = { class = "Brave-browser" },
-     properties = { tag = "2", floating = false, } },
+     properties = { tag = "2", } },
      { rule = { class = "Google-chrome" },
      properties = { tag = "4" } },
 }
