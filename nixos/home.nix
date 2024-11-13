@@ -58,10 +58,10 @@
     cinnamon.warpinator # share files pc-phone
     mpv # media player
     geeqie # img viewer
-    libreoffice-qt
+    onlyoffice-bin
     obs-studio # screen recorder
     libsForQt5.ark # Ark, zips, archive
-    qbittorrent
+    unstable.qbittorrent
     gimp
     # books
     calibre
@@ -82,7 +82,7 @@
     gnumake # use makefiles
     fzf # fuzzy finding
     bc # basic calculator (used for bash scripts)
-    neovim
+    unstable.neovim
     vscode-fhs
     unstable.code-cursor
     bruno # postman alternative
