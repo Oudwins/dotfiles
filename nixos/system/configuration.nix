@@ -11,9 +11,25 @@
       ./hardware-configuration.nix
       # tutorial -> https://www.youtube.com/watch?v=UPWkQ3LUDOU
       args.inputs.xremap-flake.nixosModules.default # makes remap service available
+      args.inputs.sops-nix.nixosModules.sops
     ];
+
+  # SECERTS
+  sops = {
+    defaultSopsFile = "${../secrets/secrets.yaml}";
+    validateSopsFiles = false;
+    age = {
+      # automatically use ssh key to gen private age key
+      sshKeyPaths = [ "/etc/ssh/ssh_master_key" ];
+      # location of key
+      #keyFile = "/var/lib/sops-nix/key.txt";
+      # generate key if it doesn't exist
+      generateKey = true;
+    };
+  };
   
   nix.settings.experimental-features = ["nix-command" "flakes"];
+
 
   nixpkgs = {
     overlays = builtins.attrValues args.outputs.overlays;
@@ -112,10 +128,61 @@ keymap:
 
   # enable light to control screen brightness
   programs.light.enable = true;
+
+  # FILE MANGEMENT
   # required by udiskie to automount usbs
   services.udisks2.enable = true;
   # required for phone to work auto mount
   services.gvfs.enable = true;
+  # required to mount nextcloud client. Mounting
+  services.davfs2.enable = true;
+
+  sops.secrets."nextcloud/autofs_secrets_file" = {
+    mode = "600";
+    # owner = "tmx";
+    path = "/etc/davfs2/secrets";
+  };
+  # Ensure the mount point directory exists
+  systemd.tmpfiles.rules = [
+    "d /mnt/nextcloud 0777 tmx tmx"
+    # "d /home/tmx/.davfs2/ 0777 tmx tmx"
+  ];
+  fileSystems."/mnt/nextcloud" = {
+    device = "https://cloud.tristanmayo.com/remote.php/webdav/";
+    fsType = "davfs";
+    options = [
+      "user"
+      "rw"
+      # "auto" # auto mount on login
+      "noauto"           # Don't mount during boot
+      # "x-systemd.automout" # auto mount on use. mounts as root unfortunatly
+      "_netdev"          # Indicates network dependency
+      "uid=${toString config.users.users.tmx.uid}"
+      # grant read/write access
+      "mode=0777"
+      # Add if you want to store credentials in secrets file
+      #"conf=/etc/davfs2/davfs2.conf"
+    ];
+  };
+
+# service to run on startup, hopefully not block and mount the nextcloud instance
+# If you change the config this may cause nix to fail switching. You may have to comment this entire code out, switch and then change the code and switch again
+systemd.services."mount-nextcloud" = {
+  description = "Mount Nextcloud WebDAV filesystem";
+  after = ["network-online.target"];
+  wants = ["network-online.target"];
+  wantedBy = ["multi-user.target"];
+  serviceConfig = {
+    Type = "oneshot";
+    ExecStart = "/run/current-system/sw/bin/mount -o uid=${toString config.users.users.tmx.uid} /mnt/nextcloud";
+    ExecStop = "/run/current-system/sw/bin/umount /mnt/nextcloud";
+    RemainAfterExit = true; # forces systemd to keep this service as "active" after exit. That way you can unmount by stoping the service
+    User = "root";
+    Group = "root";
+    IgnoreSIGPIPE = "no";
+    FailureAction = "ignore";
+  };
+};
 
   # TEAMVIEWER REMOVE THIS EVENTUALLY
   services.teamviewer.enable = true;
@@ -135,6 +202,24 @@ keymap:
     nssmdns4 = true;
     openFirewall = true;
   };
+  services.printing.drivers = [
+    pkgs.gutenprint
+    pkgs.cnijfilter2
+  ];
+# hardware.printers = {
+#   ensurePrinters = [
+#     {
+#       name = "bjc-PIXMA-MX475";
+#       location = "Home";
+#       deviceUri = "http://192.168.178.2:631/printers/Dell_1250c";
+#       model = "drv:///sample.drv/generic.ppd";
+#       ppdOptions = {
+#         PageSize = "A4";
+#       };
+#     }
+#   ];
+#   ensureDefaultPrinter = "Dell_1250c";
+# };
 
   # Enable sound with pipewire.
   sound.enable = true;
@@ -157,14 +242,17 @@ keymap:
   # services.xserver.libinput.enable = true;
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
+  users.groups.tmx = {};
   users.users.tmx = {
     isNormalUser = true;
+    group = "tmx";
     description = "tmx";
     initialPassword = "pass";
-    extraGroups = [ "networkmanager" "wheel" "libvirtd" "docker" "video" ]; #libvirtd = vm, video = light (screen brightness)
+    extraGroups = [ "tmx" "networkmanager" "wheel" "libvirtd" "docker" "video" "davfs2" ]; #libvirtd = vm, video = light (screen brightness)
     packages = with pkgs; [
       firefox
       nitrogen # wallpaper
+      pkgs.nixfmt-rfc-style # nix formatter
     ];
   };
 
@@ -186,9 +274,17 @@ keymap:
     win-spice
     gnome.adwaita-icon-theme
     qemu
+    # VPN
+    unstable.tailscale
+    # Printing Drivers
+    gutenprint
+    cnijfilter2
   ];
 
 
+
+
+  # Virtualization
   virtualisation = {
     # VMs -> Virt manager & QEMU
     libvirtd = {
@@ -209,8 +305,16 @@ keymap:
       };
     };
   };
-  services.spice-vdagentd.enable = true;
-  programs.virt-manager.enable = true;
+
+  services.spice-vdagentd.enable = true; # allows sharing files between host & guest
+  programs.virt-manager.enable = true; # enable virt manager
+
+  # VPN -> enable the tailscale service
+  services.tailscale = {
+  enable = true;
+  package = pkgs.unstable.tailscale;
+  };
+
 
 
   
@@ -276,7 +380,7 @@ keymap:
   nix.gc = {
     automatic = true;
     dates = "weekly";
-    options = "--delete-older-than 60d";
+    options = "--delete-older-than +5";
   };
   # optimize store in every build
   nix.settings.auto-optimise-store = true;

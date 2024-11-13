@@ -1,0 +1,13 @@
+keys:
+  - &users
+    - &tmx age1dh8uxu8uce5qynn04cl8gy0yk6vqnw2zc2ky0lml0s8jzvvltyuqxf96vu # from ssh
+    - &simone age1uzf3wh75kzlxc6h4sgvzw453xnkkx0wmyr8yhnfuwmn3mgal0pus7mkk9v
+  - &master_keys
+    - &mk_main age1pk47zm85yksrxekd7gnw2nn2qp46cvs00zkfs0e3hkzcf46nj55spqryrv
+creation_rules:
+  - path_regex: secrets/secrets.yaml$
+    key_groups:
+      - age:
+          - *tmx
+          - *simone
+          - *mk_main
