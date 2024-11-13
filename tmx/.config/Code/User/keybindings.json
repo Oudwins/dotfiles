@@ -178,7 +178,7 @@
     "when": "fileMatchOrFolderMatchWithResourceFocus"
   },
   {
-    "key": "ctrl+y",
+    "key": "enter",
     "command": "editor.action.inlineEdits.accept",
     "when": "inlineEditsVisible"
   },
@@ -297,5 +297,29 @@
     "key": "tab",
     "command": "-vscode-neovim.send",
     "when": "neovim.init && neovim.recording || editorTextFocus && neovim.init && neovim.mode != 'insert' && editorLangId not in 'neovim.editorLangIdExclusions'"
+  },
+  {
+    "key": "tab",
+    "command": "editor.action.inlineDiffs.acceptAll"
+  },
+  {
+    "key": "] d",
+    "command": "editor.action.marker.next",
+    "when": "editorFocus && neovim.mode != insert"
+  },
+  {
+    "key": "alt+f8",
+    "command": "-editor.action.marker.next",
+    "when": "editorFocus"
+  },
+  {
+    "key": "[ d",
+    "command": "editor.action.marker.prev",
+    "when": "editorFocus && neovim.mode != 'insert'"
+  },
+  {
+    "key": "shift+alt+f8",
+    "command": "-editor.action.marker.prev",
+    "when": "editorFocus"
   }
 ]
