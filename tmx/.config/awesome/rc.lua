@@ -292,28 +292,28 @@ local dmenu_picker_keys = leader.bind_actions({
         -- WIFI -> Network Manager
         "w",
         function()
-            awful.spawn.with_shell("$HOME/.dotfiles/tmx/.local/bin/dscripts/rofi-nm.sh")
+            awful.spawn.with_shell("$HOME/dotfiles/tmx/.local/bin/dscripts/rofi-nm.sh")
         end,
     },
     {
         -- POWER [O]n 
         "o",
         function()
-            awful.spawn.with_shell("$HOME/.dotfiles/tmx/.local/bin/dscripts/powermenu.sh")
+            awful.spawn.with_shell("$HOME/dotfiles/tmx/.local/bin/dscripts/powermenu.sh")
         end,
         "[D]menu Power [O]n off"
     },
     {
         "p",
         function()
-            awful.spawn.with_shell("$HOME/.dotfiles/tmx/.config/dmscripts-custom/dmenu-projects.sh")
+            awful.spawn.with_shell("$HOME/dotfiles/tmx/.config/dmscripts-custom/dmenu-projects.sh")
         end,
         "[D]menu open [P]rojects"
     },
     {
         "n",
         function()
-            awful.spawn.with_shell("$HOME/.dotfiles/tmx/.config/dmscripts-custom/dmenu-obsidian-vaults.sh")
+            awful.spawn.with_shell("$HOME/dotfiles/tmx/.config/dmscripts-custom/dmenu-obsidian-vaults.sh")
         end,
         "[D]menu [n]otes"
     }

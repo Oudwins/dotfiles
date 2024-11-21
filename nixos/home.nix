@@ -129,7 +129,7 @@
   # LAUNCHER
   programs.rofi = {
     enable = true;
-    theme = config.home.homeDirectory + "/.dotfiles/tmx/.config/rofi/themes/erebus.rasi";
+    theme = config.home.homeDirectory + "/dotfiles/tmx/.config/rofi/themes/erebus.rasi";
     # to find keybindings use `rofi -show keys`
     # Options -> https://davatorium.github.io/rofi/1.7.3/rofi-keys.5/#kb-mode-complete
     extraConfig = {

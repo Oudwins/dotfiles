@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Define the directory
-directory="$HOME/.dotfiles/"
+directory="$HOME/dotfiles/"
 
 # Change directory
 cd "$directory" || exit
