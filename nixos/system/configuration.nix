@@ -144,7 +144,7 @@ keymap:
   };
   # Ensure the mount point directory exists
   systemd.tmpfiles.rules = [
-    "d /mnt/nextcloud 0777 tmx tmx"
+    "d /mnt/nextcloud 0777 tmx users"
     # "d /home/tmx/.davfs2/ 0777 tmx tmx"
   ];
   fileSystems."/mnt/nextcloud" = {
@@ -157,7 +157,8 @@ keymap:
       "noauto"           # Don't mount during boot
       # "x-systemd.automout" # auto mount on use. mounts as root unfortunatly
       "_netdev"          # Indicates network dependency
-      "uid=${toString config.users.users.tmx.uid}"
+      # "uid=${toString config.users.users.tmx.uid}"
+      # "gid=${toString config.users.groups.users.gid}"  # Add group ID
       # grant read/write access
       "mode=0777"
       # Add if you want to store credentials in secrets file
@@ -174,7 +175,7 @@ systemd.services."mount-nextcloud" = {
   wantedBy = ["multi-user.target"];
   serviceConfig = {
     Type = "oneshot";
-    ExecStart = "/run/current-system/sw/bin/mount -o uid=${toString config.users.users.tmx.uid} /mnt/nextcloud";
+    ExecStart = "/run/current-system/sw/bin/mount -o uid=${toString config.users.users.tmx.uid},gid=${toString config.users.groups.users.gid} /mnt/nextcloud";
     ExecStop = "/run/current-system/sw/bin/umount /mnt/nextcloud";
     RemainAfterExit = true; # forces systemd to keep this service as "active" after exit. That way you can unmount by stoping the service
     User = "root";
@@ -183,6 +184,14 @@ systemd.services."mount-nextcloud" = {
     FailureAction = "ignore";
   };
 };
+
+security.sudo.extraRules = [{
+  users = [ "tmx" ];
+  commands = [{
+    command = "/run/current-system/sw/bin/mount";
+    options = [ "NOPASSWD" ];
+  }];
+}];
 
   # TEAMVIEWER REMOVE THIS EVENTUALLY
   services.teamviewer.enable = true;
@@ -243,12 +252,13 @@ systemd.services."mount-nextcloud" = {
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.groups.tmx = {};
+  users.groups.users = {};
   users.users.tmx = {
     isNormalUser = true;
     group = "tmx";
     description = "tmx";
     initialPassword = "pass";
-    extraGroups = [ "tmx" "networkmanager" "wheel" "libvirtd" "docker" "video" "davfs2" ]; #libvirtd = vm, video = light (screen brightness)
+    extraGroups = [ "tmx" "users" "networkmanager" "wheel" "libvirtd" "docker" "video" "davfs2" ]; #libvirtd = vm, video = light (screen brightness)
     packages = with pkgs; [
       firefox
       nitrogen # wallpaper
