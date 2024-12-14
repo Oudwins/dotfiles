@@ -58,6 +58,7 @@ browserWork = os.getenv("BROWSER_WORK") or "google-chrome"
 editor_cmd = terminal .. " -e " .. editor
 launcher = os.getenv("LAUNCHER") or ""
 screenshotter = os.getenv("SCREENSHOT") or "flameshot gui"
+screenshotterOCR = "flameshot gui --raw --accept-on-select | tesseract stdin stdout | xclip -in -selection clipboard"
 
 -- START UP PROGRAMS
 
@@ -284,7 +285,6 @@ local dmenu_picker_keys = leader.bind_actions({
     {"d",
         function()
             -- TODO
-
         end,
         "Dmenu Scripts picker"
     },
@@ -320,10 +320,22 @@ local dmenu_picker_keys = leader.bind_actions({
 })
 local dmenu_picker_leader = leader.leader(dmenu_picker_keys)
 
+-- These are behind super + a (ai keys
+local ai_keys = leader.bind_actions({
+    {"s", -- screenshot
+     function(args)
+        awful.spawn.with_shell(screenshotterOCR)
+     end,
+     "Screenshot OCR to Copy"
+    },
+}) 
+-- these are behind a alt+l + key
+local ai_leader = leader.leader(ai_keys)
+
 
 
 globalkeys = gears.table.join(
-    awful.key({ modkey,           }, "a",      hotkeys_popup.show_help,
+    awful.key({ modkey, "Control" }, "a",      hotkeys_popup.show_help,
               {description="show help", group="awesome"}),
     awful.key({ modkey, "Control" }, "r", awesome.restart,
               {description = "reload awesome", group = "awesome"}),
@@ -336,6 +348,8 @@ globalkeys = gears.table.join(
     -- KEYBOARD HOTKEYS
     awful.key({"Mod1"}, "l", language_leader,
         {description="Change keyboard language", group="system"}),
+    awful.key({ modkey}, "a",      ai_leader,
+              {description="Run AI scripts", group="launcher"}),
     
     -- START OF BRIGHTNESS & AUDIO CONTROLS
     -- ALSA volume control

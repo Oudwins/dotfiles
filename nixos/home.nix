@@ -47,6 +47,7 @@
 
     # Basics
     xclip # access clipboard from terminal
+    tesseract4 # OCR for images
     udiskie # auto mount usbs daemon
     alacritty # terminal
     rofi # launcher
