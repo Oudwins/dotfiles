@@ -231,7 +231,6 @@ security.sudo.extraRules = [{
 # };
 
   # Enable sound with pipewire.
-  sound.enable = true;
   hardware.pulseaudio.enable = false;
   security.rtkit.enable = true;
   services.pipewire = {
@@ -289,6 +288,10 @@ security.sudo.extraRules = [{
     # Printing Drivers
     gutenprint
     cnijfilter2
+    # control audio
+    alsa-utils
+    # control brightness
+    light
   ];
 
 
@@ -337,7 +340,7 @@ security.sudo.extraRules = [{
   fonts = {
      packages = with pkgs; [
 	noto-fonts
-	noto-fonts-cjk
+	noto-fonts-cjk-sans
 	noto-fonts-emoji
 	font-awesome
 	source-han-sans

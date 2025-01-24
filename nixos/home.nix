@@ -38,8 +38,8 @@
     # '')
     # visual/themes
     adwaita-qt # theme for qt
-    gnome.gnome-themes-extra # adwaita theme for gtk
-    gnome3.adwaita-icon-theme
+    gnome-themes-extra # adwaita theme for gtk
+    adwaita-icon-theme
     gtk3
     # theme switchers
     # lxappearance
@@ -50,7 +50,6 @@
     tesseract4 # OCR for images
     udiskie # auto mount usbs daemon
     alacritty # terminal
-    rofi # launcher
     xfce.xfconf # required for thunar to work
     xfce.thunar # file manager
     arandr # gui for screen control
@@ -131,6 +130,7 @@
   programs.rofi = {
     enable = true;
     theme = config.home.homeDirectory + "/dotfiles/tmx/.config/rofi/themes/erebus.rasi";
+    plugins = [pkgs.rofi-calc pkgs.rofi-emoji];
     # to find keybindings use `rofi -show keys`
     # Options -> https://davatorium.github.io/rofi/1.7.3/rofi-keys.5/#kb-mode-complete
     extraConfig = {
@@ -138,6 +138,7 @@
       kb-row-up = "Up,Control+k,Shift+Tab";
       kb-row-down = "Down,Control+j,Tab";
       kb-accept-entry = "Return,KP_Enter,Control+y";
+      # kb-accept-custom = "Return"; # -> conflicts with accept key
 
       # don't use this and they conflict
       kb-element-next = "";
