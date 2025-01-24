@@ -3,6 +3,7 @@ local gears = require("gears")
 local hotkeys_popup = require("awful.hotkeys_popup")
 local vars = require("awesome-vars")
 local leader = require("awesome-leader")
+local naughty = require("naughty") -- notifications
 
 local M = {}
 
@@ -24,6 +25,7 @@ local language_keys = leader.bind_actions({
 local language_leader = leader.leader(language_keys)
 
 -- Dmenu picker keys
+-- rofi -show calc -modi calc -no-show-match -no-sort -automatic-save-to-history > /dev/null
 local dmenu_picker_keys = leader.bind_actions({
     {"d",
         function()
@@ -58,12 +60,31 @@ local dmenu_picker_keys = leader.bind_actions({
             awful.spawn.with_shell("$HOME/dotfiles/tmx/.config/dmscripts-custom/dmenu-obsidian-vaults.sh")
         end,
         "[D]menu [n]otes"
+    },
+    {
+        "c",
+        function()
+        
+            awful.spawn.with_shell("rofi -show calc -modi calc -no-show-match -no-sort -automatic-save-to-history -calc-command \"echo -n '{result}' | xclip\"")
+        end,
+        "[D]menu [c]alculator"
+    },
+    {
+        "e",
+        function()
+            -- Depends on: https://github.com/Mange/rofi-emoji
+            -- Only copy
+            --awful.spawn.with_shell("rofi -modi emoji -show emoji -emoji-mode copy")
+            awful.spawn.with_shell("rofi -modi emoji -show emoji -emoji-mode insert")
+        end,
+        "[D]menu [E]mojis"
     }
 })
 local dmenu_picker_leader = leader.leader(dmenu_picker_keys)
 
 -- AI keys
 local ai_keys = leader.bind_actions({
+    -- "a" -> rofi over AI scripts
     {"s",
      function(args)
         awful.spawn.with_shell(vars.screenshotterOCR)
