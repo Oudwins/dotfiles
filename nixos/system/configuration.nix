@@ -5,14 +5,14 @@
 { config, pkgs, ... }@args:
 
 {
-  imports =
-    [ # Include the results of the hardware scan.
-      ./vm.nix
-      ./hardware-configuration.nix
-      # tutorial -> https://www.youtube.com/watch?v=UPWkQ3LUDOU
-      args.inputs.xremap-flake.nixosModules.default # makes remap service available
-      args.inputs.sops-nix.nixosModules.sops
-    ];
+  imports = [
+    # Include the results of the hardware scan.
+    ./vm.nix
+    ./hardware-configuration.nix
+    # tutorial -> https://www.youtube.com/watch?v=UPWkQ3LUDOU
+    args.inputs.xremap-flake.nixosModules.default # makes remap service available
+    args.inputs.sops-nix.nixosModules.sops
+  ];
 
   # SECERTS
   sops = {
@@ -27,9 +27,11 @@
       generateKey = true;
     };
   };
-  
-  nix.settings.experimental-features = ["nix-command" "flakes"];
 
+  nix.settings.experimental-features = [
+    "nix-command"
+    "flakes"
+  ];
 
   nixpkgs = {
     overlays = builtins.attrValues args.outputs.overlays;
@@ -51,8 +53,8 @@
 
   networking.hostName = "nixos"; # Define your hostname.
   networking.extraHosts = ''
-  ${builtins.readFile ./../../tmx/hosts}
-'';
+    ${builtins.readFile ./../../tmx/hosts}
+  '';
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
   # Configure network proxy if necessary
@@ -86,21 +88,21 @@
     watch = true; # watches for new devices that connect
     userName = "tmx";
     yamlConfig = ''
-modmap:
-  - name: CapsLock to Esc
-    remap:
-      CapsLock: Esc
-keymap:
-  - name: Control-y to tab for cursor
-    remap:
-      C-y: Tab
+      modmap:
+        - name: CapsLock to Esc
+          remap:
+            CapsLock: Esc
+      keymap:
+        - name: Control-y to tab for cursor
+          remap:
+            C-y: Tab
     '';
   };
 
   # Enable the X11 windowing system.
   services.displayManager = {
     sddm.enable = true;
-  # Enable awesome wm
+    # Enable awesome wm
     defaultSession = "none+awesome";
   };
   services.xserver = {
@@ -154,9 +156,9 @@ keymap:
       "user"
       "rw"
       # "auto" # auto mount on login
-      "noauto"           # Don't mount during boot
+      "noauto" # Don't mount during boot
       # "x-systemd.automout" # auto mount on use. mounts as root unfortunatly
-      "_netdev"          # Indicates network dependency
+      "_netdev" # Indicates network dependency
       # "uid=${toString config.users.users.tmx.uid}"
       # "gid=${toString config.users.groups.users.gid}"  # Add group ID
       # grant read/write access
@@ -166,32 +168,36 @@ keymap:
     ];
   };
 
-# service to run on startup, hopefully not block and mount the nextcloud instance
-# If you change the config this may cause nix to fail switching. You may have to comment this entire code out, switch and then change the code and switch again
-systemd.services."mount-nextcloud" = {
-  description = "Mount Nextcloud WebDAV filesystem";
-  after = ["network-online.target"];
-  wants = ["network-online.target"];
-  wantedBy = ["multi-user.target"];
-  serviceConfig = {
-    Type = "oneshot";
-    ExecStart = "/run/current-system/sw/bin/mount -o uid=${toString config.users.users.tmx.uid},gid=${toString config.users.groups.users.gid} /mnt/nextcloud";
-    ExecStop = "/run/current-system/sw/bin/umount /mnt/nextcloud";
-    RemainAfterExit = true; # forces systemd to keep this service as "active" after exit. That way you can unmount by stoping the service
-    User = "root";
-    Group = "root";
-    IgnoreSIGPIPE = "no";
-    FailureAction = "ignore";
+  # service to run on startup, hopefully not block and mount the nextcloud instance
+  # If you change the config this may cause nix to fail switching. You may have to comment this entire code out, switch and then change the code and switch again
+  systemd.services."mount-nextcloud" = {
+    description = "Mount Nextcloud WebDAV filesystem";
+    after = [ "network-online.target" ];
+    wants = [ "network-online.target" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "/run/current-system/sw/bin/mount -o uid=${toString config.users.users.tmx.uid},gid=${toString config.users.groups.users.gid} /mnt/nextcloud";
+      ExecStop = "/run/current-system/sw/bin/umount /mnt/nextcloud";
+      RemainAfterExit = true; # forces systemd to keep this service as "active" after exit. That way you can unmount by stoping the service
+      User = "root";
+      Group = "root";
+      IgnoreSIGPIPE = "no";
+      FailureAction = "ignore";
+    };
   };
-};
 
-security.sudo.extraRules = [{
-  users = [ "tmx" ];
-  commands = [{
-    command = "/run/current-system/sw/bin/mount";
-    options = [ "NOPASSWD" ];
-  }];
-}];
+  security.sudo.extraRules = [
+    {
+      users = [ "tmx" ];
+      commands = [
+        {
+          command = "/run/current-system/sw/bin/mount";
+          options = [ "NOPASSWD" ];
+        }
+      ];
+    }
+  ];
 
   # TEAMVIEWER REMOVE THIS EVENTUALLY
   services.teamviewer.enable = true;
@@ -201,7 +207,7 @@ security.sudo.extraRules = [{
   # Required for flatpak
   xdg.portal = {
     enable = true;
-    extraPortals = [ pkgs.xdg-desktop-portal-gtk];
+    extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
     config.common.default = "*";
   };
   # Enable CUPS to print documents.
@@ -215,20 +221,20 @@ security.sudo.extraRules = [{
     pkgs.gutenprint
     pkgs.cnijfilter2
   ];
-# hardware.printers = {
-#   ensurePrinters = [
-#     {
-#       name = "bjc-PIXMA-MX475";
-#       location = "Home";
-#       deviceUri = "http://192.168.178.2:631/printers/Dell_1250c";
-#       model = "drv:///sample.drv/generic.ppd";
-#       ppdOptions = {
-#         PageSize = "A4";
-#       };
-#     }
-#   ];
-#   ensureDefaultPrinter = "Dell_1250c";
-# };
+  # hardware.printers = {
+  #   ensurePrinters = [
+  #     {
+  #       name = "bjc-PIXMA-MX475";
+  #       location = "Home";
+  #       deviceUri = "http://192.168.178.2:631/printers/Dell_1250c";
+  #       model = "drv:///sample.drv/generic.ppd";
+  #       ppdOptions = {
+  #         PageSize = "A4";
+  #       };
+  #     }
+  #   ];
+  #   ensureDefaultPrinter = "Dell_1250c";
+  # };
 
   # Enable sound with pipewire.
   hardware.pulseaudio.enable = false;
@@ -250,14 +256,23 @@ security.sudo.extraRules = [{
   # services.xserver.libinput.enable = true;
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
-  users.groups.tmx = {};
-  users.groups.users = {};
+  users.groups.tmx = { };
+  users.groups.users = { };
   users.users.tmx = {
     isNormalUser = true;
     group = "tmx";
     description = "tmx";
     initialPassword = "pass";
-    extraGroups = [ "tmx" "users" "networkmanager" "wheel" "libvirtd" "docker" "video" "davfs2" ]; #libvirtd = vm, video = light (screen brightness)
+    extraGroups = [
+      "tmx"
+      "users"
+      "networkmanager"
+      "wheel"
+      "libvirtd"
+      "docker"
+      "video"
+      "davfs2"
+    ]; # libvirtd = vm, video = light (screen brightness)
     packages = with pkgs; [
       firefox
       nitrogen # wallpaper
@@ -265,19 +280,19 @@ security.sudo.extraRules = [{
     ];
   };
 
-
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
-   vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
-   wget 
-   awesome # window manager
-   # autorandr # automatically turn screens on & off. It sets up profiles
-   # where-is-my-sddm-theme # lock screen theme (pure black) -> https://github.com/stepanzubkov/where-is-my-sddm-theme
-   # VMS
+    vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
+    wget
+    awesome # window manager
+    # autorandr # automatically turn screens on & off. It sets up profiles
+    # where-is-my-sddm-theme # lock screen theme (pure black) -> https://github.com/stepanzubkov/where-is-my-sddm-theme
+    # VMS
     virt-manager
     virt-viewer
-    spice spice-gtk
+    spice
+    spice-gtk
     spice-protocol
     win-virtio
     win-spice
@@ -293,9 +308,6 @@ security.sudo.extraRules = [{
     # control brightness
     light
   ];
-
-
-
 
   # Virtualization
   virtualisation = {
@@ -313,8 +325,8 @@ security.sudo.extraRules = [{
     docker = {
       enable = true;
       rootless = {
-	enable = true;
-	setSocketVariable = true;
+        enable = true;
+        setSocketVariable = true;
       };
     };
   };
@@ -324,40 +336,43 @@ security.sudo.extraRules = [{
 
   # VPN -> enable the tailscale service
   services.tailscale = {
-  enable = true;
-  package = pkgs.unstable.tailscale;
+    enable = true;
+    package = pkgs.unstable.tailscale;
   };
 
-
-
-  
   console = {
-  packages = [pkgs.terminus_font];
-  font = "${pkgs.terminus_font}/share/consolefonts/ter-i22b.psf.gz";
-  useXkbConfig = true;
+    packages = [ pkgs.terminus_font ];
+    font = "${pkgs.terminus_font}/share/consolefonts/ter-i22b.psf.gz";
+    useXkbConfig = true;
   };
 
   fonts = {
-     packages = with pkgs; [
-	noto-fonts
-	noto-fonts-cjk-sans
-	noto-fonts-emoji
-	font-awesome
-	source-han-sans
-	source-han-sans-japanese
-	source-han-serif-japanese
-	(nerdfonts.override {fonts = ["Meslo"];})
+    packages = with pkgs; [
+      noto-fonts
+      noto-fonts-cjk-sans
+      noto-fonts-emoji
+      font-awesome
+      source-han-sans
+      source-han-sans-japanese
+      source-han-serif-japanese
+      (nerdfonts.override { fonts = [ "Meslo" ]; })
 
-     ];
-     fontconfig = {
-	enable = true;
-	defaultFonts = {
-		monospace = ["Meslo LG M regular Nerd Font Complete Mono"];
-		serif = ["noto Serif" "Source Han Serif"];
-		sansSerif = ["Noto Sans" "Source Han Sans"];
-	};
+    ];
+    fontconfig = {
+      enable = true;
+      defaultFonts = {
+        monospace = [ "Meslo LG M regular Nerd Font Complete Mono" ];
+        serif = [
+          "noto Serif"
+          "Source Han Serif"
+        ];
+        sansSerif = [
+          "Noto Sans"
+          "Source Han Sans"
+        ];
+      };
 
-     };
+    };
   };
 
   # Some programs need SUID wrappers, can be configured further or are
@@ -375,25 +390,27 @@ security.sudo.extraRules = [{
 
   # Open ports in the firewall.
   networking.firewall = {
-  # allowedTCPPorts = [
-  #   42000
-  #   42001
-  # ];
-  # allowedUDPPorts = [
-  #   5353
-  # ];
-};
+    # allowedTCPPorts = [
+    #   42000
+    #   42001
+    # ];
+    # allowedUDPPorts = [
+    #   5353
+    # ];
+  };
   #networking.firewall.allowedTCPPorts = [ ... ];
   # networking.firewall.allowedUDPPorts = [ ... ];
   # Or disable the firewall altogether.
   # networking.firewall.enable = false;
 
-
+  # Stop journald from using too much disk space. Also because some services read entire logs on startup which slows down startup time
+  services.journald.extraConfig = "SystemMaxUse=1G";
   # ! OPTIMIZE NIX. GC
   nix.gc = {
     automatic = true;
     dates = "weekly";
     options = "--delete-older-than +5";
+    randomizedDelaySec = "10min"; # this is to avoid all the services starting at the same time. Helps improve startup time
   };
   # optimize store in every build
   nix.settings.auto-optimise-store = true;
