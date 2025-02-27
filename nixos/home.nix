@@ -63,6 +63,9 @@
     libsForQt5.ark # Ark, zips, archive
     unstable.qbittorrent
     gimp
+    kdePackages.okular # PDF viewer
+    # remote desktop
+    rustdesk
     # books
     calibre
     # browsers
