@@ -1,4 +1,9 @@
-{ config, pkgs, ... }@args:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}@args:
 {
   # No longer needed bc its used as module now
   # nixpkgs.config = {
@@ -53,7 +58,7 @@
     xfce.xfconf # required for thunar to work
     xfce.thunar # file manager
     arandr # gui for screen control
-    flameshot # screenshots 
+    flameshot # screenshots
     gparted # drive partition management TODO -> DOESNT WORK
     cinnamon.warpinator # share files pc-phone
     mpv # media player
@@ -72,7 +77,6 @@
     librewolf
     brave
     google-chrome
-    freetube
     # coms
     telegram-desktop
     # files
@@ -89,8 +93,8 @@
     vscode-fhs
     unstable.code-cursor
     bruno # postman alternative
-    git
-    git-crypt
+    #git
+    #git-crypt
     gnupg
     jetbrains.idea-community # Intellij
     jetbrains.goland # golang IDE
@@ -111,6 +115,21 @@
     # compilers
     gcc
   ];
+  # git
+  programs.git = {
+    enable = true;
+    userName = "tristan";
+    userEmail = "tm@tristanmayo.com";
+    extraConfig = {
+      push = {
+        autoSetupRemote = true;
+      };
+      pack = {
+        windowMemory = "256m";
+        packSizeLimit = "256m";
+      };
+    };
+  };
   # BASH
   programs.bash = {
     enable = true;
@@ -128,12 +147,15 @@
   programs.starship = {
     enable = true;
   };
-  programs.neovim.extraPackages = ["gcc"];
+  programs.neovim.extraPackages = [ "gcc" ];
   # LAUNCHER
   programs.rofi = {
     enable = true;
     theme = config.home.homeDirectory + "/dotfiles/tmx/.config/rofi/themes/erebus.rasi";
-    plugins = [pkgs.rofi-calc pkgs.rofi-emoji];
+    plugins = [
+      pkgs.rofi-calc
+      pkgs.rofi-emoji
+    ];
     # to find keybindings use `rofi -show keys`
     # Options -> https://davatorium.github.io/rofi/1.7.3/rofi-keys.5/#kb-mode-complete
     extraConfig = {
@@ -201,20 +223,20 @@
 
   # THEMES
   dconf.settings = {
-      "org/gnome/desktop/background" = {
-        picture-uri-dark = "file://${pkgs.nixos-artwork.wallpapers.nineish-dark-gray.src}";
-      };
-      "org/gnome/desktop/interface" = {
-        color-scheme = "prefer-dark";
-      };
+    "org/gnome/desktop/background" = {
+      picture-uri-dark = "file://${pkgs.nixos-artwork.wallpapers.nineish-dark-gray.src}";
     };
+    "org/gnome/desktop/interface" = {
+      color-scheme = "prefer-dark";
+    };
+  };
   gtk = {
-      enable = true;
-      theme = {
-        name = "Adwaita-dark";
-        package = pkgs.gnome.gnome-themes-extra;
-      };
+    enable = true;
+    theme = {
+      name = "Adwaita-dark";
+      package = pkgs.gnome.gnome-themes-extra;
     };
+  };
 
   qt.enable = true;
   qt.platformTheme.name = "gtk";
@@ -226,7 +248,10 @@
   services = {
     syncthing = {
       enable = true;
-      extraOptions = ["--home=/home/tmx/.config/syncthing" "--no-default-folder"];
+      extraOptions = [
+        "--home=/home/tmx/.config/syncthing"
+        "--no-default-folder"
+      ];
     };
     redshift = {
       enable = true;
@@ -257,7 +282,6 @@
       };
     };
   };
-  
 
   # Home Manager can also manage your environment variables through
   # 'home.sessionVariables'. If you don't want to manage your shell through Home
@@ -280,28 +304,32 @@
   #   SCREENSHOT = "flameshot gui";
   #   GTK_THEME= "Adwaita:dark";
   # };
-home.sessionVariables = let
-  home = config.home.homeDirectory;
-  projectDirs = [
-    "open_source"
-    "work"
-    "personal"
-    "projects"
-  ];
-  obsidianDirs = [ "notes" ];
-in {
-  TERMINAL = "alacritty";
-  EDITOR = "nvim";
-  CODE_EDITOR = "cursor";
-  # this creates a string of "/home/tmx/projects:/home/tmx/{other_project_dir}"
-  # This is used by a rofi script to open the code editor in that project
-  CODE_PROJECT_DIRS = builtins.concatStringsSep ":" (map (dir: "${home}/${dir}") projectDirs);
-  OBSIDIAN_VAULT_DIRS = builtins.concatStringsSep ":" (map (dir: "${home}/${dir}") obsidianDirs);
-  LAUNCHER = "rofi -show drun";
-  DMENU = "rofi -dmenu";
-  SCREENSHOT = "flameshot gui";
-  GTK_THEME = "Adwaita:dark";
-};
+  home.sessionVariables =
+    let
+      home = config.home.homeDirectory;
+      projectDirs = [
+        "open_source"
+        "work"
+        "personal"
+        "projects"
+      ];
+      obsidianDirs = [ "notes" ];
+    in
+    {
+      TERMINAL = "alacritty";
+      EDITOR = "nvim";
+      CODE_EDITOR = "cursor";
+      # this creates a string of "/home/tmx/projects:/home/tmx/{other_project_dir}"
+      # This is used by a rofi script to open the code editor in that project
+      CODE_PROJECT_DIRS = builtins.concatStringsSep ":" (map (dir: "${home}/${dir}") projectDirs);
+      OBSIDIAN_VAULT_DIRS = builtins.concatStringsSep ":" (map (dir: "${home}/${dir}") obsidianDirs);
+      LAUNCHER = "rofi -show drun";
+      DMENU = "rofi -dmenu";
+      SCREENSHOT = "flameshot gui";
+      GTK_THEME = "Adwaita:dark";
+      # temporary fix for qbittorrent
+      QT_STYLE_OVERRIDE = lib.mkForce "Fusion";
+    };
 
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
