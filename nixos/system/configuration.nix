@@ -12,7 +12,7 @@
     # tutorial -> https://www.youtube.com/watch?v=UPWkQ3LUDOU
     args.inputs.xremap-flake.nixosModules.default # makes remap service available
     args.inputs.sops-nix.nixosModules.sops
-    ./../flatpack.nix
+    ./../flatpak.nix
   ];
 
   # SECERTS
@@ -53,9 +53,9 @@
   ];
 
   networking.hostName = "nixos"; # Define your hostname.
-  # networking.extraHosts = ''
-  #   ${builtins.readFile ./../../tmx/hosts}
-  # '';
+  networking.extraHosts = ''
+    ${builtins.readFile ./../../tmx/hosts-file}
+  '';
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
   # Configure network proxy if necessary
@@ -307,7 +307,11 @@
     alsa-utils
     # control brightness
     light
+    # logitech mouse
+    piper
   ];
+  # logitech mouse
+  services.ratbagd.enable = true;
 
   # Virtualization
   virtualisation = {

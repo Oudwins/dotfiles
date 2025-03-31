@@ -67,5 +67,18 @@
     "**/.DS_Store": true,
     "**/node_modules": true,
     "env*": true
-  }
+  },
+  "editor.insertSpaces": false,
+  "[c]": {
+    "editor.defaultFormatter": "ms-vscode.cpptools"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "html",
+    "typescriptreact"
+  ]
 }

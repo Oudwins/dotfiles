@@ -3,3 +3,7 @@
 	name = oudwins
 [core]
 	autocrlf = input
+[push]
+	autoSetupRemote = true
+[http]
+	postBuffer = 524288000

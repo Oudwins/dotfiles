@@ -1,48 +1,69 @@
 {
-  description = "System Config";
+  description = "Macos Config";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-24.11";
-    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
-    home-manager.url = "github:nix-community/home-manager/release-24.11";
-    home-manager.inputs.nixpkgs.follows = "nixpkgs";
-    nixos-hardware.url = "github:NixOS/nixos-hardware/master";
-
-    # declarative flatpaks for zen browser only atm
-    nix-flatpak.url = "github:gmodena/nix-flatpak";
-
-    # CUSTOM STUFF
-    # xremap
-    xremap-flake.url = "github:xremap/nix-flake";
-    sops-nix = {
-      url = "github:mic92/sops-nix";
+    home-manager = {
+      url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    darwin = {
+      url = "github:LnL7/nix-darwin/master";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    nix-homebrew = {
+      url = "github:zhaofengli-wip/nix-homebrew";
+    };
+
+    homebrew-bundle = {
+      url = "github:homebrew/homebrew-bundle";
+      flake = false;
+    };
+    homebrew-core = {
+      url = "github:homebrew/homebrew-core";
+      flake = false;
+    };
+    homebrew-cask = {
+      url = "github:homebrew/homebrew-cask";
+      flake = false;
     };
   };
 
   outputs =
     {
       self,
-      nixpkgs,
+      darwin,
+      nix-homebrew,
+      homebrew-bundle,
+      homebrew-core,
+      homebrew-cask,
       home-manager,
-      nixos-hardware,
-      nix-flatpak,
-      ...
+      nixpkgs,
+      disko,
+      agenix,
+      secrets,
     }@inputs:
     let
       # allow self referencing. outputs here references the result of calling the "output's" function above (i.e the attribute set built inside the in block)
       inherit (self) outputs;
       # lib used to build stuff
       inherit (nixpkgs) lib;
-      # Supported systems for your flake packages, shell, etc.
-      systems = [
-        "x86_64-linux"
-        #"aarch64-linux"
-        #"i686-linux"
-        #"aarch64-darwin"
-        #"x86_64-darwin"
+      user = "tmx";
+
+      darwinSystems = [
+        "aarch64-darwin"
+        "x86_64-darwin"
       ];
+      # Supported systems for your flake packages, shell, etc.
+      # systems = [
+      #   # "x86_64-linux"
+      #   #"aarch64-linux"
+      #   #"i686-linux"
+      #   # "aarch64-darwin"
+      # ];
 
       # This is a function that generates an attribute by calling a function you
       # pass to it, with each system as an argument
@@ -91,6 +112,33 @@
                 ;
             };
           };
+        }
+      );
+
+      darwinConfigurations = nixpkgs.lib.genAttrs darwinSystems (
+        system:
+        darwin.lib.darwinSystem {
+          inherit system;
+          specialArgs = specialArgs;
+          modules = [
+            home-manager.darwinModules.home-manager
+            nix-homebrew.darwinModules.nix-homebrew
+            {
+              nix-homebrew = {
+                inherit user;
+                enable = true;
+                enableRosetta = true;
+                taps = {
+                  "homebrew/homebrew-core" = homebrew-core;
+                  "homebrew/homebrew-cask" = homebrew-cask;
+                  "homebrew/homebrew-bundle" = homebrew-bundle;
+                };
+                mutableTaps = false;
+                autoMigrate = true;
+              };
+            }
+            ./hosts/darwin
+          ];
         }
       );
 

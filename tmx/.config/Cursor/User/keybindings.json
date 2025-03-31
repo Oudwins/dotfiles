@@ -305,7 +305,7 @@
   {
     "key": "] d",
     "command": "editor.action.marker.next",
-    "when": "editorFocus && neovim.mode != insert"
+    "when": "editorFocus && neovim.init && neovim.mode != 'insert'"
   },
   {
     "key": "alt+f8",
@@ -315,11 +315,55 @@
   {
     "key": "[ d",
     "command": "editor.action.marker.prev",
-    "when": "editorFocus && neovim.mode != 'insert'"
+    "when": "editorFocus && neovim && neovim.mode != 'normal'"
   },
   {
     "key": "shift+alt+f8",
     "command": "-editor.action.marker.prev",
     "when": "editorFocus"
+  },
+  {
+    "key": "ctrl+shift+i",
+    "command": "-editor.action.formatDocument",
+    "when": "editorHasDocumentFormattingProvider && editorTextFocus && !editorReadonly && !inCompositeEditor"
+  },
+  {
+    "key": "ctrl+shift+i",
+    "command": "-editor.action.formatDocument.none",
+    "when": "editorTextFocus && !editorHasDocumentFormattingProvider && !editorReadonly"
+  },
+  {
+    "key": "ctrl+shift+i",
+    "command": "-notebook.formatCell",
+    "when": "editorHasDocumentFormattingProvider && editorTextFocus && inCompositeEditor && notebookEditable && !editorReadonly && activeEditor == 'workbench.editor.notebook'"
+  },
+  {
+    "key": "ctrl+shift+i",
+    "command": "-workbench.action.toggleDevTools",
+    "when": "isDevelopment"
+  },
+  {
+    "key": "ctrl+shift+i",
+    "command": "-notebook.format",
+    "when": "notebookEditable && !editorTextFocus && activeEditor == 'workbench.editor.notebook'"
+  },
+  {
+    "key": "ctrl+n",
+    "command": "composer.createNew",
+    "when": "focusedView == 'workbench.panel.composerViewPane2.view'"
+  },
+  {
+    "key": "ctrl+n",
+    "command": "-composer.createNew",
+    "when": "focusedView == 'workbench.panel.composerViewPane2.view'"
+  },
+  {
+    "key": "ctrl+shift+i",
+    "command": "workbench.panel.composerViewPane2"
   }
+  // {
+  //   "key": "tab",
+  //   "command": "tab",
+  //   "when": "editorTextFocus && !editorTabMovesFocus"
+  // }
 ]
