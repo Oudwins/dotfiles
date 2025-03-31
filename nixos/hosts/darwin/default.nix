@@ -19,6 +19,7 @@
     # ghostty
     alacritty
     stow
+    aerospace
   ];
   nix.enable = true;
   nix.settings.experimental-features = "nix-command flakes";
@@ -105,7 +106,6 @@
     "cursor"
     "visual-studio-code"
     "telegram"
-    "nikitabobko/tap/aerospace"
   ];
   # homebrew.brews = [
   #   "imagemagick"
