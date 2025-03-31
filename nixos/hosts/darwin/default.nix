@@ -29,6 +29,9 @@
   users.users.tmx.home = "/Users/tmx";
   home-manager.backupFileExtension = "backup";
   system.stateVersion = 6;
+  fonts.packages = with pkgs; [
+    nerd-fonts.jetbrains-mono
+   ];
   system.defaults = {
     # Dock
     dock = {
