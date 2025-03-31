@@ -32,9 +32,6 @@
     dock = {
       autohide = true;
       mru-spaces = false;
-      persistent-apps = {
-
-      };
     };
     # finder
     finder.AppleShowAllExtensions = true;
