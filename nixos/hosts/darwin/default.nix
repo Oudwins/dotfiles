@@ -32,6 +32,32 @@
     dock = {
       autohide = true;
       mru-spaces = false;
+      autohide-time-modifier = 0.0;
+      expose-animation-duration = 0.0;
+      launchanim = false;
+      persistent-apps = [
+        {
+          app = "${pkgs.alacritty}/Applications/Alacritty.app";
+        }
+        {
+          app = "${pkgs.google-chrome}/Applications/Google Chrome.app";
+        }
+        {
+          app = "${pkgs.firefox}/Applications/Firefox.app";
+        }
+        {
+          app = "/Applications/cursor.app";
+        }
+        {
+          app = "/Applications/Visual Studio Code.app";
+        }
+        {
+          app = "/Applications/Telegram.app";
+        }
+        {
+          app = "/Applications/Zen Browser.app";
+        }
+      ];
     };
     # finder
     finder.AppleShowAllExtensions = true;
