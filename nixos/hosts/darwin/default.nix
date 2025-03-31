@@ -56,21 +56,34 @@
           app = "/Applications/Telegram.app";
         }
         {
-          app = "/Applications/Zen Browser.app";
+          app = "/Applications/Zen.app";
         }
       ];
     };
     # finder
     finder.AppleShowAllExtensions = true;
     finder.FXPreferredViewStyle = "clmv";
-    # inputs
-    NSGlobalDomain.KeyRepeat = 2;
-    # Cosmetics
     NSGlobalDomain = {
+      # inputs
+      KeyRepeat = 2;
+      "com.apple.swipescrolldirection" = false;
+      NSAutomaticCapitalizationEnabled = false;
+      NSAutomaticDashSubstitutionEnabled = false;
+      NSAutomaticInlinePredictionEnabled = true;
+      NSAutomaticPeriodSubstitutionEnabled = false;
+      NSAutomaticQuoteSubstitutionEnabled = false;
+      NSAutomaticSpellingCorrectionEnabled = false;
+      NSAutomaticWindowAnimationsEnabled = false;
+      NSScrollAnimationEnabled = false;
+      NSUseAnimatedFocusRing = false;
+      NSWindowResizeTime = 0.0;
+      # Cosmetics
       AppleICUForce24HourTime = true;
       AppleInterfaceStyle = "Dark";
-      "com.apple.swipescrolldirection" = false;
     };
+    # trackpad = {
+
+    # };
     # login
     loginwindow.LoginwindowText = "tmx";
     loginwindow.GuestEnabled = false;
