@@ -16,7 +16,8 @@
     carapace # shell completion
     firefox
     google-chrome
-    ghostty
+    # ghostty
+    alacritty
   ];
   nix.enable = true;
   nix.settings.experimental-features = "nix-command flakes";
