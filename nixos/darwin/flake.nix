@@ -42,9 +42,6 @@
       homebrew-cask,
       home-manager,
       nixpkgs,
-      disko,
-      agenix,
-      secrets,
     }@inputs:
     let
       # allow self referencing. outputs here references the result of calling the "output's" function above (i.e the attribute set built inside the in block)
@@ -58,12 +55,14 @@
         "x86_64-darwin"
       ];
       # Supported systems for your flake packages, shell, etc.
-      # systems = [
-      #   # "x86_64-linux"
-      #   #"aarch64-linux"
-      #   #"i686-linux"
-      #   # "aarch64-darwin"
-      # ];
+       systems = [
+        "aarch64-darwin"
+        "x86_64-darwin"
+         # "x86_64-linux"
+         #"aarch64-linux"
+         #"i686-linux"
+         # "aarch64-darwin"
+       ];
 
       # This is a function that generates an attribute by calling a function you
       # pass to it, with each system as an argument
@@ -77,13 +76,13 @@
     {
       # Your custom packages
       # Accessible through 'nix build', 'nix shell', etc
-      packages = forAllSystems (system: import ./pkgs nixpkgs.legacyPackages.${system});
+      packages = forAllSystems (system: import ./../pkgs nixpkgs.legacyPackages.${system});
       # Formatter for your nix files, available through 'nix fmt'
       # Other options beside 'alejandra' include 'nixpkgs-fmt'
       formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.alejandra);
 
       # Your custom packages and modifications, exported as overlays
-      overlays = import ./overlays {
+      overlays = import ./../overlays {
         inherit inputs;
         inherit outputs;
       };
@@ -164,29 +163,8 @@
                 autoMigrate = true;
               };
             }
-            ./hosts/darwin
+            ./../hosts/darwin
           ];
-        };
-      };
-
-      # SYSTEMS
-      nixosConfigurations = {
-        nixos = lib.nixosSystem {
-          modules = [
-            nix-flatpak.nixosModules.nix-flatpak
-            nixos-hardware.nixosModules.lenovo-thinkpad-p14s-amd-gen2
-            ./system/configuration.nix
-            home-manager.nixosModules.home-manager
-            {
-              home-manager.useGlobalPkgs = true;
-              home-manager.useUserPackages = true;
-              home-manager.users.tmx = {
-                imports = [ ./home.nix ];
-              };
-              home-manager.extraSpecialArgs = specialArgs;
-            }
-          ];
-          specialArgs = specialArgs;
         };
       };
     };
