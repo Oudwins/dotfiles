@@ -105,6 +105,7 @@
     "cursor"
     "visual-studio-code"
     "telegram"
+    "nikitabobko/tap/aerospace"
   ];
   # homebrew.brews = [
   #   "imagemagick"
