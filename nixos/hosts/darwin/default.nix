@@ -65,8 +65,11 @@
     # inputs
     NSGlobalDomain.KeyRepeat = 2;
     # Cosmetics
-    NSGlobalDomain.AppleICUForce24HourTime = true;
-    NSGlobalDomain.AppleInterfaceStyle = "Dark";
+    NSGlobalDomain = {
+      AppleICUForce24HourTime = true;
+      AppleInterfaceStyle = "Dark";
+      "com.apple.swipescrolldirection" = false;
+    };
     # login
     loginwindow.LoginwindowText = "tmx";
     loginwindow.GuestEnabled = false;
