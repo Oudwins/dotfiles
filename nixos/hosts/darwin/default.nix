@@ -18,17 +18,14 @@
     google-chrome
     ghostty
   ];
-  services.nix-daemon.enable = true;
-
+  nix.enable = true;
   nix.settings.experimental-features = "nix-command flakes";
 
   programs.zsh.enable = true; # default shell on catalina
 
   users.users.tmx.home = "/Users/tmx";
   home-manager.backupFileExtension = "backup";
-  nix.configureBuildUsers = true;
-  nix.useDaemon = true;
-
+  system.stateVersion = 6;
   system.defaults = {
     # Dock
     dock = {
