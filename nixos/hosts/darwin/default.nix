@@ -19,8 +19,11 @@
     # ghostty
     alacritty
     stow
-    aerospace
+    #aerospace
+    karabiner-elements
   ];
+  services.aerospace.enable = true; 
+  services.karabiner-elements.enable = true;
   nix.enable = true;
   nix.settings.experimental-features = "nix-command flakes";
 
@@ -110,7 +113,8 @@
     "visual-studio-code"
     "telegram"
   ];
-  # homebrew.brews = [
+
+  # homebrew.brews = 
   #   "imagemagick"
   # ];
 }

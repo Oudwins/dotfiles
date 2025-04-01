@@ -47,32 +47,31 @@
   # programs.neovim.extraPackages = [ "gcc" ];
   # LAUNCHER
 
-  # home.sessionVariables =
-  #   let
-  #     home = config.home.homeDirectory;
-  #     projectDirs = [
-  #       "open_source"
-  #       "work"
-  #       "personal"
-  #       "projects"
-  #     ];
-  #     obsidianDirs = [ "notes" ];
-  #   in
-  #   {
-  #     TERMINAL = "alacritty";
-  #     EDITOR = "nvim";
-  #     CODE_EDITOR = "cursor";
-  #     # this creates a string of "/home/tmx/projects:/home/tmx/{other_project_dir}"
-  #     # This is used by a rofi script to open the code editor in that project
-  #     CODE_PROJECT_DIRS = builtins.concatStringsSep ":" (map (dir: "${home}/${dir}") projectDirs);
-  #     OBSIDIAN_VAULT_DIRS = builtins.concatStringsSep ":" (map (dir: "${home}/${dir}") obsidianDirs);
-  #     LAUNCHER = "rofi -show drun";
-  #     DMENU = "rofi -dmenu";
-  #     SCREENSHOT = "flameshot gui";
-  #     GTK_THEME = "Adwaita:dark";
-  #     # temporary fix for qbittorrent
-  #     QT_STYLE_OVERRIDE = lib.mkForce "Fusion";
-  #   };
+  home.sessionVariables =
+    let
+      home = config.home.homeDirectory;
+      projectDirs = [
+        "open_source"
+        "work"
+        "personal"
+        "projects"
+      ];
+      obsidianDirs = [ "notes" ];
+    in
+    {
+      XDG_CONFIG_HOME= home;
+      # TERMINAL = "alacritty";
+      # EDITOR = "nvim";
+      # CODE_EDITOR = "cursor";
+      # this creates a string of "/home/tmx/projects:/home/tmx/{other_project_dir}"
+      # This is used by a rofi script to open the code editor in that project
+      # CODE_PROJECT_DIRS = builtins.concatStringsSep ":" (map (dir: "${home}/${dir}") projectDirs);
+      # OBSIDIAN_VAULT_DIRS = builtins.concatStringsSep ":" (map (dir: "${home}/${dir}") obsidianDirs);
+      # LAUNCHER = "rofi -show drun";
+      # DMENU = "rofi -dmenu";
+      # SCREENSHOT = "flameshot gui";
+      # temporary fix for qbittorrent
+    };
 
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
