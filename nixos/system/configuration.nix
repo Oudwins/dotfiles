@@ -54,7 +54,7 @@
 
   networking.hostName = "nixos"; # Define your hostname.
   networking.extraHosts = ''
-    ${builtins.readFile ./../../tmx/hosts-file}
+    ${builtins.readFile ./../hosts-file}
   '';
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
