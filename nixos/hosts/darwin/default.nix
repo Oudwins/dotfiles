@@ -1,8 +1,9 @@
 { config, pkgs, ... }@args:
-
 {
   imports = [
+    ./config-files/aerospace.nix
   ];
+  # services.aerospace.enable = false;
 
   nixpkgs.config.allowUnfree = true;
 
@@ -19,9 +20,7 @@
     # ghostty
     alacritty
     stow
-    karabiner-elements
   ];
-  services.karabiner-elements.enable = true;
   nix.enable = true;
   nix.settings.experimental-features = "nix-command flakes";
 
@@ -66,8 +65,6 @@
       ];
     };
     # finder
-    finder.AppleShowAllExtensions = true;
-    finder.FXPreferredViewStyle = "clmv";
     NSGlobalDomain = {
       # inputs
       KeyRepeat = 2;
@@ -96,6 +93,17 @@
     # screencapture
     screencapture.location = "~/Pictures/screenshots";
     screensaver.askForPasswordDelay = 10;
+
+    # finder
+    finder = {
+      _FXShowPosixPathInTitle = true;
+      AppleShowAllExtensions = true; 
+      FXPreferredViewStyle = "clmv";
+      AppleShowAllFiles = true;
+      FXDefaultSearchScope = "SCcf";
+      NewWindowTarget = "Home";
+      ShowPathbar = true;
+    };
   };
 
   # Homebrew needs to be installed on its own!

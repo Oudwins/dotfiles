@@ -5,9 +5,10 @@
   ...
 }@args:
 {
-  imports = [
-    ./aerospace.nix
-  ];
+  # imports = [
+  #   ./home-files/aerospace.nix
+  # ];
+  programs.aerospace.enable = false;
   home.username = "tmx";
   home.homeDirectory = "/Users/tmx";
 

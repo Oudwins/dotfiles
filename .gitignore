@@ -1,2 +1,4 @@
 tmx/.config/sops/**
 **/.direnv/
+tmx/.local/share
+tmx/.local/state
