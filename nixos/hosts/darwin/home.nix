@@ -5,6 +5,9 @@
   ...
 }@args:
 {
+  imports = [
+    ./aerospace.nix
+  ];
   home.username = "tmx";
   home.homeDirectory = "/Users/tmx";
 
@@ -59,7 +62,7 @@
       obsidianDirs = [ "notes" ];
     in
     {
-      XDG_CONFIG_HOME= home;
+      XDG_CONFIG_HOME = home;
       # TERMINAL = "alacritty";
       # EDITOR = "nvim";
       # CODE_EDITOR = "cursor";

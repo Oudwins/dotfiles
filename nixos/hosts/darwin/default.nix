@@ -19,10 +19,8 @@
     # ghostty
     alacritty
     stow
-    #aerospace
     karabiner-elements
   ];
-  services.aerospace.enable = true; 
   services.karabiner-elements.enable = true;
   nix.enable = true;
   nix.settings.experimental-features = "nix-command flakes";
@@ -34,7 +32,7 @@
   system.stateVersion = 6;
   fonts.packages = with pkgs; [
     nerd-fonts.jetbrains-mono
-   ];
+  ];
   system.defaults = {
     # Dock
     dock = {
@@ -114,7 +112,7 @@
     "telegram"
   ];
 
-  # homebrew.brews = 
+  # homebrew.brews =
   #   "imagemagick"
   # ];
 }
