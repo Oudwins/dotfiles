@@ -61,7 +61,6 @@
     flameshot # screenshots
     gparted # drive partition management TODO -> DOESNT WORK
     cinnamon.warpinator # share files pc-phone
-    mpv # media player
     geeqie # img viewer
     onlyoffice-bin
     obs-studio # screen recorder
@@ -114,7 +113,19 @@
     terraformer
     # compilers
     gcc
+
+    # video
+    mpv-unwrapped
   ];
+  # mpv
+  programs.mpv = {
+    enable = true;
+    package = pkgs.mpv-unwrapped; # we use this pkg bc it has better compatibility with thunar
+  };
+  # tells nixos to use mpv as the default video player for matroska files
+  xdg.mimeApps.defaultApplications = {
+    "video/x-matroska" = "mpv.desktop";
+  };
   # git
   programs.git = {
     enable = true;
