@@ -5,10 +5,9 @@
   ...
 }@args:
 {
-  # imports = [
-  #   ./home-files/aerospace.nix
-  # ];
-  programs.aerospace.enable = false;
+  imports = [
+    ./home-files/aerospace.nix
+  ];
   home.username = "tmx";
   home.homeDirectory = "/Users/tmx";
 
@@ -24,6 +23,8 @@
   # The home.packages option allows you to install Nix packages into your
   # environment.
   home.packages = with pkgs; [
+    nodejs_20
+    pnpm
   ];
   # git
   programs.git = {

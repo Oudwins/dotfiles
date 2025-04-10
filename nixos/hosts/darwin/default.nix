@@ -1,7 +1,7 @@
 { config, pkgs, ... }@args:
 {
   imports = [
-    ./config-files/aerospace.nix
+    # ./config-files/aerospace.nix
   ];
   # services.aerospace.enable = false;
 
@@ -20,6 +20,8 @@
     # ghostty
     alacritty
     stow
+    colima
+    bun
   ];
   nix.enable = true;
   nix.settings.experimental-features = "nix-command flakes";
@@ -118,9 +120,33 @@
     "cursor"
     "visual-studio-code"
     "telegram"
+    "beekeeper-studio"
+    "mongodb-compass"
   ];
 
-  # homebrew.brews =
-  #   "imagemagick"
-  # ];
+  homebrew.brews = [
+    "docker"
+    "docker-compose"
+  ];
+
+
+    launchd.agents."colima.default" = {
+    command = "${pkgs.colima}/bin/colima start --foreground";
+    serviceConfig = {
+      Label = "com.colima.default";
+      RunAtLoad = true;
+      KeepAlive = true;
+
+      # not sure where to put these paths and not reference a hard-coded `$HOME`; `/var/log`?
+      # StandardOutPath = "/Users/tmx/.colima/default/daemon/launchd.stdout.log";
+      # StandardErrorPath = "/Users/tmx/.colima/default/daemon/launchd.stderr.log";
+      StandardOutPath = "/tmp/colima.default.stdout.log";
+      StandardErrorPath = "/tmp/colima.default.stderr.log";
+
+      # not using launchd.agents.<name>.path because colima needs the system ones as well
+      EnvironmentVariables = {
+        PATH = "${pkgs.colima}/bin:${pkgs.docker}/bin:/usr/bin:/bin:/usr/sbin:/sbin";
+      };
+    };
+  };
 }
