@@ -303,19 +303,9 @@
     "command": "editor.action.inlineDiffs.acceptAll"
   },
   {
-    "key": "] d",
-    "command": "editor.action.marker.next",
-    "when": "editorFocus && neovim.init && neovim.mode != 'insert'"
-  },
-  {
     "key": "alt+f8",
     "command": "-editor.action.marker.next",
     "when": "editorFocus"
-  },
-  {
-    "key": "[ d",
-    "command": "editor.action.marker.prev",
-    "when": "editorFocus && neovim && neovim.mode != 'normal'"
   },
   {
     "key": "shift+alt+f8",
