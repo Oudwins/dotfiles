@@ -26,8 +26,4 @@ darwin-rebuild switch --flake ./flakepath#macos
 - Direnv
 - screenshot tool -> Shottr
 
-- keyboard
-  - Set keyrepeat rate to highest
-  - delay until repeat to short
-- input sources disable -> correct spelling automatically,capitalize words, add full stop with double space, use smart quotes
 - Finder show path bar
