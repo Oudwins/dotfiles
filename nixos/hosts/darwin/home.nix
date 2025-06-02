@@ -23,8 +23,9 @@
   # The home.packages option allows you to install Nix packages into your
   # environment.
   home.packages = with pkgs; [
-    nodejs_20
-    pnpm
+    # nodejs_20
+    # pnpm_10
+    #obsidian
   ];
   # git
   programs.git = {
@@ -76,6 +77,13 @@
       # DMENU = "rofi -dmenu";
       # SCREENSHOT = "flameshot gui";
       # temporary fix for qbittorrent
+    };
+
+    programs.zsh = {
+      enable = true;
+      initExtra = ''
+        export PATH="$HOME/.npm/bin:$PATH"
+      '';
     };
 
   # Let Home Manager install and manage itself.

@@ -30,6 +30,19 @@
       url = "github:homebrew/homebrew-cask";
       flake = false;
     };
+    homebrew-typesense = {
+      url = "github:typesense/homebrew-tap";
+      flake = false;
+    };
+    homebrew-ngrok = {
+      url = "github:ngrok/homebrew-ngrok";
+      flake = false;
+    };
+    homebrew-mongodb = {
+      url = "github:mongodb/homebrew-brew";
+      flake = false;
+    };
+    
   };
 
   outputs =
@@ -41,6 +54,9 @@
       homebrew-core,
       homebrew-cask,
       home-manager,
+      homebrew-typesense,
+      homebrew-ngrok,
+      homebrew-mongodb,
       nixpkgs,
     }@inputs:
     let
@@ -165,8 +181,11 @@
                   "homebrew/homebrew-core" = homebrew-core;
                   "homebrew/homebrew-cask" = homebrew-cask;
                   "homebrew/homebrew-bundle" = homebrew-bundle;
+                  "typesense/homebrew-tap" = homebrew-typesense;
+                  "ngrok/homebrew-ngrok" = homebrew-ngrok;
+                  "mongodb/homebrew-brew" = homebrew-mongodb;
                 };
-                mutableTaps = false;
+                mutableTaps = true;
                 autoMigrate = true;
               };
             }

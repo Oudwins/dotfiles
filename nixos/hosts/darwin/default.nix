@@ -1,4 +1,10 @@
 { config, pkgs, ... }@args:
+let 
+google-cloud = pkgs.google-cloud-sdk.withExtraComponents [
+  pkgs.google-cloud-sdk.components.gke-gcloud-auth-plugin
+  pkgs.google-cloud-sdk.components.kubectl
+];
+in 
 {
   imports = [
     # ./config-files/aerospace.nix
@@ -22,6 +28,18 @@
     stow
     colima
     bun
+    jq
+    csvkit
+    # xi
+    google-cloud
+    # python311
+    # python311Packages.pip
+    # python311Packages.setuptools
+    # python311Packages.wheel
+    # python311Packages.virtualenv
+    # python311Packages.pipx
+    # firebase-tools
+    # c2patool
   ];
   nix.enable = true;
   nix.settings.experimental-features = "nix-command flakes";
@@ -111,7 +129,7 @@
   # Homebrew needs to be installed on its own!
   homebrew.enable = true;
   homebrew.onActivation = {
-    cleanup = "zap"; # remove unused packages
+    # cleanup = "zap"; # remove unused packages
     autoUpdate = true;
     upgrade = true;
   };
@@ -122,11 +140,34 @@
     "telegram"
     "beekeeper-studio"
     "mongodb-compass"
+    "obsidian"
+    "obs"
+    "HandBrake"
+    "bruno"
+    # xi
+    # "ngrok/ngrok/ngrok"
+    # "clickhouse"
   ];
 
   homebrew.brews = [
     "docker"
     "docker-compose"
+    "pnpm"
+    "imagemagick"
+    "k6"
+    "pnpm"
+    "node"
+    # xi
+    # "cmake"
+    # "ffmpeg@5"
+    # "node@20"
+    # "pnpm@9"
+    # "java"
+    # "redis"
+    # "mongodb-community"
+    # "typesense/tap/typesense-server"
+    # "kubernetes-cli"
+    # "stripe-cli"
   ];
 
 
