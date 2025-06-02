@@ -55,12 +55,10 @@
     tesseract4 # OCR for images
     udiskie # auto mount usbs daemon
     alacritty # terminal
-    xfce.xfconf # required for thunar to work
-    xfce.thunar # file manager
     arandr # gui for screen control
     flameshot # screenshots
-    gparted # drive partition management TODO -> DOESNT WORK
-    cinnamon.warpinator # share files pc-phone
+    gparted # drive partition management TODO -> DOESNT WORK UNLESS RAN AS ADMIN. MEANING I NEED TO FIX rofi to run as admin this
+    warpinator # share files pc-phone
     geeqie # img viewer
     onlyoffice-bin
     obs-studio # screen recorder
@@ -184,6 +182,8 @@
       kb-mode-previous = "";
       kb-mode-next = "";
       kb-mode-complete = "";
+      # This conflicts with Control + c by default
+      kb-secondary-copy = "";
     };
   };
   # couldn't get this to work, need to rethink it
@@ -245,7 +245,7 @@
     enable = true;
     theme = {
       name = "Adwaita-dark";
-      package = pkgs.gnome.gnome-themes-extra;
+      package = pkgs.gnome-themes-extra;
     };
   };
 
