@@ -87,6 +87,7 @@ in
     # finder
     NSGlobalDomain = {
       # inputs
+      ApplePressAndHoldEnabled = false;
       KeyRepeat = 2;
       "com.apple.swipescrolldirection" = false;
       NSAutomaticCapitalizationEnabled = false;
