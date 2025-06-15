@@ -72,7 +72,7 @@
     calibre
     # browsers
     librewolf
-    brave
+    # brave - defined elsewhere
     google-chrome
     # coms
     telegram-desktop
@@ -115,6 +115,11 @@
     # video
     mpv-unwrapped
   ];
+  # Brave
+  programs.brave = {
+    enable = true;
+    commandLineArgs = ["--password-store=basic"]; # used to avoid it trying to contact kde wallet
+  };
   # mpv
   programs.mpv = {
     enable = true;

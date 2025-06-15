@@ -36,7 +36,14 @@
   "supermaven.enable": {
     "*": false
   },
-  "terminal.integrated.commandsToSkipShell": ["language-julia.interrupt"],
+  "terminal.integrated.shell.linux": "/bin/sh",
+  "terminal.integrated.profiles.linux": {
+    "bash (/run/current-system/sw/bin/bash)": {
+      "path": "/bin/sh",
+      "args": ["-l"],
+      "icon": "terminal-bash"
+    }
+  },
   "julia.symbolCacheDownload": true,
   "[python]": {
     "editor.formatOnSave": true,

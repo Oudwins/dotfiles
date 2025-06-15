@@ -350,6 +350,10 @@
   {
     "key": "ctrl+shift+i",
     "command": "workbench.panel.composerViewPane2"
+  },
+  {
+    "key": "ctrl+i",
+    "command": "composerMode.agent"
   }
   // {
   //   "key": "tab",
