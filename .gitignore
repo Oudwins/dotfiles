@@ -1,2 +1,9 @@
 tmx/.config/sops/**
 **/.direnv/
+tmx/.local/share
+tmx/.local/state
+tmx/.config/configstore
+tmx/.config/gcloud
+tmx/.config/firebase
+tmx/.config/direnv
+tmx/.config/simple-update-notifier

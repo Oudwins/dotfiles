@@ -106,6 +106,54 @@
         "type": "github"
       }
     },
+    "homebrew-mongodb": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1744233354,
+        "narHash": "sha256-jRsOu36jgcG3jeTGGeN76di/3ZTXQ3SSduUo8d0jIl0=",
+        "owner": "mongodb",
+        "repo": "homebrew-brew",
+        "rev": "dfc16238f42e8ae812d13ada5b44208c853897ca",
+        "type": "github"
+      },
+      "original": {
+        "owner": "mongodb",
+        "repo": "homebrew-brew",
+        "type": "github"
+      }
+    },
+    "homebrew-ngrok": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1742477912,
+        "narHash": "sha256-SdO7r1iXr7KY/QfcUCFsNFwqnPwcIIEsa4bfamUe0EM=",
+        "owner": "ngrok",
+        "repo": "homebrew-ngrok",
+        "rev": "c9ee2dbd0be6b2a2b52a5b3fd61fa6c15a04c9ff",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ngrok",
+        "repo": "homebrew-ngrok",
+        "type": "github"
+      }
+    },
+    "homebrew-typesense": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1740197395,
+        "narHash": "sha256-miIs7JHrrWU4Gx4EP9jdSs1k2iNM8Y6Itpi72xzxO+E=",
+        "owner": "typesense",
+        "repo": "homebrew-tap",
+        "rev": "4cbc6af356f714b0b895dcc3d6245227ea6701aa",
+        "type": "github"
+      },
+      "original": {
+        "owner": "typesense",
+        "repo": "homebrew-tap",
+        "type": "github"
+      }
+    },
     "nix-darwin": {
       "inputs": {
         "nixpkgs": "nixpkgs"
@@ -196,6 +244,9 @@
         "homebrew-bundle": "homebrew-bundle",
         "homebrew-cask": "homebrew-cask",
         "homebrew-core": "homebrew-core",
+        "homebrew-mongodb": "homebrew-mongodb",
+        "homebrew-ngrok": "homebrew-ngrok",
+        "homebrew-typesense": "homebrew-typesense",
         "nix-homebrew": "nix-homebrew",
         "nixpkgs": "nixpkgs_3"
       }

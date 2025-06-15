@@ -118,7 +118,7 @@
   # Brave
   programs.brave = {
     enable = true;
-    commandLineArgs = ["--password-store=basic"]; # used to avoid it trying to contact kde wallet
+    commandLineArgs = [ "--password-store=basic" ]; # used to avoid it trying to contact kde wallet
   };
   # mpv
   programs.mpv = {

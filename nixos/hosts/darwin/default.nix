@@ -1,8 +1,15 @@
 { config, pkgs, ... }@args:
-
+let 
+google-cloud = pkgs.google-cloud-sdk.withExtraComponents [
+  pkgs.google-cloud-sdk.components.gke-gcloud-auth-plugin
+  pkgs.google-cloud-sdk.components.kubectl
+];
+in 
 {
   imports = [
+    # ./config-files/aerospace.nix
   ];
+  # services.aerospace.enable = false;
 
   nixpkgs.config.allowUnfree = true;
 
@@ -19,9 +26,21 @@
     # ghostty
     alacritty
     stow
-    karabiner-elements
+    colima
+    bun
+    jq
+    csvkit
+    # xi
+    google-cloud
+    # python311
+    # python311Packages.pip
+    # python311Packages.setuptools
+    # python311Packages.wheel
+    # python311Packages.virtualenv
+    # python311Packages.pipx
+    # firebase-tools
+    # c2patool
   ];
-  services.karabiner-elements.enable = true;
   nix.enable = true;
   nix.settings.experimental-features = "nix-command flakes";
 
@@ -66,10 +85,9 @@
       ];
     };
     # finder
-    finder.AppleShowAllExtensions = true;
-    finder.FXPreferredViewStyle = "clmv";
     NSGlobalDomain = {
       # inputs
+      ApplePressAndHoldEnabled = false;
       KeyRepeat = 2;
       "com.apple.swipescrolldirection" = false;
       NSAutomaticCapitalizationEnabled = false;
@@ -96,12 +114,23 @@
     # screencapture
     screencapture.location = "~/Pictures/screenshots";
     screensaver.askForPasswordDelay = 10;
+
+    # finder
+    finder = {
+      _FXShowPosixPathInTitle = true;
+      AppleShowAllExtensions = true; 
+      FXPreferredViewStyle = "clmv";
+      AppleShowAllFiles = true;
+      FXDefaultSearchScope = "SCcf";
+      NewWindowTarget = "Home";
+      ShowPathbar = true;
+    };
   };
 
   # Homebrew needs to be installed on its own!
   homebrew.enable = true;
   homebrew.onActivation = {
-    cleanup = "zap"; # remove unused packages
+    # cleanup = "zap"; # remove unused packages
     autoUpdate = true;
     upgrade = true;
   };
@@ -110,9 +139,56 @@
     "cursor"
     "visual-studio-code"
     "telegram"
+    "beekeeper-studio"
+    "mongodb-compass"
+    "obsidian"
+    "obs"
+    "HandBrake"
+    "bruno"
+    # xi
+    # "ngrok/ngrok/ngrok"
+    # "clickhouse"
   ];
 
-  # homebrew.brews =
-  #   "imagemagick"
-  # ];
+  homebrew.brews = [
+    "docker"
+    "docker-compose"
+    "pnpm"
+    "imagemagick"
+    "k6"
+    "pnpm"
+    "node"
+    # xi
+    # "cmake"
+    # "ffmpeg@5"
+    # "node@20"
+    # "pnpm@9"
+    # "java"
+    # "redis"
+    # "mongodb-community"
+    # "typesense/tap/typesense-server"
+    # "kubernetes-cli"
+    # "stripe-cli"
+  ];
+
+
+    launchd.agents."colima.default" = {
+    command = "${pkgs.colima}/bin/colima start --foreground";
+    serviceConfig = {
+      Label = "com.colima.default";
+      RunAtLoad = true;
+      KeepAlive = true;
+
+      # not sure where to put these paths and not reference a hard-coded `$HOME`; `/var/log`?
+      # StandardOutPath = "/Users/tmx/.colima/default/daemon/launchd.stdout.log";
+      # StandardErrorPath = "/Users/tmx/.colima/default/daemon/launchd.stderr.log";
+      StandardOutPath = "/tmp/colima.default.stdout.log";
+      StandardErrorPath = "/tmp/colima.default.stderr.log";
+
+      # not using launchd.agents.<name>.path because colima needs the system ones as well
+      EnvironmentVariables = {
+        PATH = "${pkgs.colima}/bin:${pkgs.docker}/bin:/usr/bin:/bin:/usr/sbin:/sbin";
+      };
+    };
+  };
 }
