@@ -36,10 +36,10 @@
   "supermaven.enable": {
     "*": false
   },
-  "terminal.integrated.shell.linux": "/bin/sh",
+  "terminal.integrated.shell.linux": "/run/current-system/sw/bin/bash",
   "terminal.integrated.profiles.linux": {
     "bash (/run/current-system/sw/bin/bash)": {
-      "path": "/bin/sh",
+      "path": "/run/current-system/sw/bin/bash",
       "args": ["-l"],
       "icon": "terminal-bash"
     }
@@ -87,5 +87,7 @@
     "javascriptreact",
     "html",
     "typescriptreact"
-  ]
+  ],
+  "editor.tabCompletion": "on",
+  "emmet.triggerExpansionOnTab": true
 }

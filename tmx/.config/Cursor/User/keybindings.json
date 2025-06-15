@@ -40,34 +40,9 @@
     "command": "-redo"
   },
   {
-    "key": "ctrl+y",
-    "command": "editor.action.accessibleViewAcceptInlineCompletion",
-    "when": "accessibleViewIsShown && accessibleViewCurrentProviderId == 'inlineCompletions'"
-  },
-  {
-    "key": "ctrl+/",
-    "command": "-editor.action.accessibleViewAcceptInlineCompletion",
-    "when": "accessibleViewIsShown && accessibleViewCurrentProviderId == 'inlineCompletions'"
-  },
-  {
-    "key": "ctrl+y",
-    "command": "editor.action.inlineEdit.accept",
-    "when": "cursorAtInlineEdit && inlineEditVisible && !editorReadonly"
-  },
-  {
     "key": "tab",
     "command": "-editor.action.inlineEdit.accept",
     "when": "cursorAtInlineEdit && inlineEditVisible && !editorReadonly"
-  },
-  {
-    "key": "ctrl+y",
-    "command": "editor.action.inlineSuggest.commit",
-    "when": "inlineSuggestionHasIndentationLessThanTabSize && inlineSuggestionVisible && !editorHoverFocused && !editorTabMovesFocus && !suggestWidgetVisible"
-  },
-  {
-    "key": "tab",
-    "command": "-editor.action.inlineSuggest.commit",
-    "when": "inlineSuggestionHasIndentationLessThanTabSize && inlineSuggestionVisible && !editorHoverFocused && !editorTabMovesFocus && !suggestWidgetVisible"
   },
   {
     "key": "ctrl+right",
@@ -75,7 +50,7 @@
     "when": "inlineSuggestionVisible && !editorReadonly"
   },
   {
-    "key": "ctrl+y",
+    "key": "tab",
     "command": "editor.emmet.action.expandAbbreviation",
     "when": "config.emmet.triggerExpansionOnTab && editorTextFocus && !editorReadonly && !editorTabMovesFocus"
   },
@@ -83,11 +58,6 @@
     "key": "tab",
     "command": "-editor.emmet.action.expandAbbreviation",
     "when": "config.emmet.triggerExpansionOnTab && editorTextFocus && !editorReadonly && !editorTabMovesFocus"
-  },
-  {
-    "key": "ctrl+y",
-    "command": "acceptSelectedSuggestion",
-    "when": "suggestWidgetHasFocusedSuggestion && suggestWidgetVisible && textInputFocus"
   },
   {
     "key": "tab",
@@ -246,21 +216,6 @@
     "command": "-aichat.newchataction"
   },
   {
-    "key": "ctrl+y",
-    "command": "editor.action.acceptGPT4",
-    "when": "hasGPT4Diff"
-  },
-  {
-    "key": "tab",
-    "command": "-editor.action.acceptGPT4",
-    "when": "hasGPT4Diff"
-  },
-  {
-    "key": "ctrl+y",
-    "command": "workbench.action.terminal.acceptSelectedSuggestion",
-    "when": "terminalFocus && terminalHasBeenCreated && terminalIsOpen && terminalSuggestWidgetVisible || terminalFocus && terminalIsOpen && terminalProcessSupported && terminalSuggestWidgetVisible"
-  },
-  {
     "key": "tab",
     "command": "-workbench.action.terminal.acceptSelectedSuggestion",
     "when": "terminalFocus && terminalHasBeenCreated && terminalIsOpen && terminalSuggestWidgetVisible || terminalFocus && terminalIsOpen && terminalProcessSupported && terminalSuggestWidgetVisible"
@@ -297,10 +252,6 @@
     "key": "tab",
     "command": "-vscode-neovim.send",
     "when": "neovim.init && neovim.recording || editorTextFocus && neovim.init && neovim.mode != 'insert' && editorLangId not in 'neovim.editorLangIdExclusions'"
-  },
-  {
-    "key": "tab",
-    "command": "editor.action.inlineDiffs.acceptAll"
   },
   {
     "key": "alt+f8",
@@ -354,6 +305,48 @@
   {
     "key": "ctrl+i",
     "command": "composerMode.agent"
+  },
+  {
+    "key": "tab",
+    "command": "-editor.action.acceptCursorTabSuggestion",
+    "when": "cpp.shouldAcceptTab"
+  },
+  {
+    "key": "tab",
+    "command": "editor.action.acceptCursorTabSuggestion"
+  },
+  {
+    "key": "numpad_divide",
+    "command": "editor.action.inlineDiffs.acceptAll"
+  },
+  {
+    "key": "ctrl+y",
+    "command": "-editor.action.inlineDiffs.acceptPartialEdit",
+    "when": "editorHasPromptBar && editorPromptBarFocused"
+  },
+  {
+    "key": "ctrl+y",
+    "command": "-editor.action.inlineDiffs.acceptPartialEdit",
+    "when": "editorTextFocus && @inlineDiffs.acceptPartialEdit.isActiveEditorWithDiffs"
+  },
+  {
+    "key": "ctrl+y",
+    "command": "-aichat.newfollowupaction"
+  },
+  {
+    "key": "tab",
+    "command": "-editor.action.acceptGPT4",
+    "when": "hasGPT4Diff"
+  },
+  {
+    "key": "ctrl+/",
+    "command": "-editor.action.accessibleViewAcceptInlineCompletion",
+    "when": "accessibleViewIsShown && accessibleViewCurrentProviderId == 'inlineCompletions'"
+  },
+  {
+    "key": "tab",
+    "command": "-editor.action.inlineSuggest.commit",
+    "when": "inlineEditIsVisible && tabShouldAcceptInlineEdit && !editorHoverFocused && !editorTabMovesFocus && !suggestWidgetVisible || inlineSuggestionHasIndentationLessThanTabSize && inlineSuggestionVisible && !editorHoverFocused && !editorTabMovesFocus && !suggestWidgetVisible || inlineEditIsVisible && inlineSuggestionHasIndentationLessThanTabSize && inlineSuggestionVisible && !editorHoverFocused && !editorTabMovesFocus && !suggestWidgetVisible || inlineEditIsVisible && inlineSuggestionVisible && tabShouldAcceptInlineEdit && !editorHoverFocused && !editorTabMovesFocus && !suggestWidgetVisible"
   }
   // {
   //   "key": "tab",
