@@ -24,7 +24,6 @@ in
     firefox
     google-chrome
     # ghostty
-    alacritty
     stow
     colima
     bun
@@ -32,6 +31,7 @@ in
     csvkit
     # xi
     google-cloud
+    python314
     # python311
     # python311Packages.pip
     # python311Packages.setuptools
@@ -52,6 +52,7 @@ in
   fonts.packages = with pkgs; [
     nerd-fonts.jetbrains-mono
   ];
+  system.primaryUser = "tmx"; # user to apply the settings to
   system.defaults = {
     # Dock
     dock = {
@@ -135,7 +136,6 @@ in
     upgrade = true;
   };
   homebrew.casks = [
-    "zen-browser"
     "cursor"
     "visual-studio-code"
     "telegram"
@@ -145,6 +145,7 @@ in
     "obs"
     "HandBrake"
     "bruno"
+    "alacritty"
     # xi
     # "ngrok/ngrok/ngrok"
     # "clickhouse"
@@ -158,6 +159,9 @@ in
     "k6"
     "pnpm"
     "node"
+    "syncthing"
+    # python
+    "uv"
     # xi
     # "cmake"
     # "ffmpeg@5"
