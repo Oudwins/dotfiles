@@ -152,6 +152,7 @@
       set -o vi 
       ## ensure ctl + l is bound to clear screen
       bind '"\C-l": clear-screen'
+      export PATH="$PATH:${config.home.homeDirectory}/go/bin"
     '';
   };
   programs.direnv = {
