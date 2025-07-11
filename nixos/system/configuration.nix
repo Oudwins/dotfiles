@@ -7,8 +7,9 @@
 {
   imports = [
     # Include the results of the hardware scan.
-    ./vm.nix
     ./hardware-configuration.nix
+    # VM
+    ./vm.nix
     # tutorial -> https://www.youtube.com/watch?v=UPWkQ3LUDOU
     args.inputs.xremap-flake.nixosModules.default # makes remap service available
     args.inputs.sops-nix.nixosModules.sops
@@ -39,6 +40,9 @@
     config = {
       allowUnfree = true;
     };
+    config.permittedInsecurePackages = [
+      "beekeeper-studio-5.1.5"
+    ];
     # permittedInsecurePackages = [
     #   "electron-25.9.0" # for obsidian
     # ];
@@ -238,7 +242,7 @@
   # };
 
   # Enable sound with pipewire.
-  hardware.pulseaudio.enable = false;
+  services.pulseaudio.enable = false;
   security.rtkit.enable = true;
   services.pipewire = {
     enable = true;
@@ -296,7 +300,7 @@
     spice-protocol
     win-virtio
     win-spice
-    gnome.adwaita-icon-theme
+    adwaita-icon-theme
     qemu
     # VPN
     unstable.tailscale
@@ -315,7 +319,8 @@
 
   # Virtualization
   virtualisation = {
-    # VMs -> Virt manager & QEMU
+    spiceUSBRedirection.enable = true;
+    # if this is removed, switch won't work
     libvirtd = {
       enable = true;
       qemu = {
@@ -324,7 +329,6 @@
         ovmf.packages = [ pkgs.OVMFFull.fd ];
       };
     };
-    spiceUSBRedirection.enable = true;
     # Docker
     docker = {
       enable = true;
@@ -334,7 +338,13 @@
       };
     };
   };
+  #
 
+  programs.thunar.enable = true;
+  programs.thunar.plugins = [ pkgs.xfce.thunar-archive-plugin ];
+  programs.xfconf.enable = true; # required for thunar
+
+  #
   services.spice-vdagentd.enable = true; # allows sharing files between host & guest
   programs.virt-manager.enable = true; # enable virt manager
 
@@ -359,8 +369,7 @@
       source-han-sans
       source-han-sans-japanese
       source-han-serif-japanese
-      (nerdfonts.override { fonts = [ "Meslo" ]; })
-
+      nerd-fonts.meslo-lg
     ];
     fontconfig = {
       enable = true;

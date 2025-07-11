@@ -55,12 +55,10 @@
     tesseract4 # OCR for images
     udiskie # auto mount usbs daemon
     alacritty # terminal
-    xfce.xfconf # required for thunar to work
-    xfce.thunar # file manager
     arandr # gui for screen control
     flameshot # screenshots
-    gparted # drive partition management TODO -> DOESNT WORK
-    cinnamon.warpinator # share files pc-phone
+    gparted # drive partition management TODO -> DOESNT WORK UNLESS RAN AS ADMIN. MEANING I NEED TO FIX rofi to run as admin this
+    warpinator # share files pc-phone
     geeqie # img viewer
     onlyoffice-bin
     obs-studio # screen recorder
@@ -74,7 +72,7 @@
     calibre
     # browsers
     librewolf
-    brave
+    # brave - defined elsewhere
     google-chrome
     # coms
     telegram-desktop
@@ -117,6 +115,11 @@
     # video
     mpv-unwrapped
   ];
+  # Brave
+  programs.brave = {
+    enable = true;
+    commandLineArgs = [ "--password-store=basic" ]; # used to avoid it trying to contact kde wallet
+  };
   # mpv
   programs.mpv = {
     enable = true;
@@ -184,6 +187,8 @@
       kb-mode-previous = "";
       kb-mode-next = "";
       kb-mode-complete = "";
+      # This conflicts with Control + c by default
+      kb-secondary-copy = "";
     };
   };
   # couldn't get this to work, need to rethink it
@@ -245,7 +250,7 @@
     enable = true;
     theme = {
       name = "Adwaita-dark";
-      package = pkgs.gnome.gnome-themes-extra;
+      package = pkgs.gnome-themes-extra;
     };
   };
 
@@ -318,11 +323,15 @@
   home.sessionVariables =
     let
       home = config.home.homeDirectory;
-      projectDirs = [
+      #
+      projectParentDirs = [
         "open_source"
         "work"
         "personal"
         "projects"
+      ];
+      projects = [
+        "dotfiles"
       ];
       obsidianDirs = [ "notes" ];
     in
@@ -332,7 +341,10 @@
       CODE_EDITOR = "cursor";
       # this creates a string of "/home/tmx/projects:/home/tmx/{other_project_dir}"
       # This is used by a rofi script to open the code editor in that project
-      CODE_PROJECT_DIRS = builtins.concatStringsSep ":" (map (dir: "${home}/${dir}") projectDirs);
+      CODE_PROJECTS_PARENT_DIRS = builtins.concatStringsSep ":" (
+        map (dir: "${home}/${dir}") projectParentDirs
+      );
+      CODE_PROJECTS = builtins.concatStringsSep ":" (map (dir: "${home}/${dir}") projects);
       OBSIDIAN_VAULT_DIRS = builtins.concatStringsSep ":" (map (dir: "${home}/${dir}") obsidianDirs);
       LAUNCHER = "rofi -show drun";
       DMENU = "rofi -dmenu";

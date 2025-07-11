@@ -36,7 +36,14 @@
   "supermaven.enable": {
     "*": false
   },
-  "terminal.integrated.commandsToSkipShell": ["language-julia.interrupt"],
+  "terminal.integrated.shell.linux": "/run/current-system/sw/bin/bash",
+  "terminal.integrated.profiles.linux": {
+    "bash (/run/current-system/sw/bin/bash)": {
+      "path": "/run/current-system/sw/bin/bash",
+      "args": ["-l"],
+      "icon": "terminal-bash"
+    }
+  },
   "julia.symbolCacheDownload": true,
   "[python]": {
     "editor.formatOnSave": true,
@@ -74,6 +81,11 @@
   },
   "[typescriptreact]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "editor.tabCompletion": "on",
+  "emmet.triggerExpansionOnTab": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
   },
   "eslint.validate": [
     "javascript",
