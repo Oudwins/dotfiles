@@ -51,11 +51,6 @@
   },
   {
     "key": "tab",
-    "command": "editor.emmet.action.expandAbbreviation",
-    "when": "config.emmet.triggerExpansionOnTab && editorTextFocus && !editorReadonly && !editorTabMovesFocus"
-  },
-  {
-    "key": "tab",
     "command": "-editor.emmet.action.expandAbbreviation",
     "when": "config.emmet.triggerExpansionOnTab && editorTextFocus && !editorReadonly && !editorTabMovesFocus"
   },
@@ -173,47 +168,9 @@
     "when": "suggestWidgetHasFocusedSuggestion && suggestWidgetVisible && textInputFocus"
   },
   {
-    "key": "ctrl+space k",
-    "command": "aipopup.action.modal.generate",
-    "when": "editorFocus && !composerBarIsVisible && !composerControlPanelIsVisible"
-  },
-  {
-    "key": "ctrl+k",
-    "command": "-aipopup.action.modal.generate",
-    "when": "editorFocus && !composerBarIsVisible && !composerControlPanelIsVisible"
-  },
-  {
-    "key": "ctrl+space i",
-    "command": "composer.startComposerPrompt",
-    "when": "composerIsEnabled"
-  },
-  {
-    "key": "ctrl+i",
-    "command": "-composer.startComposerPrompt",
-    "when": "composerIsEnabled"
-  },
-  {
     "key": "ctrl+y",
     "command": "editor.action.inlineDiffs.acceptAll",
     "when": "editorTextFocus && (arbitrary function)"
-  },
-  {
-    "key": "ctrl+l",
-    "command": "workbench.action.chat.newChat",
-    "when": "chatIsEnabled && inChat"
-  },
-  {
-    "key": "ctrl+l",
-    "command": "-workbench.action.chat.newChat",
-    "when": "chatIsEnabled && inChat"
-  },
-  {
-    "key": "ctrl+space l",
-    "command": "aichat.newchataction"
-  },
-  {
-    "key": "ctrl+l",
-    "command": "-aichat.newchataction"
   },
   {
     "key": "tab",
@@ -230,11 +187,11 @@
     "when": "suggestWidgetHasFocusedSuggestion && suggestWidgetVisible && textInputFocus"
   },
   {
-    "key": "ctrl+t",
+    "key": "ctrl+space",
     "command": "editor.action.inlineSuggest.trigger"
   },
   {
-    "key": "ctrl+t",
+    "key": "ctrl+space",
     "command": "editor.action.triggerSuggest",
     "when": "editorHasCompletionItemProvider && textInputFocus && !editorReadonly && !suggestWidgetVisible"
   },
@@ -316,7 +273,7 @@
     "command": "editor.action.acceptCursorTabSuggestion"
   },
   {
-    "key": "numpad_divide",
+    "key": "ctrl+enter",
     "command": "editor.action.inlineDiffs.acceptAll"
   },
   {
@@ -347,10 +304,99 @@
     "key": "tab",
     "command": "-editor.action.inlineSuggest.commit",
     "when": "inlineEditIsVisible && tabShouldAcceptInlineEdit && !editorHoverFocused && !editorTabMovesFocus && !suggestWidgetVisible || inlineSuggestionHasIndentationLessThanTabSize && inlineSuggestionVisible && !editorHoverFocused && !editorTabMovesFocus && !suggestWidgetVisible || inlineEditIsVisible && inlineSuggestionHasIndentationLessThanTabSize && inlineSuggestionVisible && !editorHoverFocused && !editorTabMovesFocus && !suggestWidgetVisible || inlineEditIsVisible && inlineSuggestionVisible && tabShouldAcceptInlineEdit && !editorHoverFocused && !editorTabMovesFocus && !suggestWidgetVisible"
+  },
+  {
+    "key": "ctrl+l",
+    "command": "workbench.action.terminal.clear"
+  },
+  // WARNING!!!!! GPT generated this. use vim kebingings to move between left sidebar, code, right sidebar
+  {
+    "key": "ctrl+h",
+    "command": "workbench.action.focusLeftGroup",
+    "when": "editorTextFocus && vim.active && vim.mode != 'Insert'"
+  },
+  {
+    "key": "ctrl+h",
+    "command": "workbench.explorer.fileView.focus",
+    "when": "editorTextFocus && vim.active && vim.mode != 'Insert' && activeEditorGroupIndex == 1 && explorerViewletVisible"
+  },
+
+  // → Move focus to right editor group, or back to first editor from sidebar
+  {
+    "key": "ctrl+l",
+    "command": "workbench.action.focusRightGroup",
+    "when": "editorTextFocus && vim.active && vim.mode != 'Insert'"
+  },
+  {
+    "key": "ctrl+l",
+    "command": "workbench.action.focusFirstEditorGroup",
+    "when": "filesExplorerFocus"
+  },
+
+  // ↑/↓ Move focus between split editor groups (up/down)
+  {
+    "key": "ctrl+k",
+    "command": "workbench.action.focusAboveGroup",
+    "when": "editorTextFocus && vim.active && vim.mode != 'Insert'"
+  },
+  {
+    "key": "ctrl+j",
+    "command": "workbench.action.focusBelowGroup",
+    "when": "editorTextFocus && vim.active && vim.mode != 'Insert'"
+  },
+
+  // Ctrl+0 toggles focus between sidebar and editor
+  {
+    "key": "ctrl+0",
+    "command": "-workbench.action.focusSideBar" // remove default unconditional
+  },
+  {
+    "key": "ctrl+0",
+    "command": "workbench.action.focusSideBar",
+    "when": "!sideBarFocus"
+  },
+  {
+    "key": "ctrl+0",
+    "command": "workbench.action.focusActiveEditorGroup",
+    "when": "sideBarFocus"
+  },
+
+  // Terminal ↔ Editor focus toggle with Ctrl+`
+  {
+    "key": "ctrl+`",
+    "command": "workbench.action.terminal.focus"
+  },
+  {
+    "key": "ctrl+`",
+    "command": "workbench.action.focusActiveEditorGroup",
+    "when": "terminalFocus"
+  },
+  {
+    "key": "ctrl+h",
+    "command": "-vscode-neovim.send-cmdline",
+    "when": "neovim.init && neovim.mode == 'cmdline'"
+  },
+  {
+    "key": "ctrl+h",
+    "command": "-vscode-neovim.send",
+    "when": "editorTextFocus && neovim.ctrlKeysNormal.h && neovim.init && neovim.mode != 'insert' && editorLangId not in 'neovim.editorLangIdExclusions'"
+  },
+  {
+    "key": "ctrl+h",
+    "command": "-vscode-neovim.send",
+    "when": "editorTextFocus && neovim.ctrlKeysInsert.h && neovim.init && neovim.mode == 'insert' && editorLangId not in 'neovim.editorLangIdExclusions'"
+  },
+  {
+    "key": "ctrl+h",
+    "command": "-editor.action.startFindReplaceAction",
+    "when": "editorFocus || editorIsOpen"
+  },
+  {
+    "key": "ctrl+`",
+    "command": "workbench.action.togglePanel"
+  },
+  {
+    "key": "ctrl+j",
+    "command": "-workbench.action.togglePanel"
   }
-  // {
-  //   "key": "tab",
-  //   "command": "tab",
-  //   "when": "editorTextFocus && !editorTabMovesFocus"
-  // }
 ]

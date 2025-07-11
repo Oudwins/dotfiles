@@ -323,11 +323,15 @@
   home.sessionVariables =
     let
       home = config.home.homeDirectory;
-      projectDirs = [
+      #
+      projectParentDirs = [
         "open_source"
         "work"
         "personal"
         "projects"
+      ];
+      projects = [
+        "dotfiles"
       ];
       obsidianDirs = [ "notes" ];
     in
@@ -337,7 +341,10 @@
       CODE_EDITOR = "cursor";
       # this creates a string of "/home/tmx/projects:/home/tmx/{other_project_dir}"
       # This is used by a rofi script to open the code editor in that project
-      CODE_PROJECT_DIRS = builtins.concatStringsSep ":" (map (dir: "${home}/${dir}") projectDirs);
+      CODE_PROJECTS_PARENT_DIRS = builtins.concatStringsSep ":" (
+        map (dir: "${home}/${dir}") projectParentDirs
+      );
+      CODE_PROJECTS = builtins.concatStringsSep ":" (map (dir: "${home}/${dir}") projects);
       OBSIDIAN_VAULT_DIRS = builtins.concatStringsSep ":" (map (dir: "${home}/${dir}") obsidianDirs);
       LAUNCHER = "rofi -show drun";
       DMENU = "rofi -dmenu";

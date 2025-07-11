@@ -82,12 +82,15 @@
   "[typescriptreact]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
+  "editor.tabCompletion": "on",
+  "emmet.triggerExpansionOnTab": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
   "eslint.validate": [
     "javascript",
     "javascriptreact",
     "html",
     "typescriptreact"
-  ],
-  "editor.tabCompletion": "on",
-  "emmet.triggerExpansionOnTab": true
+  ]
 }
