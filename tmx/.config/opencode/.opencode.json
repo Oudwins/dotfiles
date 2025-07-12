@@ -1,0 +1,16 @@
+{
+  "data": {
+    "directory": ".opencode"
+  },
+  "lsp": {
+    "go": {
+      "disabled": false,
+      "command": "gopls"
+    },
+    "typescript": {
+      "disabled": false,
+      "command": "typescript-language-server",
+      "args": ["--stdio"]
+    }
+  }
+}
