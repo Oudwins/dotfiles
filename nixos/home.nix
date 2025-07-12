@@ -117,6 +117,7 @@
 
     # TODO REMOVE THIS. TEMPORARY FOR OPEN CODE
     typescript-language-server
+    ripgrep
   ];
   # Brave
   programs.brave = {
@@ -157,7 +158,7 @@
       bind '"\C-l": clear-screen'
       # TODO REMOVE THIS. TEMPORARY FOR OPEN CODE
       # Adds go to path
-      export PATH="$PATH:${config.home.homeDirectory}/go/bin"
+      export PATH="$PATH:${config.home.homeDirectory}/go/bin:${config.home.homeDirectory}/.npm/bin"
     '';
   };
   programs.direnv = {
