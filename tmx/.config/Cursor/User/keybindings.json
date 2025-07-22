@@ -398,5 +398,33 @@
   {
     "key": "ctrl+j",
     "command": "-workbench.action.togglePanel"
+  },
+  // Fix scrolling
+  {
+    "key": "ctrl+u",
+    "command": "runCommands",
+    "args": {
+      "commands": [
+        { "command": "vscode-neovim.send", "args": "<C-u>" },
+        { "command": "editorScroll", "args": { "to": "up", "by": "halfPage" } },
+        { "command": "vscode-neovim.send", "args": "zz" }
+      ]
+    },
+    "when": "editorTextFocus"
+  },
+  {
+    "key": "ctrl+d",
+    "command": "runCommands",
+    "args": {
+      "commands": [
+        { "command": "vscode-neovim.send", "args": "<C-d>" },
+        {
+          "command": "editorScroll",
+          "args": { "to": "down", "by": "halfPage" }
+        },
+        { "command": "vscode-neovim.send", "args": "zz" }
+      ]
+    },
+    "when": "editorTextFocus"
   }
 ]
