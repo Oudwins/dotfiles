@@ -13,5 +13,20 @@
       "command": "typescript-language-server",
       "args": ["--stdio"]
     }
+  },
+  "vertexai": {
+    "npm": "@ai-sdk/google-vertex/anthropic",
+    "options": {
+      "project": "xi-playground",
+      "location": "us-east5",
+      "googleAuthOptions": {
+        "keyFile": "~/.config/gcloud/application_default_credentials.json"
+      }
+    },
+    "models": {
+      "claude-opus-4@20250514": {
+        "name": "claude-opus-4"
+      }
+    }
   }
 }
