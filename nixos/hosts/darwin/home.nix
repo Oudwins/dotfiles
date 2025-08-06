@@ -81,7 +81,7 @@
 
     programs.zsh = {
       enable = true;
-      initExtra = ''
+      initContent = ''
         export PATH="$HOME/.npm/bin:$PATH"
       '';
     };

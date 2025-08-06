@@ -24,7 +24,6 @@ in
     firefox
     google-chrome
     # ghostty
-    alacritty
     stow
     colima
     bun
@@ -32,6 +31,8 @@ in
     csvkit
     # xi
     google-cloud
+    python314
+    terraform
     # python311
     # python311Packages.pip
     # python311Packages.setuptools
@@ -52,6 +53,7 @@ in
   fonts.packages = with pkgs; [
     nerd-fonts.jetbrains-mono
   ];
+  system.primaryUser = "tmx"; # user to apply the settings to
   system.defaults = {
     # Dock
     dock = {
@@ -135,16 +137,16 @@ in
     upgrade = true;
   };
   homebrew.casks = [
-    "zen-browser"
     "cursor"
-    "visual-studio-code"
     "telegram"
     "beekeeper-studio"
-    "mongodb-compass"
     "obsidian"
     "obs"
     "HandBrake"
     "bruno"
+
+    # xi-sandbox
+    "font-liberation"
     # xi
     # "ngrok/ngrok/ngrok"
     # "clickhouse"
@@ -153,11 +155,18 @@ in
   homebrew.brews = [
     "docker"
     "docker-compose"
+    "docker-buildx"
     "pnpm"
     "imagemagick"
     "k6"
     "pnpm"
     "node"
+    "syncthing"
+    # python
+    "uv"
+    # xi-sandbox
+    "poppler"
+    "ffmpeg"
     # xi
     # "cmake"
     # "ffmpeg@5"
@@ -170,6 +179,7 @@ in
     # "kubernetes-cli"
     # "stripe-cli"
   ];
+
 
 
     launchd.agents."colima.default" = {
