@@ -32,6 +32,7 @@ in
     # xi
     google-cloud
     python314
+    terraform
     # python311
     # python311Packages.pip
     # python311Packages.setuptools
@@ -137,15 +138,15 @@ in
   };
   homebrew.casks = [
     "cursor"
-    "visual-studio-code"
     "telegram"
     "beekeeper-studio"
-    "mongodb-compass"
     "obsidian"
     "obs"
     "HandBrake"
     "bruno"
-    "alacritty"
+
+    # xi-sandbox
+    "font-liberation"
     # xi
     # "ngrok/ngrok/ngrok"
     # "clickhouse"
@@ -154,6 +155,7 @@ in
   homebrew.brews = [
     "docker"
     "docker-compose"
+    "docker-buildx"
     "pnpm"
     "imagemagick"
     "k6"
@@ -162,6 +164,9 @@ in
     "syncthing"
     # python
     "uv"
+    # xi-sandbox
+    "poppler"
+    "ffmpeg"
     # xi
     # "cmake"
     # "ffmpeg@5"
@@ -174,6 +179,7 @@ in
     # "kubernetes-cli"
     # "stripe-cli"
   ];
+
 
 
     launchd.agents."colima.default" = {
