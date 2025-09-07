@@ -16,6 +16,9 @@
     ./../flatpak.nix
   ];
 
+  # TODO remove this. This is Temporary for Open Code
+  programs.nix-ld.enable = true;
+
   # SECERTS
   sops = {
     defaultSopsFile = "${../secrets/secrets.yaml}";
@@ -57,9 +60,9 @@
   ];
 
   networking.hostName = "nixos"; # Define your hostname.
-  networking.extraHosts = ''
-    ${builtins.readFile ./../hosts-file}
-  '';
+  # networking.extraHosts = ''
+  #   ${builtins.readFile ./../hosts-file}
+  # '';
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
   # Configure network proxy if necessary

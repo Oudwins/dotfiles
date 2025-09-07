@@ -118,6 +118,7 @@
     # TODO REMOVE THIS. TEMPORARY FOR OPEN CODE
     typescript-language-server
     ripgrep
+    bun
   ];
   # Brave
   programs.brave = {
