@@ -60,9 +60,9 @@
   ];
 
   networking.hostName = "nixos"; # Define your hostname.
-  networking.extraHosts = ''
-    ${builtins.readFile ./../hosts-file}
-  '';
+  # networking.extraHosts = ''
+  #   ${builtins.readFile ./../hosts-file}
+  # '';
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
   # Configure network proxy if necessary
@@ -253,7 +253,7 @@
     alsa.support32Bit = true;
     pulse.enable = true;
     # If you want to use JACK applications, uncomment this
-    #jack.enable = true;
+    jack.enable = true;
 
     # use the example session manager (no others are packaged yet so this is enabled by default,
     # no need to redefine it in your config for now)
@@ -310,12 +310,12 @@
     # Printing Drivers
     gutenprint
     cnijfilter2
-    # control audio
-    alsa-utils
     # control brightness
     light
-    # logitech mouse
-    piper
+    # control audio
+    alsa-utils
+    pulseaudio
+    qpwgraph
   ];
   # logitech mouse
   services.ratbagd.enable = true;

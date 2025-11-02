@@ -97,6 +97,9 @@
     jetbrains.goland # golang IDE
     awscli2 # aws cli
     beekeeper-studio # sql gui & database gui
+    devdocs-desktop # TODO -> this doesn't work. I have to make an overlay that adds missing dep
+    tldr
+    cheat
     # languages
     go
     gotools
@@ -160,6 +163,18 @@
       # TODO REMOVE THIS. TEMPORARY FOR OPEN CODE
       # Adds go to path
       export PATH="$PATH:${config.home.homeDirectory}/go/bin:${config.home.homeDirectory}/.npm/bin"
+
+      # This allows tldr to load from nvim always
+      tldrv() {
+        # if nvim isn't available fall back to the real tldr output
+        if ! command -v nvim >/dev/null 2>&1; then
+          command tldr "$@"
+          return
+        fi
+
+        # Use the real tldr (avoid recursion), pipe into nvim reading stdin
+        command tldr "$@" | nvim -R -c 'set ft=markdown' -
+      }
     '';
   };
   programs.direnv = {
