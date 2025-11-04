@@ -5,7 +5,6 @@
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.formatOnSave": true,
   "editor.lineNumbers": "relative",
-  "svelte.enable-ts-plugin": true,
   "editor.wordWrap": "on",
   "explorer.confirmDelete": false,
   "git.suggestSmartCommit": false,
@@ -13,12 +12,6 @@
     "editor.defaultFormatter": "golang.go"
   },
   "diffEditor.ignoreTrimWhitespace": false,
-  "github.copilot.enable": {
-    "*": false,
-    "plaintext": false,
-    "markdown": false,
-    "scminput": false
-  },
   "files.associations": {
     "*.ts": "typescript",
     "*.svelte": "svelte"
@@ -26,15 +19,11 @@
   "[astro]": {
     "editor.defaultFormatter": "astro-build.astro-vscode"
   },
-  "github.copilot.editor.enableAutoCompletions": false,
   "[terraform]": {
     "editor.defaultFormatter": "hashicorp.terraform"
   },
   "[svelte]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "supermaven.enable": {
-    "*": false
   },
   "terminal.integrated.shell.linux": "/run/current-system/sw/bin/bash",
   "terminal.integrated.profiles.linux": {
@@ -92,5 +81,6 @@
     "javascriptreact",
     "html",
     "typescriptreact"
-  ]
+  ],
+  "cursor.composer.shouldAllowCustomModes": true
 }

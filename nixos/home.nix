@@ -58,7 +58,7 @@
     arandr # gui for screen control
     flameshot # screenshots
     gparted # drive partition management TODO -> DOESNT WORK UNLESS RAN AS ADMIN. MEANING I NEED TO FIX rofi to run as admin this
-    warpinator # share files pc-phone
+    figma-linux # design
     geeqie # img viewer
     onlyoffice-bin
     obs-studio # screen recorder

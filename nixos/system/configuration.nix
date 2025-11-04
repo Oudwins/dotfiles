@@ -92,6 +92,7 @@
 
   # Key remapping. Only available because of xremap import above (see imports)
   services.xremap = {
+    enable = true;
     withX11 = true;
     watch = true; # watches for new devices that connect
     userName = "tmx";
@@ -253,7 +254,6 @@
     alsa.support32Bit = true;
     pulse.enable = true;
     # If you want to use JACK applications, uncomment this
-    jack.enable = true;
 
     # use the example session manager (no others are packaged yet so this is enabled by default,
     # no need to redefine it in your config for now)
@@ -315,7 +315,6 @@
     # control audio
     alsa-utils
     pulseaudio
-    qpwgraph
   ];
   # logitech mouse
   services.ratbagd.enable = true;
