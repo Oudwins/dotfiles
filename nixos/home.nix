@@ -58,7 +58,6 @@
     arandr # gui for screen control
     flameshot # screenshots
     gparted # drive partition management TODO -> DOESNT WORK UNLESS RAN AS ADMIN. MEANING I NEED TO FIX rofi to run as admin this
-    figma-linux # design
     geeqie # img viewer
     onlyoffice-bin
     obs-studio # screen recorder
@@ -135,7 +134,13 @@
   };
   # tells nixos to use mpv as the default video player for matroska files
   xdg.mimeApps.defaultApplications = {
-    "video/x-matroska" = "mpv.desktop";
+    "video/x-matroska" = [ "mpv.desktop" ];
+    # Set Brave as default browser
+    # if this doesn't work do `xdg-settings set default-web-browser brave-browser.desktop`
+    # test with -> xdg-open https://example.com
+    "text/html" = [ "brave-browser.desktop" ];
+    "x-scheme-handler/http" = [ "brave-browser.desktop" ];
+    "x-scheme-handler/https" = [ "brave-browser.desktop" ];
   };
   # git
   programs.git = {
@@ -375,6 +380,7 @@
       GTK_THEME = "Adwaita:dark";
       # temporary fix for qbittorrent
       QT_STYLE_OVERRIDE = lib.mkForce "Fusion";
+      BROWSER = "brave";
     };
 
   # Let Home Manager install and manage itself.

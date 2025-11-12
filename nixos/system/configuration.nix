@@ -315,6 +315,8 @@
     # control audio
     alsa-utils
     pulseaudio
+    # VPN
+    eddie
   ];
   # logitech mouse
   services.ratbagd.enable = true;
