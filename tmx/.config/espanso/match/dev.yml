@@ -1,0 +1,3 @@
+matches:
+  - trigger: ":commit"
+    replace: "git commit -m '$|$' -n"
