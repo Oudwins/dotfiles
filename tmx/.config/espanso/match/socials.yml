@@ -1,0 +1,15 @@
+matches:
+  - trigger: ":linkedin"
+    replace: "https://www.linkedin.com/in/tristanmayo"
+
+  - trigger: ":web"
+    replace: "https://tristanmayo.com/"
+
+  - trigger: ":github"
+    replace: "https://github.com/Oudwins"
+
+  - trigger: ":cv"
+    replace: "https://tristanmayo.com/cv.pdf"
+
+  - trigger: ":email"
+    replace: "tm@tristanmayo.com"

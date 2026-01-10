@@ -325,6 +325,11 @@
         };
       };
     };
+    espanso = {
+      enable = true;
+      waylandSupport = false;
+      x11Support = true;
+    };
   };
 
   # Home Manager can also manage your environment variables through

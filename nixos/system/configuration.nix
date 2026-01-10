@@ -45,10 +45,9 @@
     };
     config.permittedInsecurePackages = [
       "beekeeper-studio-5.1.5"
+      "dotnet-sdk-6.0.428"
+      "dotnet-runtime-6.0.36"
     ];
-    # permittedInsecurePackages = [
-    #   "electron-25.9.0" # for obsidian
-    # ];
   };
   # Bootloader.
   boot.loader.systemd-boot.enable = true;

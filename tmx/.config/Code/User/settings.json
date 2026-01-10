@@ -46,4 +46,5 @@
     }
   },
   "isort.args": ["--profile", "black"],
+  "sherlock.userId": "b63607cf-583f-44a5-94ca-20a2419bb443"
 }

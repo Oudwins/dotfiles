@@ -82,5 +82,6 @@
     "html",
     "typescriptreact"
   ],
-  "cursor.composer.shouldAllowCustomModes": true
+  "cursor.composer.shouldAllowCustomModes": true,
+  "sherlock.userId": "32128a58-14a0-4971-956e-46c87520f218"
 }
