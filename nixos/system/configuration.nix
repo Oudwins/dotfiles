@@ -44,7 +44,7 @@
       allowUnfree = true;
     };
     config.permittedInsecurePackages = [
-      "beekeeper-studio-5.1.5"
+      "beekeeper-studio-5.3.4"
       "dotnet-sdk-6.0.428"
       "dotnet-runtime-6.0.36"
     ];
@@ -300,7 +300,6 @@
     spice
     spice-gtk
     spice-protocol
-    win-virtio
     win-spice
     adwaita-icon-theme
     qemu
@@ -328,8 +327,8 @@
       enable = true;
       qemu = {
         swtpm.enable = true;
-        ovmf.enable = true;
-        ovmf.packages = [ pkgs.OVMFFull.fd ];
+        # ovmf.enable = true;
+        # ovmf.packages = [ pkgs.OVMFFull.fd ];
       };
     };
     # Docker
@@ -367,11 +366,11 @@
     packages = with pkgs; [
       noto-fonts
       noto-fonts-cjk-sans
-      noto-fonts-emoji
+      noto-fonts-color-emoji
       font-awesome
       source-han-sans
-      source-han-sans-japanese
-      source-han-serif-japanese
+      source-han-sans
+      source-han-serif
       nerd-fonts.meslo-lg
     ];
     fontconfig = {

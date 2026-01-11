@@ -59,9 +59,9 @@
     flameshot # screenshots
     gparted # drive partition management TODO -> DOESNT WORK UNLESS RAN AS ADMIN. MEANING I NEED TO FIX rofi to run as admin this
     geeqie # img viewer
-    onlyoffice-bin
+    onlyoffice-desktopeditors
     obs-studio # screen recorder
-    libsForQt5.ark # Ark, zips, archive
+    kdePackages.ark # zip manager
     unstable.qbittorrent
     gimp
     kdePackages.okular # PDF viewer
@@ -96,7 +96,6 @@
     jetbrains.goland # golang IDE
     awscli2 # aws cli
     beekeeper-studio # sql gui & database gui
-    devdocs-desktop # TODO -> this doesn't work. I have to make an overlay that adds missing dep
     tldr
     cheat
     # languages
