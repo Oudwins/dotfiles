@@ -33,14 +33,6 @@ in
     google-cloud
     python314
     terraform
-    # python311
-    # python311Packages.pip
-    # python311Packages.setuptools
-    # python311Packages.wheel
-    # python311Packages.virtualenv
-    # python311Packages.pipx
-    # firebase-tools
-    # c2patool
   ];
   nix.enable = true;
   nix.settings.experimental-features = "nix-command flakes";
@@ -142,7 +134,6 @@ in
     "beekeeper-studio"
     "obsidian"
     "obs"
-    "HandBrake"
     "bruno"
 
     # xi-sandbox
