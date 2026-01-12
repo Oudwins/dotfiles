@@ -66,6 +66,10 @@
     in
     {
       XDG_CONFIG_HOME = home;
+      # CLAUDE CODE + VERTEX AI
+      CLAUDE_CODE_USE_VERTEX=1;
+      CLOUD_ML_REGION="us-east5";
+      ANTHROPIC_VERTEX_PROJECT_ID="xi-playground";
       # TERMINAL = "alacritty";
       # EDITOR = "nvim";
       # CODE_EDITOR = "cursor";

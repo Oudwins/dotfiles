@@ -16,6 +16,7 @@
   },
   "vertexai": {
     "npm": "@ai-sdk/google-vertex/anthropic",
+    "name": "google-vertex-anthropic",
     "options": {
       "project": "xi-playground",
       "location": "us-east5",
