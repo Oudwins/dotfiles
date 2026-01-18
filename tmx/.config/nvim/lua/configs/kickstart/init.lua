@@ -14,6 +14,14 @@ vim.o.breakindent = true
 -- Save undo history
 vim.o.undofile = true
 
+-- [[ Indentation defaults ]]
+-- If a plugin/ftplugin mis-detects indentation it can make `<CR>` insert a *huge*
+-- amount of whitespace. We set sane defaults here so "Enter" behaves normally.
+vim.opt.expandtab = true
+vim.opt.shiftwidth = 2
+vim.opt.softtabstop = 2
+vim.opt.tabstop = 2
+
 -- Keep signcolumn on by default
 vim.o.signcolumn = 'yes'
 
@@ -137,7 +145,9 @@ rtp:prepend(lazypath)
 -- NOTE: Here is where you install your plugins.
 -- Plugins can be added with a link (or for a github repo: 'owner/repo' link).
 require('lazy').setup({
-  'NMAC427/guess-indent.nvim', -- Detect tabstop and shiftwidth automatically
+  -- Detect tabstop and shiftwidth automatically.
+  -- Disabled: it can occasionally mis-detect and cause *insane* indent on `<CR>`.
+  { 'NMAC427/guess-indent.nvim', enabled = false },
 
   -- Use `opts = {}` to automatically pass options to a plugin's `setup()` function, forcing the plugin to be loaded.
   --
