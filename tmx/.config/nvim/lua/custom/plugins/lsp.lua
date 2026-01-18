@@ -247,12 +247,50 @@ return {
       --  - capabilities (table): Override fields in capabilities. Can be used to disable certain LSP features.
       --  - settings (table): Override the default settings passed when initializing the server.
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
+      local util = require 'lspconfig.util'
       local servers = {
-        -- clangd = {},
+        -- NOTE: see `:help lspconfig-all` for a list of all the pre-configured LSP Servers
         gopls = {},
+
+        -- NOTE: WEB
+        superhtml = {},
+        cssls = {},
+        tailwindcss = {},
+
+        -- NOTE: Python
         pyright = {},
+
+        -- NOTE: terraform
+        -- Warning ai generated, might not work
+        terraformls = {
+          -- avoid formatter conflicts; let efm handle fmt
+          on_attach = function(client)
+            client.server_capabilities.documentFormattingProvider = false
+            client.server_capabilities.documentRangeFormattingProvider = false
+          end,
+        },
+        efm = {
+          filetypes = { 'terraform', 'terraform-vars', 'hcl' },
+          root_dir = util.root_pattern('.git', '.tflint.hcl', '.terraform'),
+          init_options = {
+            documentFormatting = true,
+            documentRangeFormatting = true,
+            documentDiagnostics = true,
+          },
+          settings = {
+            rootMarkers = { '.git/' },
+            languages = {
+              terraform = {
+                { formatCommand = 'terraform fmt -', formatStdin = true },
+              },
+              ['terraform-vars'] = {
+                { formatCommand = 'terraform fmt -', formatStdin = true },
+              },
+            },
+          },
+        },
+
         -- rust_analyzer = {},
-        -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
         --
         --
         -- But for many setups, the LSP (`ts_ls`) will work just fine
@@ -291,6 +329,10 @@ return {
       local ensure_installed = vim.tbl_keys(servers or {})
       vim.list_extend(ensure_installed, {
         'stylua', -- Used to format Lua code
+        -- NOTE: WEB
+        'tailwindcss-language-server',
+        -- NOTE: terraform
+        'terraform-ls', -- have to add it here because mason name & nvim name are not same
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
