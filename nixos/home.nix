@@ -115,13 +115,16 @@
     # video
     mpv-unwrapped
 
+    # nvim
     unstable.neovim
     fd
-    # TODO REMOVE THIS. TEMPORARY FOR OPEN CODE
     unzip
-    typescript-language-server
     ripgrep
+    # Dev
     bun
+    python315
+    # Opencode
+    typescript-language-server
   ];
   # Brave
   programs.brave = {
@@ -198,6 +201,7 @@
     "ripgrep"
     "fd"
     "xclip"
+    "python315"
   ];
   # LAUNCHER
   programs.rofi = {

@@ -251,6 +251,14 @@ return {
       local servers = {
         -- NOTE: see `:help lspconfig-all` for a list of all the pre-configured LSP Servers
         gopls = {},
+        -- md lsps
+        marksman = {},
+        -- rumdl = {}, -- not really lsp. linter formatter
+        -- markdown_oxide = {}, -- inspired by obsidian
+
+        -- nix lsps
+        nixd = {},
+        -- nil_ls = {},
 
         -- NOTE: WEB
         superhtml = {},
@@ -258,7 +266,8 @@ return {
         tailwindcss = {},
 
         -- NOTE: Python
-        pyright = {},
+        basedpyright = {},
+        ruff = {},
 
         -- NOTE: terraform
         -- Warning ai generated, might not work
@@ -326,13 +335,19 @@ return {
       --
       -- You can add other tools here that you want Mason to install
       -- for you, so that they are available from within Neovim.
-      local ensure_installed = vim.tbl_keys(servers or {})
+
+      -- extracts keys from lsps, converts to mason pkg names and installs them
+      local mason_pkg_registry = require 'mason-registry'
+      local server_mapping = require('mason-lspconfig.mappings').get_mason_map().lspconfig_to_package
+      local ensure_installed = {}
+      for server_name, _ in pairs(servers or {}) do
+        local pkg = server_mapping[server_name] or server_name
+        if mason_pkg_registry.has_package(pkg) then
+          table.insert(ensure_installed, pkg)
+        end
+      end
       vim.list_extend(ensure_installed, {
         'stylua', -- Used to format Lua code
-        -- NOTE: WEB
-        'tailwindcss-language-server',
-        -- NOTE: terraform
-        'terraform-ls', -- have to add it here because mason name & nvim name are not same
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
