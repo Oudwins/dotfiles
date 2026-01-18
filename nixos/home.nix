@@ -85,7 +85,6 @@
     gnumake # use makefiles
     fzf # fuzzy finding
     bc # basic calculator (used for bash scripts)
-    unstable.neovim
     vscode-fhs
     unstable.code-cursor
     bruno # postman alternative
@@ -116,7 +115,10 @@
     # video
     mpv-unwrapped
 
+    unstable.neovim
+    fd
     # TODO REMOVE THIS. TEMPORARY FOR OPEN CODE
+    unzip
     typescript-language-server
     ripgrep
     bun
@@ -188,7 +190,15 @@
   programs.starship = {
     enable = true;
   };
-  programs.neovim.extraPackages = [ "gcc" ];
+  programs.neovim.extraPackages = [
+    "gcc"
+    "git"
+    "make"
+    "unzip"
+    "ripgrep"
+    "fd"
+    "xclip"
+  ];
   # LAUNCHER
   programs.rofi = {
     enable = true;
@@ -328,6 +338,13 @@
       enable = true;
       waylandSupport = false;
       x11Support = true;
+      configs = {
+        default = {
+          search_shortcut = "off";
+          search_trigger = ":search";
+          show_notifications = false;
+        };
+      };
     };
   };
 

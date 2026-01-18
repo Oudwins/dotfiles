@@ -93,6 +93,7 @@
   services.xremap = {
     enable = true;
     withX11 = true;
+    mouse = true;
     watch = true; # watches for new devices that connect
     userName = "tmx";
     yamlConfig = ''
@@ -100,10 +101,6 @@
         - name: CapsLock to Esc
           remap:
             CapsLock: Esc
-      keymap:
-        - name: Control-y to tab for cursor
-          remap:
-            C-y: Tab
     '';
   };
 
