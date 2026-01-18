@@ -136,7 +136,7 @@ rtp:prepend(lazypath)
 --
 -- NOTE: Here is where you install your plugins.
 -- Plugins can be added with a link (or for a github repo: 'owner/repo' link).
-require('lazy').setup {
+require('lazy').setup({
   'NMAC427/guess-indent.nvim', -- Detect tabstop and shiftwidth automatically
 
   -- Use `opts = {}` to automatically pass options to a plugin's `setup()` function, forcing the plugin to be loaded.
@@ -590,28 +590,27 @@ require('lazy').setup {
     -- In normal mode type `<space>sh` then write `lazy.nvim-plugin`
     -- you can continue same window with `<space>sr` which resumes last telescope search
   },
-  {
-    ui = {
-      -- If you are using a Nerd Font: set icons to an empty table which will use the
-      -- default lazy.nvim defined Nerd Font icons, otherwise define a unicode icons table
-      icons = vim.g.have_nerd_font and {} or {
-        cmd = '⌘',
-        config = '🛠',
-        event = '📅',
-        ft = '📂',
-        init = '⚙',
-        keys = '🗝',
-        plugin = '🔌',
-        runtime = '💻',
-        require = '🌙',
-        source = '📄',
-        start = '🚀',
-        task = '📌',
-        lazy = '💤 ',
-      },
+}, {
+  ui = {
+    -- If you are using a Nerd Font: set icons to an empty table which will use the
+    -- default lazy.nvim defined Nerd Font icons, otherwise define a unicode icons table
+    icons = vim.g.have_nerd_font and {} or {
+      cmd = '⌘',
+      config = '🛠',
+      event = '📅',
+      ft = '📂',
+      init = '⚙',
+      keys = '🗝',
+      plugin = '🔌',
+      runtime = '💻',
+      require = '🌙',
+      source = '📄',
+      start = '🚀',
+      task = '📌',
+      lazy = '💤 ',
     },
   },
-}
+})
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
