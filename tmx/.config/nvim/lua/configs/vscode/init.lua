@@ -1,5 +1,7 @@
-
-
+-- NVIM CONFIG
+--   local vscode = require('vscode-neovim')
+--   
+-- vim.keymap.set({ 'n' }, '<Space>sf', function() vscode.call("workbench.action.quickOpen") end, { silent = true })
 local vscode = require('vscode')
 
 vim.keymap.set('n', "]d", function() vscode.call("editor.action.marker.next") end, { silent = true })
