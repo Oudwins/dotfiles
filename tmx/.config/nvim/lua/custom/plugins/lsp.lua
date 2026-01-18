@@ -12,6 +12,18 @@ return {
       },
     },
   },
+  -- Sets up typescript LSP
+  {
+    'pmizio/typescript-tools.nvim',
+    dependencies = { 'nvim-lua/plenary.nvim', 'neovim/nvim-lspconfig' },
+    opts = {
+      on_attach = function(client)
+        -- Disable typescript-tools formatting
+        client.server_capabilities.documentFormattingProvider = false
+        client.server_capabilities.documentRangeFormattingProvider = false
+      end,
+    },
+  },
   {
     -- Main LSP Configuration
     'neovim/nvim-lspconfig',
@@ -242,8 +254,6 @@ return {
         -- rust_analyzer = {},
         -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
         --
-        -- Some languages (like typescript) have entire language plugins that can be useful:
-        --    https://github.com/pmizio/typescript-tools.nvim
         --
         -- But for many setups, the LSP (`ts_ls`) will work just fine
         -- ts_ls = {},
