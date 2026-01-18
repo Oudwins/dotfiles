@@ -267,9 +267,7 @@ return {
 
         -- NOTE: Python
         basedpyright = {},
-        ruff = {},
-
-        -- NOTE: terraform
+        ruff = {}, -- NOTE: terraform
         -- Warning ai generated, might not work
         terraformls = {
           -- avoid formatter conflicts; let efm handle fmt
