@@ -469,6 +469,12 @@ require('lazy').setup({
           -- By default, you may press `<c-space>` to show the documentation.
           -- Optionally, set `auto_show = true` to show the documentation after a delay.
           documentation = { auto_show = false, auto_show_delay_ms = 500 },
+          menu = {
+            draw = {
+              -- Show source name in the completion menu
+              columns = { { 'kind_icon' }, { 'label', 'label_description', gap = 1 }, { 'source_name' } },
+            },
+          },
         },
 
         sources = {
@@ -478,7 +484,6 @@ require('lazy').setup({
             supermaven = {
               name = 'supermaven',
               module = 'blink.compat.source',
-              kind = 'Supermaven',
               score_offset = 100,
               async = true,
             },
