@@ -68,17 +68,28 @@ return {
   {
     'sindrets/diffview.nvim',
     dependencies = { 'nvim-lua/plenary.nvim' },
+    cmd = { 'DiffviewOpen', 'DiffviewClose', 'DiffviewToggleFiles' },
     keys = {
-      -- { '<leader>gd', '<CMD>DiffviewOpen<CR>', desc = 'Open Diffview' },
-      -- { '<leader>gD', '<CMD>DiffviewClose<CR>', desc = 'Close Diffview' },
+      {
+        '<leader>gd',
+        function()
+          if next(require('diffview.lib').views) == nil then
+            vim.cmd 'DiffviewOpen'
+          else
+            vim.cmd 'DiffviewClose'
+          end
+        end,
+        desc = 'Toggle Diffview',
+      },
     },
     opts = {
-      -- keymaps = {
-      --   disable_defaults = false, -- Keep defaults like <tab> for next file
-      --   view = {
-      --     { 'n', '<tab>', require('diffview.actions').select_next_entry, { desc = 'Next file' } },
-      --   },
-      -- },
+      -- Would be good to make ]c go to next change in any file (i.e cycly through files)
+      -- TODO: Doesn't seem to work. Need to investigate why
+      hooks = {
+        view_opened = function()
+          vim.cmd 'normal! zR'
+        end,
+      },
     },
   },
 }
