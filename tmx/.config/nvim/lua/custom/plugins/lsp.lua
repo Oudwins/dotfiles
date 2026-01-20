@@ -382,6 +382,7 @@ return {
         'eslint_d',
         'prettierd',
         'ruff',
+        'nixfmt',
         -- LINTERS
         'jsonlint',
         'tflint',

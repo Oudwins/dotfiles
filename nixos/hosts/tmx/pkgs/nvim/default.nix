@@ -29,6 +29,7 @@
     python315
     typescript
     markdownlint-cli
+    nixd
     # Opencode
     typescript-language-server
   ];
@@ -45,6 +46,7 @@
     "typescript"
     "markdownlint-cli"
     "icu"
+    "nixd"
   ];
 
 

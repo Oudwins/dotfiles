@@ -65,4 +65,20 @@ return {
       end,
     },
   },
+  {
+    'sindrets/diffview.nvim',
+    dependencies = { 'nvim-lua/plenary.nvim' },
+    keys = {
+      -- { '<leader>gd', '<CMD>DiffviewOpen<CR>', desc = 'Open Diffview' },
+      -- { '<leader>gD', '<CMD>DiffviewClose<CR>', desc = 'Close Diffview' },
+    },
+    opts = {
+      -- keymaps = {
+      --   disable_defaults = false, -- Keep defaults like <tab> for next file
+      --   view = {
+      --     { 'n', '<tab>', require('diffview.actions').select_next_entry, { desc = 'Next file' } },
+      --   },
+      -- },
+    },
+  },
 }
