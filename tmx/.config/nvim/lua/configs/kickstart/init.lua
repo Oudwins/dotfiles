@@ -425,6 +425,8 @@ require('lazy').setup({
           opts = {},
         },
         'folke/lazydev.nvim',
+        -- blink.compat for nvim-cmp source compatibility (e.g., supermaven)
+        { 'saghen/blink.compat', version = '*', lazy = true, opts = {} },
       },
       --- @module 'blink.cmp'
       --- @type blink.cmp.Config
@@ -470,9 +472,16 @@ require('lazy').setup({
         },
 
         sources = {
-          default = { 'lsp', 'path', 'snippets', 'lazydev' },
+          default = { 'lsp', 'path', 'snippets', 'lazydev', 'supermaven' },
           providers = {
             lazydev = { module = 'lazydev.integrations.blink', score_offset = 100 },
+            supermaven = {
+              name = 'supermaven',
+              module = 'blink.compat.source',
+              kind = 'Supermaven',
+              score_offset = 100,
+              async = true,
+            },
           },
         },
 
@@ -490,7 +499,6 @@ require('lazy').setup({
         signature = { enabled = true },
       },
     },
-
     { -- You can easily change to a different colorscheme.
       -- Change the name of the colorscheme plugin below, and then
       -- change the command in the config to whatever the name of that colorscheme is.
@@ -595,7 +603,7 @@ require('lazy').setup({
     require 'kickstart.plugins.autopairs',
     require 'kickstart.plugins.neo-tree',
     require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
-
+    require 'kickstart.plugins.ai',
     -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
     --    This is the easiest way to modularize your config.
     --

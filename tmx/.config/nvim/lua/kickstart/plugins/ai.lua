@@ -3,14 +3,8 @@ return {
     'supermaven-inc/supermaven-nvim',
     config = function()
       require('supermaven-nvim').setup {
-        -- keymaps = {
-        --   accept_suggestion = '<C-y>',
-        --   -- clear_suggestion = '<C-]>',
-        --   -- accept_word = '<C-j>',
-        --   clear_suggestion = '',
-        --   accept_word = '',
-        -- },
-        disable_keymaps = false,
+        disable_inline_completion = true, -- blink.cmp handles the completion UI
+        disable_keymaps = true, -- blink.cmp handles keymaps
       }
     end,
   },
