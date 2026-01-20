@@ -5,6 +5,9 @@
   ...
 }@args:
 {
+  imports = [
+    ./hosts/tmx/pkgs/nvim
+  ];
   # No longer needed bc its used as module now
   # nixpkgs.config = {
   #   allowUnfree = true;
@@ -88,43 +91,17 @@
     vscode-fhs
     unstable.code-cursor
     bruno # postman alternative
-    #git
-    #git-crypt
     gnupg
-    jetbrains.idea-community # Intellij
-    jetbrains.goland # golang IDE
     awscli2 # aws cli
     beekeeper-studio # sql gui & database gui
     tldr
     cheat
-    # languages
-    go
-    gotools
-    gopls
-    nodejs
-    corepack # pnpm
     # jdk11
     jdk21
     maven
-    # IaC
-    terraform
-    terraformer
-    # compilers
-    gcc
 
     # video
     mpv-unwrapped
-
-    # nvim
-    unstable.neovim
-    fd
-    unzip
-    ripgrep
-    # Dev
-    bun
-    python315
-    # Opencode
-    typescript-language-server
   ];
   # Brave
   programs.brave = {
@@ -193,16 +170,6 @@
   programs.starship = {
     enable = true;
   };
-  programs.neovim.extraPackages = [
-    "gcc"
-    "git"
-    "make"
-    "unzip"
-    "ripgrep"
-    "fd"
-    "xclip"
-    "python315"
-  ];
   # LAUNCHER
   programs.rofi = {
     enable = true;
@@ -253,10 +220,6 @@
     #".gitconfig".source = ./.gitconfig;
     # ".testing" = {
     #   source=./.testing;
-    #   recursive=true;
-    # };
-    # ".config/nvim" = {
-    #   source=../tmx/.config/nvim;
     #   recursive=true;
     # };
     # ".config/Code/User" = {
@@ -391,7 +354,7 @@
     {
       TERMINAL = "alacritty";
       EDITOR = "nvim";
-      CODE_EDITOR = "cursor";
+      CODE_EDITOR = lib.mkDefault "cursor .";
       # this creates a string of "/home/tmx/projects:/home/tmx/{other_project_dir}"
       # This is used by a rofi script to open the code editor in that project
       CODE_PROJECTS_PARENT_DIRS = builtins.concatStringsSep ":" (

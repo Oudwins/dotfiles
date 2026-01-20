@@ -1,5 +1,25 @@
 return {
   -- NOTE LSP Plugins and Configuration
+  --
+  {
+    'roobert/tailwindcss-colorizer-cmp.nvim',
+    ft = { 'html', 'javascriptreact', 'typescriptreact', 'svelte', 'vue' },
+    -- optionally, override the default options:
+    config = function()
+      require('tailwindcss-colorizer-cmp').setup {
+        color_square_width = 2,
+      }
+    end,
+  },
+  -- Doens't work :(
+  -- {
+  --   'themaxmarchuk/tailwindcss-colors.nvim',
+  --   ft = { 'html', 'javascriptreact', 'typescriptreact', 'svelte', 'vue' },
+  --   'themaxmarchuk/tailwindcss-colors.nvim',
+  --   config = function()
+  --     require('tailwindcss-colors').setup()
+  --   end,
+  -- },
   {
     -- `lazydev` configures Lua LSP for your Neovim config, runtime and plugins
     -- used for completion, annotations and signatures of Neovim apis
@@ -261,13 +281,25 @@ return {
         -- nil_ls = {},
 
         -- NOTE: WEB
+        emmet_language_server = {
+          filetypes = { 'html', 'css', 'javascriptreact', 'typescriptreact' },
+        },
         superhtml = {},
         cssls = {},
-        tailwindcss = {},
+        tailwindcss = {
+          on_attach = function(client, bufnr)
+            -- doesn't work :(
+            -- vim.schedule(function()
+            --   require('tailwindcss-colors').buf_attach(bufnr)
+            -- end)
+          end,
+        },
+        eslint = {},
 
         -- NOTE: Python
         basedpyright = {},
-        ruff = {}, -- NOTE: terraform
+        ruff = {},
+        -- NOTE: terraform
         -- Warning ai generated, might not work
         terraformls = {
           -- avoid formatter conflicts; let efm handle fmt
@@ -345,7 +377,15 @@ return {
         end
       end
       vim.list_extend(ensure_installed, {
+        -- FORMATTERS
         'stylua', -- Used to format Lua code
+        'eslint_d',
+        'prettierd',
+        'ruff',
+        -- LINTERS
+        'jsonlint',
+        'tflint',
+        'hadolint',
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 

@@ -374,16 +374,19 @@ require('lazy').setup({
             return nil
           else
             return {
-              timeout_ms = 500,
-              lsp_format = 'fallback',
+              timeout_ms = 2000,
+              lsp_format = 'first',
             }
           end
         end,
         formatters_by_ft = {
           lua = { 'stylua' },
-          -- Conform can also run multiple formatters sequentially
-          -- python = { "isort", "black" },
-          --
+          python = { 'ruff' },
+          -- runs one then the other
+          javascript = { 'prettierd' },
+          typescript = { 'prettierd' },
+          javascriptreact = { 'prettierd' },
+          typescriptreact = { 'prettierd' },
           -- You can use 'stop_after_first' to run the first available formatter from the list
           -- javascript = { "prettierd", "prettier", stop_after_first = true },
         },
@@ -557,9 +560,9 @@ require('lazy').setup({
       main = 'nvim-treesitter.configs', -- Sets main module to use for opts
       -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
       opts = {
-        ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' },
+        ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc', 'typescript', 'javascript' },
         -- Autoinstall languages that are not installed
-        auto_install = false,
+        auto_install = true,
         highlight = {
           enable = true,
           -- Some languages depend on vim's regex highlighting system (such as Ruby) for indent rules.
@@ -575,6 +578,10 @@ require('lazy').setup({
       --    - Incremental selection: Included, see `:help nvim-treesitter-incremental-selection-mod`
       --    - Show your current context: https://github.com/nvim-treesitter/nvim-treesitter-context
       --    - Treesitter + textobjects: https://github.com/nvim-treesitter/nvim-treesitter-textobjects
+    },
+    {
+      'windwp/nvim-ts-autotag',
+      opts = {},
     },
 
     -- NOTE: Next step on your Neovim journey: Add/Configure additional plugins for Kickstart
