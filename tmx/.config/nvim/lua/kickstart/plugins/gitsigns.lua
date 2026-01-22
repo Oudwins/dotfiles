@@ -84,7 +84,7 @@ return {
     },
     opts = {
       -- Would be good to make ]c go to next change in any file (i.e cycly through files)
-      -- TODO: Doesn't seem to work. Need to investigate why
+      -- TODO: Doesn't seem to work. Need to investigate why. What I want here is to not start with folds
       hooks = {
         view_opened = function()
           vim.cmd 'normal! zR'

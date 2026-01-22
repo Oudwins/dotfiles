@@ -11,6 +11,8 @@
 
     # declarative flatpaks for zen browser only atm
     nix-flatpak.url = "github:gmodena/nix-flatpak";
+    # TMUX sessions plugin
+    tmux-sessionx.url = "github:omerxx/tmux-sessionx";
 
     # CUSTOM STUFF
     # xremap
@@ -22,14 +24,7 @@
   };
 
   outputs =
-    {
-      self,
-      nixpkgs,
-      home-manager,
-      nixos-hardware,
-      nix-flatpak,
-      ...
-    }@inputs:
+    { self, nixpkgs, home-manager, nixos-hardware, nix-flatpak, ... }@inputs:
     let
       # allow self referencing. outputs here references the result of calling the "output's" function above (i.e the attribute set built inside the in block)
       inherit (self) outputs;
@@ -52,14 +47,15 @@
         inherit inputs;
         inherit outputs;
       };
-    in
-    {
+    in {
       # Your custom packages
       # Accessible through 'nix build', 'nix shell', etc
-      packages = forAllSystems (system: import ./pkgs nixpkgs.legacyPackages.${system});
+      packages =
+        forAllSystems (system: import ./pkgs nixpkgs.legacyPackages.${system});
       # Formatter for your nix files, available through 'nix fmt'
       # Other options beside 'alejandra' include 'nixpkgs-fmt'
-      formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.alejandra);
+      formatter =
+        forAllSystems (system: nixpkgs.legacyPackages.${system}.alejandra);
 
       # Your custom packages and modifications, exported as overlays
       overlays = import ./overlays {
@@ -70,29 +66,20 @@
       ################### DevShell ####################
       #
       # Custom shell for bootstrapping on new hosts, modifying nix-config, and secrets management
-      devShells = forAllSystems (
-        system:
-        let
-          pkgs = nixpkgs.legacyPackages.${system};
-        in
-        {
+      devShells = forAllSystems (system:
+        let pkgs = nixpkgs.legacyPackages.${system};
+        in {
           default = pkgs.mkShell {
-            NIX_CONFIG = "extra-experimental-features = nix-command flakes repl-flake";
+            NIX_CONFIG =
+              "extra-experimental-features = nix-command flakes repl-flake";
             nativeBuildInputs = builtins.attrValues {
               inherit (pkgs)
-                nix
-                home-manager
-                git
-                just
+                nix home-manager git just
 
-                age
-                ssh-to-age
-                sops
-                ;
+                age ssh-to-age sops;
             };
           };
-        }
-      );
+        });
 
       # SYSTEMS
       nixosConfigurations = {
@@ -106,9 +93,7 @@
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
               home-manager.backupFileExtension = "backup";
-              home-manager.users.tmx = {
-                imports = [ ./home.nix ];
-              };
+              home-manager.users.tmx = { imports = [ ./home.nix ]; };
               home-manager.extraSpecialArgs = specialArgs;
             }
           ];

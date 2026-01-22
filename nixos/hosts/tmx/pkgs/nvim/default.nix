@@ -1,10 +1,4 @@
-{
-  config,
-  pkgs,
-  lib,
-  ...
-}@args:
-{
+{ config, pkgs, lib, ... }@args: {
   home.packages = with pkgs; [
     # nvim
     unstable.neovim
@@ -49,13 +43,11 @@
     "nixd"
   ];
 
-
-  home.sessionVariables =
-    {
-      CODE_EDITOR = "alacritty -e nvim";
-      # this is needed for marksman to find the lib
-      LD_LIBRARY_PATH = "${pkgs.icu}/lib:$LD_LIBRARY_PATH";
-    };
+  home.sessionVariables = {
+    CODE_EDITOR = "alacritty -e nvim";
+    # this is needed for marksman to find the lib
+    LD_LIBRARY_PATH = "${pkgs.icu}/lib:$LD_LIBRARY_PATH";
+  };
 
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;

@@ -14,6 +14,7 @@
     args.inputs.xremap-flake.nixosModules.default # makes remap service available
     args.inputs.sops-nix.nixosModules.sops
     ./../flatpak.nix
+    # ../hosts/tmx/pkgs/nvim/katana.nix
   ];
 
   # TODO remove this. This is Temporary for Open Code
@@ -90,18 +91,18 @@
   };
 
   # Key remapping. Only available because of xremap import above (see imports)
-  services.xremap = {
-    enable = true;
-    withX11 = true;
-    watch = true; # watches for new devices that connect
-    userName = "tmx";
-    yamlConfig = ''
-      modmap:
-        - name: CapsLock to Esc
-          remap:
-            CapsLock: Esc
-    '';
-  };
+  # services.xremap = {
+  #   enable = true;
+  #   withX11 = true;
+  #   watch = true; # watches for new devices that connect
+  #   userName = "tmx";
+  #   yamlConfig = ''
+  #     modmap:
+  #       - name: CapsLock to Esc
+  #         remap:
+  #           CapsLock: Esc
+  #   '';
+  # };
 
   # Enable the X11 windowing system.
   services.displayManager = {

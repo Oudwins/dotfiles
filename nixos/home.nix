@@ -1,13 +1,5 @@
-{
-  config,
-  pkgs,
-  lib,
-  ...
-}@args:
-{
-  imports = [
-    ./hosts/tmx/pkgs/nvim
-  ];
+{ config, pkgs, lib, ... }@args: {
+  imports = [ ./hosts/tmx/pkgs/nvim ./hosts/tmx/pkgs/nvim/tmux.nix ];
   # No longer needed bc its used as module now
   # nixpkgs.config = {
   #   allowUnfree = true;
@@ -106,12 +98,15 @@
   # Brave
   programs.brave = {
     enable = true;
-    commandLineArgs = [ "--password-store=basic" ]; # used to avoid it trying to contact kde wallet
+    commandLineArgs = [
+      "--password-store=basic"
+    ]; # used to avoid it trying to contact kde wallet
   };
   # mpv
   programs.mpv = {
     enable = true;
-    package = pkgs.mpv-unwrapped; # we use this pkg bc it has better compatibility with thunar
+    package =
+      pkgs.mpv-unwrapped; # we use this pkg bc it has better compatibility with thunar
   };
   # tells nixos to use mpv as the default video player for matroska files
   xdg.mimeApps.defaultApplications = {
@@ -129,9 +124,7 @@
     userName = "tristan";
     userEmail = "tm@tristanmayo.com";
     extraConfig = {
-      push = {
-        autoSetupRemote = true;
-      };
+      push = { autoSetupRemote = true; };
       pack = {
         windowMemory = "256m";
         packSizeLimit = "256m";
@@ -167,17 +160,13 @@
     enable = true;
     nix-direnv.enable = true;
   };
-  programs.starship = {
-    enable = true;
-  };
+  programs.starship = { enable = true; };
   # LAUNCHER
   programs.rofi = {
     enable = true;
-    theme = config.home.homeDirectory + "/dotfiles/tmx/.config/rofi/themes/erebus.rasi";
-    plugins = [
-      pkgs.rofi-calc
-      pkgs.rofi-emoji
-    ];
+    theme = config.home.homeDirectory
+      + "/dotfiles/tmx/.config/rofi/themes/erebus.rasi";
+    plugins = [ pkgs.rofi-calc pkgs.rofi-emoji ];
     # to find keybindings use `rofi -show keys`
     # Options -> https://davatorium.github.io/rofi/1.7.3/rofi-keys.5/#kb-mode-complete
     extraConfig = {
@@ -244,11 +233,10 @@
   # THEMES
   dconf.settings = {
     "org/gnome/desktop/background" = {
-      picture-uri-dark = "file://${pkgs.nixos-artwork.wallpapers.nineish-dark-gray.src}";
+      picture-uri-dark =
+        "file://${pkgs.nixos-artwork.wallpapers.nineish-dark-gray.src}";
     };
-    "org/gnome/desktop/interface" = {
-      color-scheme = "prefer-dark";
-    };
+    "org/gnome/desktop/interface" = { color-scheme = "prefer-dark"; };
   };
   gtk = {
     enable = true;
@@ -268,10 +256,8 @@
   services = {
     syncthing = {
       enable = true;
-      extraOptions = [
-        "--home=/home/tmx/.config/syncthing"
-        "--no-default-folder"
-      ];
+      extraOptions =
+        [ "--home=/home/tmx/.config/syncthing" "--no-default-folder" ];
     };
     redshift = {
       enable = true;
@@ -336,40 +322,33 @@
   #   SCREENSHOT = "flameshot gui";
   #   GTK_THEME= "Adwaita:dark";
   # };
-  home.sessionVariables =
-    let
-      home = config.home.homeDirectory;
-      #
-      projectParentDirs = [
-        "open_source"
-        "work"
-        "personal"
-        "projects"
-      ];
-      projects = [
-        "dotfiles"
-      ];
-      obsidianDirs = [ "notes" ];
-    in
-    {
-      TERMINAL = "alacritty";
-      EDITOR = "nvim";
-      CODE_EDITOR = lib.mkDefault "cursor .";
-      # this creates a string of "/home/tmx/projects:/home/tmx/{other_project_dir}"
-      # This is used by a rofi script to open the code editor in that project
-      CODE_PROJECTS_PARENT_DIRS = builtins.concatStringsSep ":" (
-        map (dir: "${home}/${dir}") projectParentDirs
-      );
-      CODE_PROJECTS = builtins.concatStringsSep ":" (map (dir: "${home}/${dir}") projects);
-      OBSIDIAN_VAULT_DIRS = builtins.concatStringsSep ":" (map (dir: "${home}/${dir}") obsidianDirs);
-      LAUNCHER = "rofi -show drun";
-      DMENU = "rofi -dmenu";
-      SCREENSHOT = "flameshot gui";
-      GTK_THEME = "Adwaita:dark";
-      # temporary fix for qbittorrent
-      QT_STYLE_OVERRIDE = lib.mkForce "Fusion";
-      BROWSER = "brave";
-    };
+  home.sessionVariables = let
+    home = config.home.homeDirectory;
+    #
+    projectParentDirs =
+      [ "open_source" "work" "personal" "projects" ".config" ];
+    projects = [ "dotfiles" ];
+    obsidianDirs = [ "notes" ];
+  in {
+    TERMINAL = "alacritty";
+    EDITOR = "nvim";
+    CODE_EDITOR = lib.mkDefault "cursor .";
+    # this creates a string of "/home/tmx/projects:/home/tmx/{other_project_dir}"
+    # This is used by a rofi script to open the code editor in that project
+    CODE_PROJECTS_PARENT_DIRS = builtins.concatStringsSep ":"
+      (map (dir: "${home}/${dir}") projectParentDirs);
+    CODE_PROJECTS =
+      builtins.concatStringsSep ":" (map (dir: "${home}/${dir}") projects);
+    OBSIDIAN_VAULT_DIRS =
+      builtins.concatStringsSep ":" (map (dir: "${home}/${dir}") obsidianDirs);
+    LAUNCHER = "rofi -show drun";
+    DMENU = "rofi -dmenu";
+    SCREENSHOT = "flameshot gui";
+    GTK_THEME = "Adwaita:dark";
+    # temporary fix for qbittorrent
+    QT_STYLE_OVERRIDE = lib.mkForce "Fusion";
+    BROWSER = "brave";
+  };
 
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
