@@ -6,7 +6,7 @@
 }@args:
 {
   imports = [
-    ./home-files/aerospace.nix
+    ../../home/darwin
   ];
   home.username = "tmx";
   home.homeDirectory = "/Users/tmx";
@@ -19,39 +19,6 @@
   # want to update the value, then make sure to first check the Home Manager
   # release notes.
   home.stateVersion = "23.11"; # Please read the comment before changing.
-
-  # The home.packages option allows you to install Nix packages into your
-  # environment.
-  home.packages = with pkgs; [
-    # nodejs_20
-    # pnpm_10
-    #obsidian
-  ];
-  # git
-  programs.git = {
-    enable = true;
-    userName = "tristan";
-    userEmail = "tm@tristanmayo.com";
-    extraConfig = {
-      push = {
-        autoSetupRemote = true;
-      };
-      pack = {
-        windowMemory = "256m";
-        packSizeLimit = "256m";
-      };
-    };
-  };
-  # BASH
-  programs.direnv = {
-    enable = true;
-    nix-direnv.enable = true;
-  };
-  programs.starship = {
-    enable = true;
-  };
-  # programs.neovim.extraPackages = [ "gcc" ];
-  # LAUNCHER
 
   home.sessionVariables =
     let
@@ -67,9 +34,9 @@
     {
       XDG_CONFIG_HOME = home;
       # CLAUDE CODE + VERTEX AI
-      CLAUDE_CODE_USE_VERTEX=1;
-      CLOUD_ML_REGION="us-east5";
-      ANTHROPIC_VERTEX_PROJECT_ID="xi-playground";
+      CLAUDE_CODE_USE_VERTEX = 1;
+      CLOUD_ML_REGION = "us-east5";
+      ANTHROPIC_VERTEX_PROJECT_ID = "xi-playground";
       # TERMINAL = "alacritty";
       # EDITOR = "nvim";
       # CODE_EDITOR = "cursor";
@@ -81,13 +48,6 @@
       # DMENU = "rofi -dmenu";
       # SCREENSHOT = "flameshot gui";
       # temporary fix for qbittorrent
-    };
-
-    programs.zsh = {
-      enable = true;
-      initContent = ''
-        export PATH="$HOME/.npm/bin:$PATH"
-      '';
     };
 
   # Let Home Manager install and manage itself.
