@@ -6,10 +6,7 @@
 
 {
   imports = [
-    # Include the results of the hardware scan.
-    ./hardware-configuration.nix
-    # VM
-    ./vm.nix
+    ../hosts/nixos
     # tutorial -> https://www.youtube.com/watch?v=UPWkQ3LUDOU
     args.inputs.xremap-flake.nixosModules.default # makes remap service available
     args.inputs.sops-nix.nixosModules.sops
@@ -30,7 +27,10 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
   # IDK WHAT THIS DOES, FOR WORK PROGRAM TO CONNECT TO COMMAND LINE
-  boot.kernelParams = [ "console=ttyS0,115200" "console=tty1" ];
+  boot.kernelParams = [
+    "console=ttyS0,115200"
+    "console=tty1"
+  ];
 
   networking.hostName = "nixos"; # Define your hostname.
   # networking.extraHosts = ''
@@ -77,7 +77,7 @@
   services.fail2ban.enable = true;
   services.endlessh = {
     enable = true;
-    port = 5555;
+    port = 22;
     openFirewall = true;
   };
 

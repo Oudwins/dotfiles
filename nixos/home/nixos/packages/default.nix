@@ -1,0 +1,47 @@
+{ pkgs, ... }:
+
+{
+  home.packages = with pkgs; [
+    adwaita-qt
+    gnome-themes-extra
+    adwaita-icon-theme
+    gtk3
+    xclip
+    tesseract4
+    udiskie
+    alacritty
+    arandr
+    flameshot
+    gparted
+    geeqie
+    onlyoffice-desktopeditors
+    obs-studio
+    kdePackages.ark
+    unstable.qbittorrent
+    gimp
+    kdePackages.okular
+    rustdesk
+    calibre
+    librewolf
+    google-chrome
+    telegram-desktop
+    syncthing
+    obsidian
+    networkmanagerapplet
+    stow
+    gnumake
+    fzf
+    bc
+    vscode-fhs
+    unstable.code-cursor
+    bruno
+    gnupg
+    awscli2
+    beekeeper-studio
+    tldr
+    cheat
+    jdk21
+    maven
+    mpv-unwrapped
+  ];
+}
