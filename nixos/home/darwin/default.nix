@@ -1,8 +1,7 @@
 { ... }:
 {
   imports = [
-    ../common/git
-    ../common/shell
+    ../common
     ./aerospace
     ./packages
     ./shell

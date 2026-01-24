@@ -12,7 +12,8 @@
     args.inputs.sops-nix.nixosModules.sops
     ./../modules/common/base
     ./../modules/common/sops
-    ./../modules/common/users/tmx
+    ./../modules/nixos/users/tmx
+    ./../modules/nixos/base
     ./../modules/nixos/desktop
     ./../modules/nixos/services
     ./../modules/nixos/virtualization

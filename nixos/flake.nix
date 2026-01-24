@@ -2,11 +2,21 @@
   description = "System Config";
 
   inputs = {
+    # NixOS uses stable
     nixpkgs.url = "github:nixos/nixpkgs/nixos-25.11";
+    # Darwin uses unstable
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
+    # Home manager for NixOS (follows stable)
     home-manager.url = "github:nix-community/home-manager/release-25.11";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
+
+    # Home manager for Darwin (follows unstable)
+    home-manager-darwin = {
+      url = "github:nix-community/home-manager";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
+    };
+
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
 
     # declarative flatpaks for zen browser only atm
@@ -21,41 +31,89 @@
       url = "github:mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # Darwin-specific inputs
+    darwin = {
+      url = "github:LnL7/nix-darwin/master";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
+    };
+    nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew";
+    homebrew-bundle = {
+      url = "github:homebrew/homebrew-bundle";
+      flake = false;
+    };
+    homebrew-core = {
+      url = "github:homebrew/homebrew-core";
+      flake = false;
+    };
+    homebrew-cask = {
+      url = "github:homebrew/homebrew-cask";
+      flake = false;
+    };
+    homebrew-typesense = {
+      url = "github:typesense/homebrew-tap";
+      flake = false;
+    };
+    homebrew-ngrok = {
+      url = "github:ngrok/homebrew-ngrok";
+      flake = false;
+    };
+    homebrew-mongodb = {
+      url = "github:mongodb/homebrew-brew";
+      flake = false;
+    };
   };
 
   outputs =
-    { self, nixpkgs, home-manager, nixos-hardware, nix-flatpak, ... }@inputs:
+    {
+      self,
+      nixpkgs,
+      nixpkgs-unstable,
+      home-manager,
+      home-manager-darwin,
+      nixos-hardware,
+      nix-flatpak,
+      darwin,
+      nix-homebrew,
+      homebrew-bundle,
+      homebrew-core,
+      homebrew-cask,
+      homebrew-typesense,
+      homebrew-ngrok,
+      homebrew-mongodb,
+      ...
+    }@inputs:
     let
-      # allow self referencing. outputs here references the result of calling the "output's" function above (i.e the attribute set built inside the in block)
+      # allow self referencing
       inherit (self) outputs;
-      # lib used to build stuff
       inherit (nixpkgs) lib;
-      # Supported systems for your flake packages, shell, etc.
-      systems = [
-        "x86_64-linux"
-        #"aarch64-linux"
-        #"i686-linux"
-        #"aarch64-darwin"
-        #"x86_64-darwin"
-      ];
 
-      # This is a function that generates an attribute by calling a function you
-      # pass to it, with each system as an argument
+      # System lists
+      linuxSystems = [ "x86_64-linux" ];
+      darwinSystems = [ "aarch64-darwin" "x86_64-darwin" ];
+      systems = linuxSystems ++ darwinSystems;
+
       forAllSystems = lib.genAttrs systems;
 
       specialArgs = {
         inherit inputs;
         inherit outputs;
       };
+
+      user = "tmx";
+
+      # Helper to get the right nixpkgs for each system
+      pkgsFor = system:
+        if builtins.elem system darwinSystems
+        then nixpkgs-unstable.legacyPackages.${system}
+        else nixpkgs.legacyPackages.${system};
     in {
       # Your custom packages
       # Accessible through 'nix build', 'nix shell', etc
-      packages =
-        forAllSystems (system: import ./pkgs nixpkgs.legacyPackages.${system});
+      packages = forAllSystems (system: import ./pkgs (pkgsFor system));
+
       # Formatter for your nix files, available through 'nix fmt'
-      # Other options beside 'alejandra' include 'nixpkgs-fmt'
-      formatter =
-        forAllSystems (system: nixpkgs.legacyPackages.${system}.alejandra);
+      formatter = forAllSystems (system: (pkgsFor system).alejandra);
 
       # Your custom packages and modifications, exported as overlays
       overlays = import ./overlays {
@@ -67,7 +125,7 @@
       #
       # Custom shell for bootstrapping on new hosts, modifying nix-config, and secrets management
       devShells = forAllSystems (system:
-        let pkgs = nixpkgs.legacyPackages.${system};
+        let pkgs = pkgsFor system;
         in {
           default = pkgs.mkShell {
             NIX_CONFIG =
@@ -93,11 +151,46 @@
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
               home-manager.backupFileExtension = "backup";
-              home-manager.users.tmx = { imports = [ ./home.nix ]; };
+              home-manager.users.tmx = { imports = [ ./hosts/nixos/home.nix ]; };
               home-manager.extraSpecialArgs = specialArgs;
             }
           ];
           specialArgs = specialArgs;
+        };
+      };
+
+      darwinConfigurations = {
+        macos = darwin.lib.darwinSystem {
+          system = "aarch64-darwin";
+          specialArgs = specialArgs;
+          modules = [
+            ./hosts/darwin
+            home-manager-darwin.darwinModules.home-manager
+            {
+              home-manager.useGlobalPkgs = true;
+              home-manager.useUserPackages = true;
+              home-manager.extraSpecialArgs = specialArgs;
+              home-manager.users.${user} = import ./hosts/darwin/home.nix;
+            }
+            nix-homebrew.darwinModules.nix-homebrew
+            {
+              nix-homebrew = {
+                inherit user;
+                enable = true;
+                enableRosetta = true;
+                taps = {
+                  "homebrew/homebrew-core" = homebrew-core;
+                  "homebrew/homebrew-cask" = homebrew-cask;
+                  "homebrew/homebrew-bundle" = homebrew-bundle;
+                  "typesense/homebrew-tap" = homebrew-typesense;
+                  "ngrok/homebrew-ngrok" = homebrew-ngrok;
+                  "mongodb/homebrew-brew" = homebrew-mongodb;
+                };
+                mutableTaps = true;
+                autoMigrate = true;
+              };
+            }
+          ];
         };
       };
     };

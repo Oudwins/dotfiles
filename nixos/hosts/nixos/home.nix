@@ -7,16 +7,11 @@
 
 {
   imports = [
-    ./hosts/tmx/pkgs/nvim
-    ./hosts/tmx/pkgs/nvim/tmux.nix
-    ./home/common/base
-    ./home/common/shell
-    ./home/common/git
-    ./home/nixos/desktop
-    ./home/nixos/packages
-    ./home/nixos/services
+    ./home/nixos
   ];
 
+  home.username = "tmx";
+  home.homeDirectory = "/home/tmx";
   home.stateVersion = "23.11"; # Please read the comment before changing.
 
   home.file = {

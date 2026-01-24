@@ -7,7 +7,7 @@
 ## Macos
 
 ```bash
-sudo darwin-rebuild switch --flake ./flakepath#macos
+sudo darwin-rebuild switch --flake .#macos
 ```
 
 - Aerospace WM
