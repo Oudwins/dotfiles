@@ -326,7 +326,7 @@
     home = config.home.homeDirectory;
     #
     projectParentDirs =
-      [ "open_source" "work" "personal" "projects" ".config" ];
+      [ "open_source" "work" "personal" "projects" ".config" "Documents" ];
     projects = [ "dotfiles" ];
     obsidianDirs = [ "notes" ];
   in {
