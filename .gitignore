@@ -15,3 +15,4 @@ tmx/.config/git/config
 tmx/.config/tmux/tmux.conf
 tmx/.gitconfig
 tmx/.config/alacritty/
+tmx/.zshrc

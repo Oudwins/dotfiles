@@ -33,13 +33,7 @@
           app = "/Applications/cursor.app";
         }
         {
-          app = "/Applications/Visual Studio Code.app";
-        }
-        {
           app = "/Applications/Telegram.app";
-        }
-        {
-          app = "/Applications/Zen.app";
         }
       ];
     };
