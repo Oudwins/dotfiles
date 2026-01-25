@@ -1,36 +1,15 @@
-//.opencode/tool/webresearch.ts
+//.opencode/tool/btca.ts
 import { tool } from "@opencode-ai/plugin/tool";
-
-const QUALITY_PRESETS = {
-  fast: {
-    effort: "low",
-    directive: "Keep it quick; use only the most relevant sources.",
-  },
-  balanced: {
-    effort: "medium",
-    directive: "Cover the main angles; resolve contradictions if they appear.",
-  },
-  deep: {
-    effort: "high",
-    directive:
-      "Follow second-order leads and resolve contradictions until extra sources stop adding value.",
-  },
-} as const;
-
-type Quality = keyof typeof QUALITY_PRESETS;
 
 function buildPrompt({
   reason,
   query,
   additionalContext,
-  quality,
 }: {
   reason: string;
   query: string;
   additionalContext?: string;
-  quality: Quality;
 }) {
-  const preset = QUALITY_PRESETS[quality];
   const contextBlock = additionalContext
     ? `Additional context (optional): ${additionalContext}`
     : "Additional context (optional):";

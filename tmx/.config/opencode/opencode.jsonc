@@ -3,14 +3,16 @@
   "lsp": {
     "go": {
       "disabled": false,
-      "command": "gopls"
+      "command": ["gopls"],
+      "extensions": [".go"]
     },
     "typescript": {
       "disabled": false,
-      "command": "typescript-language-server",
-      "args": ["--stdio"]
+      "command": ["typescript-language-server", "--stdio"],
+      "extensions": [".ts", ".tsx"]
     }
   },
+  "provider": {
   "vertexai": {
     "npm": "@ai-sdk/google-vertex/anthropic",
     "name": "google-vertex-anthropic",
@@ -26,5 +28,6 @@
         "name": "claude-opus-4"
       }
     }
+  },
   }
 }
