@@ -21,8 +21,9 @@ let
   };
 
   home = config.home.homeDirectory;
-  projectParentDirs = [
+  projectParentDirs = 
     [ "open_source" "work" "personal" "projects" ".config" "Documents" ".local/share/droner" ];
+    
   projectParentDirsStr = builtins.concatStringsSep "," (
     map (dir: "${home}/${dir}") projectParentDirs
   );

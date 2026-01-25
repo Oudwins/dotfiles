@@ -18,6 +18,10 @@
     obsidianDirs = [ "notes" ];
   in {
     XDG_CONFIG_HOME = home;
+    # Opencode vertex ai
+    GOOGLE_CLOUD_PROJECT = "xi-playground";
+    GOOGLE_APPLICATION_CREDENTIALS = "/Users/tmx/.config/gcloud/application_default_credentials.json"; 
+    VERTEX_LOCATION = "us-east5";
     # CLAUDE CODE + VERTEX AI
     CLAUDE_CODE_USE_VERTEX = 1;
     CLOUD_ML_REGION = "us-east5";

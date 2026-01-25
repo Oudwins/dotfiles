@@ -13,3 +13,5 @@ tmx/.config/aerospace/
 tmx/.config/aerospace.bak/
 tmx/.config/git/config
 tmx/.config/tmux/tmux.conf
+tmx/.gitconfig
+tmx/.config/alacritty/
