@@ -1,4 +1,10 @@
-{ config, pkgs, lib, inputs, ... }@args:
+{
+  config,
+  pkgs,
+  lib,
+  inputs,
+  ...
+}@args:
 
 let
   # see: https://github.com/NixOS/nixpkgs/blob/fe2ecaf706a5907b5e54d979fbde4924d84b65fc/pkgs/misc/tmux-plugins/default.nix#L15
@@ -15,23 +21,26 @@ let
   };
 
   home = config.home.homeDirectory;
-  projectParentDirs = 
-    [ "open_source" "work" "personal" "projects" ".config" "Documents" ".local/share/droner" ];
-    
+  projectParentDirs = [
+    "open_source"
+    "work"
+    "personal"
+    "projects"
+    ".config"
+    "Documents"
+    ".local/share/droner"
+  ];
+
   projectParentDirsStr = builtins.concatStringsSep "," (
     map (dir: "${home}/${dir}") projectParentDirs
   );
 in
 {
-=======
-  projectParentDirs =
-    [ "open_source" "work" "personal" "projects" ".config" "Documents" ];
-  projectParentDirsStr = builtins.concatStringsSep ","
-    (map (dir: "${home}/${dir}") projectParentDirs);
-in {
->>>>>>> c8afdb3 (refactor: tmux)
   # required by sessionx plugin
-  home.packages = with pkgs; [ fzf bat ];
+  home.packages = with pkgs; [
+    fzf
+    bat
+  ];
 
   programs.tmux = {
     enable = true;
