@@ -1,5 +1,5 @@
 //.opencode/tool/webresearch.ts
-import { tool } from "@opencode-ai/plugin/tool";
+import { tool } from "@opencode-ai/tool";
 
 const QUALITY_PRESETS = {
   fast: {
