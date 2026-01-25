@@ -24,7 +24,7 @@
     ANTHROPIC_VERTEX_PROJECT_ID = "xi-playground";
     # TERMINAL = "alacritty";
     EDITOR = "nvim";
-    CODE_EDITOR = "nvim";
+    # CODE_EDITOR = "nvim";
     # this creates a string of "/home/tmx/projects:/home/tmx/{other_project_dir}"
     # This is used by a rofi script to open the code editor in that project
     # CODE_PROJECT_DIRS = builtins.concatStringsSep ":" (map (dir: "${home}/${dir}") projectDirs);

@@ -366,32 +366,26 @@ return {
       -- You can add other tools here that you want Mason to install
       -- for you, so that they are available from within Neovim.
 
-      -- extracts keys from lsps, converts to mason pkg names and installs them
-      local mason_pkg_registry = require 'mason-registry'
-      local server_mapping = require('mason-lspconfig.mappings').get_mason_map().lspconfig_to_package
-      local ensure_installed = {}
-      for server_name, _ in pairs(servers or {}) do
-        local pkg = server_mapping[server_name] or server_name
-        if mason_pkg_registry.has_package(pkg) then
-          table.insert(ensure_installed, pkg)
-        end
-      end
-      vim.list_extend(ensure_installed, {
-        -- FORMATTERS
-        'stylua', -- Used to format Lua code
-        'eslint_d',
-        'prettierd',
-        'ruff',
-        'nixfmt',
-        -- LINTERS
-        'jsonlint',
-        'tflint',
-        'hadolint',
-      })
-      require('mason-tool-installer').setup { ensure_installed = ensure_installed }
+      -- Use mason-tool-installer for non-LSP tools (formatters, linters)
+      -- mason-lspconfig handles LSP server installation with proper name translation
+      require('mason-tool-installer').setup {
+        ensure_installed = {
+          -- FORMATTERS
+          'stylua', -- Used to format Lua code
+          'eslint_d',
+          'prettierd',
+          'ruff',
+          'nixfmt',
+          -- LINTERS
+          'jsonlint',
+          'tflint',
+          'hadolint',
+        },
+      }
 
+      -- mason-lspconfig handles lspconfig -> mason name translation internally
       require('mason-lspconfig').setup {
-        ensure_installed = {}, -- explicitly set to an empty table (Kickstart populates installs via mason-tool-installer)
+        ensure_installed = vim.tbl_keys(servers or {}),
         automatic_installation = false,
         handlers = {
           function(server_name)
