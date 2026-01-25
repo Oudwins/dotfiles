@@ -314,6 +314,13 @@ require('lazy').setup({
         vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = '[S]earch [H]elp' })
         vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[S]earch [K]eymaps' })
         vim.keymap.set('n', '<leader>sf', builtin.find_files, { desc = '[S]earch [F]iles' }) -- respects gitignore
+        vim.keymap.set('n', '<leader>sa', function()
+          builtin.find_files {
+            hidden = true,
+            no_ignore = true,
+            no_ignore_parent = true,
+          }
+        end, { desc = '[S]earch [A]ll Files' }) -- All!
         vim.keymap.set('n', '<leader>sl', builtin.git_stash, { desc = '[S]earch [Lazy]Git' }) -- respects gitignore
         vim.keymap.set('n', '<leader>ss', builtin.builtin, { desc = '[S]earch [S]elect Telescope' })
         vim.keymap.set('n', '<leader>sw', builtin.grep_string, { desc = '[S]earch current [W]ord' })
@@ -342,6 +349,7 @@ require('lazy').setup({
         end, { desc = '[S]earch [/] in Open Files' })
 
         -- Shortcut for searching your Neovim configuration files
+        -- Search neovim & search configuration files
         vim.keymap.set('n', '<leader>sn', function()
           builtin.find_files { cwd = vim.fn.stdpath 'config' }
         end, { desc = '[S]earch [N]eovim files' })
