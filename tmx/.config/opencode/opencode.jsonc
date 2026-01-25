@@ -1,8 +1,5 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "data": {
-    "directory": ".opencode"
-  },
   "lsp": {
     "go": {
       "disabled": false,

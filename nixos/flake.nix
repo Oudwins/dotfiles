@@ -64,25 +64,10 @@
     };
   };
 
-  outputs =
-    {
-      self,
-      nixpkgs,
-      nixpkgs-unstable,
-      home-manager,
-      home-manager-darwin,
-      nixos-hardware,
-      nix-flatpak,
-      darwin,
-      nix-homebrew,
-      homebrew-bundle,
-      homebrew-core,
-      homebrew-cask,
-      homebrew-typesense,
-      homebrew-ngrok,
-      homebrew-mongodb,
-      ...
-    }@inputs:
+  outputs = { self, nixpkgs, nixpkgs-unstable, home-manager, home-manager-darwin
+    , nixos-hardware, nix-flatpak, darwin, nix-homebrew, homebrew-bundle
+    , homebrew-core, homebrew-cask, homebrew-typesense, homebrew-ngrok
+    , homebrew-mongodb, ... }@inputs:
     let
       # allow self referencing
       inherit (self) outputs;
@@ -104,16 +89,17 @@
 
       # Helper to get the right nixpkgs for each system
       pkgsFor = system:
-        if builtins.elem system darwinSystems
-        then nixpkgs-unstable.legacyPackages.${system}
-        else nixpkgs.legacyPackages.${system};
+        if builtins.elem system darwinSystems then
+          nixpkgs-unstable.legacyPackages.${system}
+        else
+          nixpkgs.legacyPackages.${system};
     in {
       # Your custom packages
       # Accessible through 'nix build', 'nix shell', etc
       packages = forAllSystems (system: import ./pkgs (pkgsFor system));
 
       # Formatter for your nix files, available through 'nix fmt'
-      formatter = forAllSystems (system: (pkgsFor system).alejandra);
+      formatter = forAllSystems (system: (pkgsFor system).nixfmt-rfc-style);
 
       # Your custom packages and modifications, exported as overlays
       overlays = import ./overlays {
@@ -151,7 +137,9 @@
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
               home-manager.backupFileExtension = "backup";
-              home-manager.users.tmx = { imports = [ ./hosts/nixos/home.nix ]; };
+              home-manager.users.tmx = {
+                imports = [ ./hosts/nixos/home.nix ];
+              };
               home-manager.extraSpecialArgs = specialArgs;
             }
           ];

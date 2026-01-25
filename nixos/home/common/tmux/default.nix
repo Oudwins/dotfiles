@@ -15,18 +15,11 @@ let
   };
 
   home = config.home.homeDirectory;
-  projectParentDirs = [
-    "open_source"
-    "work"
-    "personal"
-    "projects"
-    ".config"
-    "Documents"
-  ];
+  projectParentDirs =
+    [ "open_source" "work" "personal" "projects" ".config" "Documents" ];
   projectParentDirsStr = builtins.concatStringsSep ","
     (map (dir: "${home}/${dir}") projectParentDirs);
-in
-{
+in {
   # required by sessionx plugin
   home.packages = with pkgs; [ fzf bat ];
 

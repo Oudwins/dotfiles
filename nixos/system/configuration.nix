@@ -12,6 +12,7 @@
     args.inputs.sops-nix.nixosModules.sops
     ./../modules/common/base
     ./../modules/common/sops
+    ./../modules/common/agents
     ./../modules/nixos/users/tmx
     ./../modules/nixos/base
     ./../modules/nixos/desktop
@@ -21,17 +22,11 @@
     # ../hosts/tmx/pkgs/nvim/katana.nix
   ];
 
-  # TODO remove this. This is Temporary for Open Code
-  programs.nix-ld.enable = true;
-
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
   # IDK WHAT THIS DOES, FOR WORK PROGRAM TO CONNECT TO COMMAND LINE
-  boot.kernelParams = [
-    "console=ttyS0,115200"
-    "console=tty1"
-  ];
+  boot.kernelParams = [ "console=ttyS0,115200" "console=tty1" ];
 
   networking.hostName = "nixos"; # Define your hostname.
   # networking.extraHosts = ''

@@ -1,10 +1,1 @@
-{ ... }:
-{
-  imports = [
-    ./base
-    ./git
-    ./shell
-    ./nvim
-    ./nvim/tmux.nix
-  ];
-}
+{ ... }: { imports = [ ./base ./git ./shell ./nvim ./tmux ]; }
