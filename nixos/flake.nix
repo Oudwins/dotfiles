@@ -131,7 +131,7 @@
           modules = [
             nix-flatpak.nixosModules.nix-flatpak
             nixos-hardware.nixosModules.lenovo-thinkpad-p14s-amd-gen2
-            ./system/configuration.nix
+            ./hosts/nixos
             home-manager.nixosModules.home-manager
             {
               home-manager.useGlobalPkgs = true;

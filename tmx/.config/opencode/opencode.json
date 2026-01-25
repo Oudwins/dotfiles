@@ -1,0 +1,33 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "lsp": {
+    "go": {
+      "disabled": false,
+      "command": ["gopls"],
+      "extensions": [".go"]
+    },
+    "typescript": {
+      "disabled": false,
+      "command": ["typescript-language-server", "--stdio"],
+      "extensions": [".ts", ".tsx"]
+    }
+  },
+  "provider": {
+    "vertexai": {
+      "npm": "@ai-sdk/google-vertex/anthropic",
+      "name": "google-vertex-anthropic",
+      "options": {
+        "project": "xi-playground",
+        "location": "us-east5",
+        "googleAuthOptions": {
+          "keyFile": "~/.config/gcloud/application_default_credentials.json"
+        }
+      },
+      "models": {
+        "claude-opus-4@20250514": {
+          "name": "claude-opus-4"
+        }
+      }
+    }
+  }
+}

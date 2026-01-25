@@ -1,9 +1,1 @@
-{ ... }:
-{
-  imports = [
-    ../common
-    ./desktop
-    ./packages
-    ./services
-  ];
-}
+{ ... }: { imports = [ ../common ./desktop ./packages ./services ]; }

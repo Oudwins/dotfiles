@@ -1,4 +1,10 @@
-{ config, pkgs, lib, inputs, ... }@args:
+{
+  config,
+  pkgs,
+  lib,
+  inputs,
+  ...
+}@args:
 
 let
   # see: https://github.com/NixOS/nixpkgs/blob/fe2ecaf706a5907b5e54d979fbde4924d84b65fc/pkgs/misc/tmux-plugins/default.nix#L15
@@ -15,13 +21,24 @@ let
   };
 
   home = config.home.homeDirectory;
-  projectParentDirs =
-    [ "open_source" "work" "personal" "projects" ".config" "Documents" ];
-  projectParentDirsStr = builtins.concatStringsSep ","
-    (map (dir: "${home}/${dir}") projectParentDirs);
-in {
+  projectParentDirs = [
+    "open_source"
+    "work"
+    "personal"
+    "projects"
+    ".config"
+    "Documents"
+  ];
+  projectParentDirsStr = builtins.concatStringsSep "," (
+    map (dir: "${home}/${dir}") projectParentDirs
+  );
+in
+{
   # required by sessionx plugin
-  home.packages = with pkgs; [ fzf bat ];
+  home.packages = with pkgs; [
+    fzf
+    bat
+  ];
 
   programs.tmux = {
     enable = true;
@@ -82,6 +99,8 @@ in {
       # set <leader>r to reload config
       unbind R
       bind R source-file ~/.config/tmux/tmux.conf \; display-message "Config reloaded..."
+      # set <leader>n to create droner job
+      bind n run-shell "~/.config/tmux/droner-create.sh"
 
       ###
       # Plugin Key Bindings
