@@ -1,7 +1,7 @@
 { config, pkgs, lib, ... }@args:
 
 {
-  imports = [ ./home/nixos ];
+  imports = [ ../../home/nixos ];
 
   home.username = "tmx";
   home.homeDirectory = "/home/tmx";

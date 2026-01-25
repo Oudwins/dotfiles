@@ -9,16 +9,15 @@
     # tutorial -> https://www.youtube.com/watch?v=UPWkQ3LUDOU
     args.inputs.xremap-flake.nixosModules.default # makes remap service available
     args.inputs.sops-nix.nixosModules.sops
-    ./../modules/common/base
-    ./../modules/common/sops
-    ./../modules/common/agents
-    ./../modules/nixos/users/tmx
-    ./../modules/nixos/base
-    ./../modules/nixos/desktop
-    ./../modules/nixos/services
-    ./../modules/nixos/virtualization
-    ./../modules/nixos/filesystems
-    # ../hosts/tmx/pkgs/nvim/katana.nix
+    ./../../modules/common/base
+    ./../../modules/common/sops
+    ./../../modules/common/agents
+    ./../../modules/nixos/users/tmx
+    ./../../modules/nixos/base
+    ./../../modules/nixos/desktop
+    ./../../modules/nixos/services
+    ./../../modules/nixos/virtualization
+    ./../../modules/nixos/filesystems
   ];
 
   # Bootloader.
