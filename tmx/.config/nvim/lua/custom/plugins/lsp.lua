@@ -294,7 +294,12 @@ return {
             -- end)
           end,
         },
-        eslint = {},
+        eslint = {
+          -- Not sure if this is actually needed
+          settings = {
+            workingDirectory = {mode = "auto"}
+          }
+        },
 
         -- NOTE: Python
         basedpyright = {},
