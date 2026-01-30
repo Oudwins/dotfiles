@@ -546,6 +546,15 @@ require('lazy').setup({
 
     { -- Collection of various small independent plugins/modules
       'echasnovski/mini.nvim',
+      dependencies = {
+        -- Context-aware commentstring for JSX/TSX
+        {
+          'JoosepAlviste/nvim-ts-context-commentstring',
+          opts = {
+            enable_autocmd = false, -- We'll integrate with mini.comment manually
+          },
+        },
+      },
       config = function()
         -- Better Around/Inside textobjects
         --
@@ -561,6 +570,16 @@ require('lazy').setup({
         -- - sd'   - [S]urround [D]elete [']quotes
         -- - sr)'  - [S]urround [R]eplace [)] [']
         require('mini.surround').setup()
+
+        -- Comments with context-aware commentstring for JSX/TSX
+        -- Uses gc to toggle comments (gcc for line, gc + motion for region)
+        require('mini.comment').setup {
+          options = {
+            custom_commentstring = function()
+              return require('ts_context_commentstring').calculate_commentstring() or vim.bo.commentstring
+            end,
+          },
+        }
 
         -- Simple and easy statusline.
         --  You could remove this setup call if you don't like it,
@@ -601,6 +620,7 @@ require('lazy').setup({
           'vimdoc',
           'typescript',
           'javascript',
+          'tsx', -- Required for context-aware commenting in TSX
           'go',
         },
         -- Autoinstall languages that are not installed
