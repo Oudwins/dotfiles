@@ -277,14 +277,14 @@ return {
         -- markdown_oxide = {}, -- inspired by obsidian
 
         -- nix lsps
-        nixd = {},
+        -- nixd = {},
         -- nil_ls = {},
 
         -- NOTE: WEB
         emmet_language_server = {
           filetypes = { 'html', 'css', 'javascriptreact', 'typescriptreact' },
         },
-        superhtml = {},
+        -- superhtml = {},
         cssls = {},
         tailwindcss = {
           on_attach = function(client, bufnr)
@@ -292,6 +292,22 @@ return {
             -- vim.schedule(function()
             --   require('tailwindcss-colors').buf_attach(bufnr)
             -- end)
+          end,
+          root_dir = util.root_pattern('.git'),
+          on_new_config = function(new_config, new_root_dir)
+            -- Override tailwind config for elevenlabs/marketing-website monorepo
+            local handle = io.popen('git -C ' .. vim.fn.shellescape(new_root_dir) .. ' remote get-url origin 2>/dev/null')
+            if handle then
+              local remote = handle:read('*a'):gsub('%s+$', '')
+              handle:close()
+              if remote:match('elevenlabs/marketing%-website') then
+                local config_path = new_root_dir .. '/frontend-next/tailwind.v2.config.ts'
+                new_config.settings = new_config.settings or {}
+                new_config.settings.tailwindCSS = new_config.settings.tailwindCSS or {}
+                new_config.settings.tailwindCSS.experimental = new_config.settings.tailwindCSS.experimental or {}
+                new_config.settings.tailwindCSS.experimental.configFile = config_path
+              end
+            end
           end,
         },
         eslint = {
@@ -302,8 +318,8 @@ return {
         },
 
         -- NOTE: Python
-        basedpyright = {},
-        ruff = {},
+        -- basedpyright = {},
+        -- ruff = {},
         -- NOTE: terraform
         -- Warning ai generated, might not work
         terraformls = {
@@ -380,7 +396,7 @@ return {
           'eslint_d',
           'prettierd',
           'ruff',
-          'nixfmt',
+          -- 'nixfmt',
           -- LINTERS
           'jsonlint',
           'tflint',
