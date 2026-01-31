@@ -271,16 +271,70 @@ return {
       local servers = {
         -- NOTE: see `:help lspconfig-all` for a list of all the pre-configured LSP Servers
         gopls = {},
-        -- md lsps
-        marksman = {},
+        -- md lsps. Didn't like it so removed for now
+        -- marksman = {},
         -- rumdl = {}, -- not really lsp. linter formatter
         -- markdown_oxide = {}, -- inspired by obsidian
 
         -- nix lsps
-        -- nixd = {},
-        -- nil_ls = {},
+        -- nixd = {}, -- not in mason
+        nil_ls = {}, -- experimental
 
         -- NOTE: WEB
+        --
+        -- tsgo. Works great but doesn't have code actions
+        -- tsgo = {
+        --   cmd = { 'tsgo', '--lsp', '--stdio' },
+        --   filetypes = {
+        --     'javascript',
+        --     'javascriptreact',
+        --     'javascript.jsx',
+        --     'typescript',
+        --     'typescriptreact',
+        --     'typescript.tsx',
+        --   },
+        --   root_markers = {
+        --     'tsconfig.json',
+        --     'jsconfig.json',
+        --     'package.json',
+        --     '.git',
+        --     'tsconfig.base.json',
+        --   },
+        -- },
+        -- typescript alternative to ts_ls
+        vtsls = {
+          -- on_attach = function(client)
+          --   client.server_capabilities.documentFormattingProvider = false
+          --   client.server_capabilities.documentRangeFormattingProvider = false
+          -- end,
+          settings = {
+            complete_function_calls = true,
+            vtsls = {
+              enableMoveToFileCodeAction = true,
+              autoUseWorkspaceTsdk = true,
+              experimental = {
+                maxInlayHintLength = 30,
+                completion = {
+                  enableServerSideFuzzyMatch = true,
+                },
+              },
+            },
+            typescript = {
+              updateImportsOnFileMove = { enabled = 'always' },
+              suggest = {
+                completeFunctionCalls = true,
+              },
+              inlayHints = {
+                enumMemberValues = { enabled = true },
+                functionLikeReturnTypes = { enabled = true },
+                parameterNames = { enabled = 'literals' },
+                parameterTypes = { enabled = true },
+                propertyDeclarationTypes = { enabled = true },
+                variableTypes = { enabled = false },
+              },
+            },
+          },
+        },
         emmet_language_server = {
           filetypes = { 'html', 'css', 'javascriptreact', 'typescriptreact' },
         },
@@ -349,14 +403,6 @@ return {
             },
           },
         },
-
-        -- rust_analyzer = {},
-        --
-        --
-        -- But for many setups, the LSP (`ts_ls`) will work just fine
-        -- ts_ls = {},
-        --
-
         lua_ls = {
           -- cmd = { ... },
           -- filetypes = { ... },
@@ -368,39 +414,6 @@ return {
               },
               -- You can toggle below to ignore Lua_LS's noisy `missing-fields` warnings
               -- diagnostics = { disable = { 'missing-fields' } },
-            },
-          },
-        },
-        vtsls = {
-          -- on_attach = function(client)
-          --   client.server_capabilities.documentFormattingProvider = false
-          --   client.server_capabilities.documentRangeFormattingProvider = false
-          -- end,
-          settings = {
-            complete_function_calls = true,
-            vtsls = {
-              enableMoveToFileCodeAction = true,
-              autoUseWorkspaceTsdk = true,
-              experimental = {
-                maxInlayHintLength = 30,
-                completion = {
-                  enableServerSideFuzzyMatch = true,
-                },
-              },
-            },
-            typescript = {
-              updateImportsOnFileMove = { enabled = 'always' },
-              suggest = {
-                completeFunctionCalls = true,
-              },
-              inlayHints = {
-                enumMemberValues = { enabled = true },
-                functionLikeReturnTypes = { enabled = true },
-                parameterNames = { enabled = 'literals' },
-                parameterTypes = { enabled = true },
-                propertyDeclarationTypes = { enabled = true },
-                variableTypes = { enabled = false },
-              },
             },
           },
         },
@@ -443,7 +456,11 @@ return {
         automatic_installation = false,
         handlers = {
           function(server_name)
-            local server = servers[server_name] or {}
+            local server = servers[server_name]
+            -- avoid setting up unconfigured servers
+            if not server then
+              return
+            end
             -- This handles overriding only values explicitly passed
             -- by the server configuration above. Useful when disabling
             -- certain features of an LSP (for example, turning off formatting for ts_ls)

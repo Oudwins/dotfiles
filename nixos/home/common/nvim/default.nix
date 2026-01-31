@@ -1,8 +1,8 @@
-{ config, pkgs, lib, ... }@args:
+{ config, pkgs, lib }:
 
 let
   isLinux = pkgs.stdenv.isLinux;
-  isDarwin = pkgs.stdenv.isDarwin;
+  # isDarwin = pkgs.stdenv.isDarwin;
   # On NixOS we use unstable overlay, on Darwin pkgs is already unstable
   neovimPkg = if pkgs ? unstable then pkgs.unstable.neovim else pkgs.neovim;
 in {
@@ -30,8 +30,10 @@ in {
       python3
       typescript
       markdownlint-cli
-      nixd
-      vtsls # typescript vscode server wrapper
+      typescript-go
+      # Rust (require for some nvim pkgs)
+      rustc
+      cargo
     ] ++ lib.optionals isLinux [ xclip ];
 
   programs.neovim.extraPackages = [
@@ -47,7 +49,7 @@ in {
     "markdownlint-cli"
     "icu"
     "nixd"
-    "vtsls"
+    "typescript-go"
   ] ++ lib.optionals isLinux [ "xclip" ];
 
   home.sessionVariables = lib.mkMerge [
