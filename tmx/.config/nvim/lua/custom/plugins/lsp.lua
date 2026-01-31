@@ -369,6 +369,23 @@ return {
           settings = {
             workingDirectory = { mode = 'auto' },
           },
+          on_attach = function(client, bufnr)
+            client.server_capabilities.documentFormattingProvider = false
+            client.server_capabilities.documentRangeFormattingProvider = false
+            vim.api.nvim_buf_create_user_command(bufnr, 'EslintFixAll', function()
+              vim.lsp.buf.code_action {
+                apply = true,
+                context = { only = { 'source.fixAll.eslint' }, diagnostics = {} },
+              }
+            end, { desc = 'ESLint: fix all' })
+            vim.api.nvim_create_autocmd('BufWritePre', {
+              buffer = bufnr,
+              group = vim.api.nvim_create_augroup('eslint-fix-on-save', { clear = false }),
+              callback = function()
+                vim.cmd 'EslintFixAll'
+              end,
+            })
+          end,
         },
 
         -- NOTE: Python
@@ -419,6 +436,20 @@ return {
         },
       }
 
+      vim.api.nvim_create_autocmd('LspAttach', {
+        group = vim.api.nvim_create_augroup('custom-lsp-attach', { clear = true }),
+        callback = function(event)
+          local client = vim.lsp.get_client_by_id(event.data.client_id)
+          if not client then
+            return
+          end
+          local server = servers[client.name]
+          if server and server.on_attach then
+            server.on_attach(client, event.buf)
+          end
+        end,
+      })
+
       -- Ensure the servers and tools above are installed
       --
       -- To check the current status of installed tools and/or manually install
@@ -439,7 +470,6 @@ return {
         ensure_installed = {
           -- FORMATTERS
           'stylua', -- Used to format Lua code
-          'eslint_d',
           'prettierd',
           -- LINTERS
           'jsonlint',
