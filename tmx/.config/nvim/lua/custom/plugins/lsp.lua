@@ -32,18 +32,18 @@ return {
       },
     },
   },
-  -- Sets up typescript LSP
-  {
-    'pmizio/typescript-tools.nvim',
-    dependencies = { 'nvim-lua/plenary.nvim', 'neovim/nvim-lspconfig' },
-    opts = {
-      on_attach = function(client)
-        -- Disable typescript-tools formatting
-        client.server_capabilities.documentFormattingProvider = false
-        client.server_capabilities.documentRangeFormattingProvider = false
-      end,
-    },
-  },
+  -- Sets up typescript LSP with plugin (doesn't support import paths)
+  -- {
+  --   'pmizio/typescript-tools.nvim',
+  --   dependencies = { 'nvim-lua/plenary.nvim', 'neovim/nvim-lspconfig' },
+  --   opts = {
+  --     on_attach = function(client)
+  --       -- Disable typescript-tools formatting
+  --       client.server_capabilities.documentFormattingProvider = false
+  --       client.server_capabilities.documentRangeFormattingProvider = false
+  --     end,
+  --   },
+  -- },
   {
     -- Main LSP Configuration
     'neovim/nvim-lspconfig',
@@ -293,14 +293,14 @@ return {
             --   require('tailwindcss-colors').buf_attach(bufnr)
             -- end)
           end,
-          root_dir = util.root_pattern('.git'),
+          root_dir = util.root_pattern '.git',
           on_new_config = function(new_config, new_root_dir)
             -- Override tailwind config for elevenlabs/marketing-website monorepo
             local handle = io.popen('git -C ' .. vim.fn.shellescape(new_root_dir) .. ' remote get-url origin 2>/dev/null')
             if handle then
               local remote = handle:read('*a'):gsub('%s+$', '')
               handle:close()
-              if remote:match('elevenlabs/marketing%-website') then
+              if remote:match 'elevenlabs/marketing%-website' then
                 local config_path = new_root_dir .. '/frontend-next/tailwind.v2.config.ts'
                 new_config.settings = new_config.settings or {}
                 new_config.settings.tailwindCSS = new_config.settings.tailwindCSS or {}
@@ -313,8 +313,8 @@ return {
         eslint = {
           -- Not sure if this is actually needed
           settings = {
-            workingDirectory = {mode = "auto"}
-          }
+            workingDirectory = { mode = 'auto' },
+          },
         },
 
         -- NOTE: Python
@@ -368,6 +368,39 @@ return {
               },
               -- You can toggle below to ignore Lua_LS's noisy `missing-fields` warnings
               -- diagnostics = { disable = { 'missing-fields' } },
+            },
+          },
+        },
+        vtsls = {
+          -- on_attach = function(client)
+          --   client.server_capabilities.documentFormattingProvider = false
+          --   client.server_capabilities.documentRangeFormattingProvider = false
+          -- end,
+          settings = {
+            complete_function_calls = true,
+            vtsls = {
+              enableMoveToFileCodeAction = true,
+              autoUseWorkspaceTsdk = true,
+              experimental = {
+                maxInlayHintLength = 30,
+                completion = {
+                  enableServerSideFuzzyMatch = true,
+                },
+              },
+            },
+            typescript = {
+              updateImportsOnFileMove = { enabled = 'always' },
+              suggest = {
+                completeFunctionCalls = true,
+              },
+              inlayHints = {
+                enumMemberValues = { enabled = true },
+                functionLikeReturnTypes = { enabled = true },
+                parameterNames = { enabled = 'literals' },
+                parameterTypes = { enabled = true },
+                propertyDeclarationTypes = { enabled = true },
+                variableTypes = { enabled = false },
+              },
             },
           },
         },

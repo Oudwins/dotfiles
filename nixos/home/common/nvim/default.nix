@@ -31,6 +31,7 @@ in {
       typescript
       markdownlint-cli
       nixd
+      vtsls # typescript vscode server wrapper
     ] ++ lib.optionals isLinux [ xclip ];
 
   programs.neovim.extraPackages = [
@@ -46,6 +47,7 @@ in {
     "markdownlint-cli"
     "icu"
     "nixd"
+    "vtsls"
   ] ++ lib.optionals isLinux [ "xclip" ];
 
   home.sessionVariables = lib.mkMerge [

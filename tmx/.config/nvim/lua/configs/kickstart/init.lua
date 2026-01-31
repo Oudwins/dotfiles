@@ -485,8 +485,21 @@ require('lazy').setup({
           documentation = { auto_show = false, auto_show_delay_ms = 500 },
           menu = {
             draw = {
-              -- Show source name in the completion menu
-              columns = { { 'kind_icon' }, { 'label', 'label_description', gap = 1 }, { 'source_name' } },
+              -- Show source name in the completion menu & also path
+              columns = {
+                { 'kind_icon', 'label', 'label_description', gap = 1 },
+                { 'kind', 'source_name', gap = 1 },
+              },
+              components = {
+                label_description = {
+                  width = { max = 50 },
+                },
+                source_name = {
+                  text = function(ctx)
+                    return '[' .. ctx.source_name .. ']'
+                  end,
+                },
+              },
             },
           },
         },

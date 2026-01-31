@@ -4,10 +4,7 @@
   services = {
     syncthing = {
       enable = true;
-      extraOptions = [
-        "--home=/home/tmx/.config/syncthing"
-        "--no-default-folder"
-      ];
+      extraOptions = [ "--home=/home/tmx/.config/syncthing" ];
     };
     redshift = {
       enable = true;
