@@ -1,4 +1,4 @@
-{ config, pkgs, lib }:
+{ config, pkgs, lib, ... }:
 
 let
   isLinux = pkgs.stdenv.isLinux;
