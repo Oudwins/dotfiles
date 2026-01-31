@@ -11,15 +11,15 @@ return {
       }
     end,
   },
-  -- Doens't work :(
-  -- {
-  --   'themaxmarchuk/tailwindcss-colors.nvim',
-  --   ft = { 'html', 'javascriptreact', 'typescriptreact', 'svelte', 'vue' },
-  --   'themaxmarchuk/tailwindcss-colors.nvim',
-  --   config = function()
-  --     require('tailwindcss-colors').setup()
-  --   end,
-  -- },
+  --
+  {
+    'themaxmarchuk/tailwindcss-colors.nvim',
+    ft = { 'html', 'javascriptreact', 'typescriptreact', 'svelte', 'vue' },
+    'themaxmarchuk/tailwindcss-colors.nvim',
+    config = function()
+      require('tailwindcss-colors').setup()
+    end,
+  },
   {
     -- `lazydev` configures Lua LSP for your Neovim config, runtime and plugins
     -- used for completion, annotations and signatures of Neovim apis
@@ -343,9 +343,7 @@ return {
         tailwindcss = {
           on_attach = function(client, bufnr)
             -- doesn't work :(
-            -- vim.schedule(function()
-            --   require('tailwindcss-colors').buf_attach(bufnr)
-            -- end)
+            require('tailwindcss-colors').buf_attach(bufnr)
           end,
           root_dir = util.root_pattern '.git',
           on_new_config = function(new_config, new_root_dir)
