@@ -313,7 +313,16 @@ require('lazy').setup({
         local builtin = require 'telescope.builtin'
         vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = '[S]earch [H]elp' })
         vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[S]earch [K]eymaps' })
-        vim.keymap.set('n', '<leader>sf', builtin.find_files, { desc = '[S]earch [F]iles' }) -- respects gitignore
+        vim.keymap.set('n', '<leader>sf', function()
+          builtin.find_files {
+            hidden = true,
+            no_ignore = false,
+            no_ignore_parent = false,
+            file_ignore_patterns = {
+              '^.git/',
+            },
+          }
+        end, { desc = '[S]earch [F]iles' }) -- respects gitignore
         vim.keymap.set('n', '<leader>sa', function()
           builtin.find_files {
             hidden = true,
