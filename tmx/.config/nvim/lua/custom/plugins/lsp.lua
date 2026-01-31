@@ -372,8 +372,8 @@ return {
         },
 
         -- NOTE: Python
-        -- basedpyright = {},
-        -- ruff = {},
+        basedpyright = {},
+        ruff = {},
         -- NOTE: terraform
         -- Warning ai generated, might not work
         terraformls = {
@@ -441,8 +441,6 @@ return {
           'stylua', -- Used to format Lua code
           'eslint_d',
           'prettierd',
-          'ruff',
-          -- 'nixfmt',
           -- LINTERS
           'jsonlint',
           'tflint',
