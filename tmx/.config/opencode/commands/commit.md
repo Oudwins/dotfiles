@@ -42,6 +42,7 @@ git diff:
 - Do not include any "Generated with Claude" messages
 - Do not add "Co-Authored-By" lines
 - Write commit messages as if the user wrote them
+- Do not ask for confirmation from the user to create the commits. Just create them
 
 ## Remember:
 - You have the full context of what was done in this session
