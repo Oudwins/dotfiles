@@ -70,13 +70,21 @@ vim.o.confirm = true
 -- Clear highlights on search when pressing <Esc> in normal mode
 --  See `:help hlsearch`
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
--- To test
-vim.keymap.set('n', '/', function()
-  vim.cmd 'nohlsearch'
-  return '/'
-end, { expr = true })
 
--- Diagnostic keymaps
+-- [[ Diagnostic Config + Diagnostic keymaps ]]
+vim.diagnostic.config {
+  update_in_insert = false,
+  severity_sort = true,
+  float = { border = 'rounded', source = 'if_many' },
+  underline = { severity = vim.diagnostic.severity.ERROR },
+
+  -- Can switch between these as you prefer
+  virtual_text = true, -- Text shows up at the end of the line
+  virtual_lines = false, -- Teest shows up underneath the line, with virtual lines
+
+  -- Auto open the float, so you can easily read the errors when jumping with `[d` and `]d`
+  jump = { float = true },
+}
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
 
 -- TODO remove this
@@ -88,7 +96,7 @@ vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagn
 -- or just use <C-\><C-n> to exit terminal mode
 vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
 
--- TIP: Disable arrow keys in normal mode
+-- Disable arrow keys in normal mode
 vim.keymap.set('n', '<left>', '<cmd>echo "Use h to move!!"<CR>')
 vim.keymap.set('n', '<right>', '<cmd>echo "Use l to move!!"<CR>')
 vim.keymap.set('n', '<up>', '<cmd>echo "Use k to move!!"<CR>')
@@ -148,7 +156,7 @@ rtp:prepend(lazypath)
 require('lazy').setup({
   -- Detect tabstop and shiftwidth automatically.
   -- Disabled: it can occasionally mis-detect and cause *insane* indent on `<CR>`.
-  { 'NMAC427/guess-indent.nvim', enabled = false },
+  { 'NMAC427/guess-indent.nvim', opts = {} },
 
   -- Use `opts = {}` to automatically pass options to a plugin's `setup()` function, forcing the plugin to be loaded.
   --
@@ -305,7 +313,6 @@ require('lazy').setup({
         }
 
         -- Enable Telescope extensions if they are installed
-        pcall(require('telescope').load_extension, 'file_browser')
         pcall(require('telescope').load_extension, 'fzf')
         pcall(require('telescope').load_extension, 'ui-select')
 

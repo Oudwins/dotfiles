@@ -47,6 +47,7 @@ return {
   {
     -- Main LSP Configuration
     'neovim/nvim-lspconfig',
+    event = 'VimEnter',
     dependencies = {
       -- Automatically install LSPs and related tools to stdpath for Neovim
       -- Mason must be loaded before its dependents so we need to set it up here.
@@ -434,20 +435,6 @@ return {
         },
       }
 
-      vim.api.nvim_create_autocmd('LspAttach', {
-        group = vim.api.nvim_create_augroup('custom-lsp-attach', { clear = true }),
-        callback = function(event)
-          local client = vim.lsp.get_client_by_id(event.data.client_id)
-          if not client then
-            return
-          end
-          local server = servers[client.name]
-          if server and server.on_attach then
-            server.on_attach(client, event.buf)
-          end
-        end,
-      })
-
       -- Ensure the servers and tools above are installed
       --
       -- To check the current status of installed tools and/or manually install
@@ -464,37 +451,70 @@ return {
 
       -- Use mason-tool-installer for non-LSP tools (formatters, linters)
       -- mason-lspconfig handles LSP server installation with proper name translation
+      local ensure_installed = vim.tbl_keys(servers or {})
+      vim.list_extend(ensure_installed, {
+
+        -- FORMATTERS
+        'stylua', -- Used to format Lua code
+        'prettierd',
+        -- LINTERS
+        'jsonlint',
+        'tflint',
+        'hadolint',
+      })
       require('mason-tool-installer').setup {
-        ensure_installed = {
-          -- FORMATTERS
-          'stylua', -- Used to format Lua code
-          'prettierd',
-          -- LINTERS
-          'jsonlint',
-          'tflint',
-          'hadolint',
-        },
+        ensure_installed = ensure_installed,
       }
 
-      -- mason-lspconfig handles lspconfig -> mason name translation internally
-      require('mason-lspconfig').setup {
-        ensure_installed = vim.tbl_keys(servers or {}),
-        automatic_installation = false,
-        handlers = {
-          function(server_name)
-            local server = servers[server_name]
-            -- avoid setting up unconfigured servers
-            if not server then
+      for name, server in pairs(servers) do
+        server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
+        vim.lsp.config(name, server)
+        vim.lsp.enable(name)
+      end
+
+      -- Special Lua Config, as recommended by neovim help docs
+      vim.lsp.config('lua_ls', {
+        on_init = function(client)
+          if client.workspace_folders then
+            local path = client.workspace_folders[1].name
+            if path ~= vim.fn.stdpath 'config' and (vim.uv.fs_stat(path .. '/.luarc.json') or vim.uv.fs_stat(path .. '/.luarc.jsonc')) then
               return
             end
-            -- This handles overriding only values explicitly passed
-            -- by the server configuration above. Useful when disabling
-            -- certain features of an LSP (for example, turning off formatting for ts_ls)
-            server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
-            require('lspconfig')[server_name].setup(server)
-          end,
+          end
+
+          client.config.settings.Lua = vim.tbl_deep_extend('force', client.config.settings.Lua, {
+            runtime = {
+              version = 'LuaJIT',
+              path = { 'lua/?.lua', 'lua/?/init.lua' },
+            },
+            workspace = {
+              checkThirdParty = false,
+              -- NOTE: this is a lot slower and will cause issues when working on your own configuration.
+              --  See https://github.com/neovim/nvim-lspconfig/issues/3189
+              library = vim.api.nvim_get_runtime_file('', true),
+            },
+          })
+        end,
+        settings = {
+          Lua = {},
         },
-      }
+      })
+      vim.lsp.enable 'lua_ls'
+
+      -- Handles on attach functions in lsp's configs
+      vim.api.nvim_create_autocmd('LspAttach', {
+        group = vim.api.nvim_create_augroup('custom-lsp-attach', { clear = true }),
+        callback = function(event)
+          local client = vim.lsp.get_client_by_id(event.data.client_id)
+          if not client then
+            return
+          end
+          local server = servers[client.name]
+          if server and server.on_attach then
+            server.on_attach(client, event.buf)
+          end
+        end,
+      })
     end,
   },
 }

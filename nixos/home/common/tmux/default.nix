@@ -1,10 +1,4 @@
-{
-  config,
-  pkgs,
-  lib,
-  inputs,
-  ...
-}@args:
+{ config, pkgs, lib, inputs, ... }@args:
 
 let
   # see: https://github.com/NixOS/nixpkgs/blob/fe2ecaf706a5907b5e54d979fbde4924d84b65fc/pkgs/misc/tmux-plugins/default.nix#L15
@@ -31,16 +25,11 @@ let
     ".local/share/droner/worktrees"
   ];
 
-  projectParentDirsStr = builtins.concatStringsSep "," (
-    map (dir: "${home}/${dir}") projectParentDirs
-  );
-in
-{
+  projectParentDirsStr = builtins.concatStringsSep ","
+    (map (dir: "${home}/${dir}") projectParentDirs);
+in {
   # required by sessionx plugin
-  home.packages = with pkgs; [
-    fzf
-    bat
-  ];
+  home.packages = with pkgs; [ fzf bat ];
 
   programs.tmux = {
     enable = true;
@@ -78,6 +67,8 @@ in
       ###
       # Key Bindings
       ###
+      # vim bindings
+      set -g mode-keys vi
       # Sets alt+{n} for switching windows
       bind-key -n M-1 select-window -t :1
       bind-key -n M-2 select-window -t :2
