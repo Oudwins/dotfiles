@@ -320,6 +320,15 @@ require('lazy').setup({
             no_ignore_parent = false,
             file_ignore_patterns = {
               '^.git/',
+              '^node_modules/',
+              '^.next/',
+              '^dist/',
+              '^build/',
+              '^__pycache__/',
+              '^*.pyc/',
+              '^.pytest_cache/',
+              '^.venv/',
+              '^venv/',
             },
           }
         end, { desc = '[S]earch [F]iles' }) -- respects gitignore
