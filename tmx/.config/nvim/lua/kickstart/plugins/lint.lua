@@ -43,6 +43,7 @@ return {
       lint.linters_by_ft['rst'] = nil
       lint.linters_by_ft['ruby'] = nil
       lint.linters_by_ft['text'] = nil
+      lint.linters_by_ft['markdown'] = nil
       -- Avoid ENOENT errors when external linters aren't installed.
       local function enable_linter(key, value)
         if vim.fn.executable(value) == 1 then
@@ -52,7 +53,7 @@ return {
         end
       end
 
-      enable_linter('markdown', 'markdownlint')
+      -- enable_linter('markdown', 'markdownlint')
       enable_linter('dockerfile', 'hadolint')
       enable_linter('json', 'jsonlint')
       enable_linter('terraform', 'tflint')
