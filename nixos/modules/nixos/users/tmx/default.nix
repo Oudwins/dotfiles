@@ -17,10 +17,9 @@
       "docker"
       "video"
       "davfs2"
+      "ydotool"
+      "uinput"
     ];
-    packages = with pkgs; [
-      nitrogen
-      pkgs.nixfmt-rfc-style
-    ];
+    packages = with pkgs; [ nitrogen pkgs.nixfmt-rfc-style ];
   };
 }

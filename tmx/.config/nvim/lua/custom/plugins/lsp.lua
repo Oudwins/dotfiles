@@ -271,7 +271,23 @@ return {
       local util = require 'lspconfig.util'
       local servers = {
         -- NOTE: see `:help lspconfig-all` for a list of all the pre-configured LSP Servers
-        gopls = {},
+        gopls = {
+          -- Diffview uses virtual buffers with a `diffview://...` URI.
+          -- gopls only supports `file://` URIs, so we avoid attaching in diffview buffers.
+          --
+          -- Note: `vim.lsp.config()` expects `root_dir` to be a callback-style function.
+          root_dir = function(bufnr, on_dir)
+            local fname = vim.api.nvim_buf_get_name(bufnr)
+            if fname == '' or fname:match '^diffview://' then
+              return
+            end
+
+            local root = util.root_pattern('go.work', 'go.mod', '.git')(fname)
+            if root then
+              on_dir(root)
+            end
+          end,
+        },
         -- md lsps. Didn't like it so removed for now
         -- marksman = {},
         -- rumdl = {}, -- not really lsp. linter formatter
@@ -284,58 +300,58 @@ return {
         -- NOTE: WEB
         --
         -- tsgo. Works great but doesn't have code actions
-        -- tsgo = {
-        --   cmd = { 'tsgo', '--lsp', '--stdio' },
-        --   filetypes = {
-        --     'javascript',
-        --     'javascriptreact',
-        --     'javascript.jsx',
-        --     'typescript',
-        --     'typescriptreact',
-        --     'typescript.tsx',
-        --   },
-        --   root_markers = {
-        --     'tsconfig.json',
-        --     'jsconfig.json',
-        --     'package.json',
-        --     '.git',
-        --     'tsconfig.base.json',
-        --   },
-        -- },
-        -- typescript alternative to ts_ls
-        vtsls = {
-          -- on_attach = function(client)
-          --   client.server_capabilities.documentFormattingProvider = false
-          --   client.server_capabilities.documentRangeFormattingProvider = false
-          -- end,
-          settings = {
-            complete_function_calls = true,
-            vtsls = {
-              enableMoveToFileCodeAction = true,
-              autoUseWorkspaceTsdk = true,
-              experimental = {
-                maxInlayHintLength = 30,
-                completion = {
-                  enableServerSideFuzzyMatch = true,
-                },
-              },
-            },
-            typescript = {
-              updateImportsOnFileMove = { enabled = 'always' },
-              suggest = {
-                completeFunctionCalls = true,
-              },
-              inlayHints = {
-                enumMemberValues = { enabled = true },
-                functionLikeReturnTypes = { enabled = true },
-                parameterNames = { enabled = 'literals' },
-                parameterTypes = { enabled = true },
-                propertyDeclarationTypes = { enabled = true },
-                variableTypes = { enabled = false },
-              },
-            },
+        tsgo = {
+          cmd = { 'tsgo', '--lsp', '--stdio' },
+          filetypes = {
+            'javascript',
+            'javascriptreact',
+            'javascript.jsx',
+            'typescript',
+            'typescriptreact',
+            'typescript.tsx',
+          },
+          root_markers = {
+            'tsconfig.json',
+            'jsconfig.json',
+            'package.json',
+            '.git',
+            'tsconfig.base.json',
           },
         },
+        -- typescript alternative to ts_ls. Disabling in favor of tsgo for now
+        -- vtsls = {
+        --   -- on_attach = function(client)
+        --   --   client.server_capabilities.documentFormattingProvider = false
+        --   --   client.server_capabilities.documentRangeFormattingProvider = false
+        --   -- end,
+        --   settings = {
+        --     complete_function_calls = true,
+        --     vtsls = {
+        --       enableMoveToFileCodeAction = true,
+        --       autoUseWorkspaceTsdk = true,
+        --       experimental = {
+        --         maxInlayHintLength = 30,
+        --         completion = {
+        --           enableServerSideFuzzyMatch = true,
+        --         },
+        --       },
+        --     },
+        --     typescript = {
+        --       updateImportsOnFileMove = { enabled = 'always' },
+        --       suggest = {
+        --         completeFunctionCalls = true,
+        --       },
+        --       inlayHints = {
+        --         enumMemberValues = { enabled = true },
+        --         functionLikeReturnTypes = { enabled = true },
+        --         parameterNames = { enabled = 'literals' },
+        --         parameterTypes = { enabled = true },
+        --         propertyDeclarationTypes = { enabled = true },
+        --         variableTypes = { enabled = false },
+        --       },
+        --     },
+        --   },
+        -- },
         emmet_language_server = {
           filetypes = { 'html', 'css', 'javascriptreact', 'typescriptreact' },
         },

@@ -422,6 +422,7 @@ require('lazy').setup({
           python = { 'ruff' },
           nix = { 'nixfmt' },
           -- runs one then the other
+          json = { 'prettierd' },
           javascript = { 'prettierd' },
           typescript = { 'prettierd' },
           javascriptreact = { 'prettierd' },
