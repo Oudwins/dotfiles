@@ -423,6 +423,7 @@ require('lazy').setup({
           nix = { 'nixfmt' },
           -- runs one then the other
           json = { 'prettierd' },
+          jsonc = { 'prettierd' },
           javascript = { 'prettierd' },
           typescript = { 'prettierd' },
           javascriptreact = { 'prettierd' },
@@ -666,6 +667,12 @@ require('lazy').setup({
         auto_install = true,
         highlight = {
           enable = true,
+          -- WORKAROUND(2026-02-22): Neovim 0.11.x can throw
+          -- "Index out of bounds" from the Tree-sitter highlighter when
+          -- editing fenced code blocks inside markdown (often with injected
+          -- languages like ```bash). Disable TS highlighting for markdown for
+          -- now; remove this once you upgrade Neovim/parsers and it's stable.
+          disable = { 'markdown', 'markdown_inline' },
           -- Some languages depend on vim's regex highlighting system (such as Ruby) for indent rules.
           --  If you are experiencing weird indenting issues, add the language to
           --  the list of additional_vim_regex_highlighting and disabled languages for indent.

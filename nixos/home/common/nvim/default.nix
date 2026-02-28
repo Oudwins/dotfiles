@@ -52,6 +52,21 @@ in {
     "typescript-go"
   ] ++ lib.optionals isLinux [ "xclip" ];
 
+  # This makes it so telescope never ignores env files in search
+  home.file.".ignore" = {
+    text = ''
+      !.env*
+      !*/.env*
+    '';
+  };
+  # same as above but for ripgrep just in case
+  home.file.".rgignore" = {
+    text = ''
+      !.env*
+      !*/.env*
+    '';
+  };
+
   home.sessionVariables = lib.mkMerge [
     { CODE_EDITOR = "alacritty -e nvim"; }
     (lib.mkIf isLinux {

@@ -22,7 +22,7 @@ let
     "projects"
     ".config"
     "Documents"
-    ".local/share/droner/worktrees"
+    ".droner/worktrees"
   ];
 
   projectParentDirsStr = builtins.concatStringsSep ","

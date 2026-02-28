@@ -1,0 +1,42 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    // https://help.figma.com/hc/en-us/articles/32132100833559-Guide-to-the-Figma-MCP-server
+    // "figma": {
+    //     "type": "remote",
+    //     "url": "https://mcp.figma.com/mcp",
+    //     "timeout": 60000,
+    //     "oauth": {},
+    //   },
+    // Linear mcp for tickets
+    // context7 for up to date docs
+    // sentry mcp for debugging production
+  },
+  "lsp": {
+    "go": {
+      "disabled": false,
+      "command": ["gopls"],
+      "extensions": [".go"],
+    },
+    "typescript": {
+      "disabled": false,
+      "command": ["typescript-language-server", "--stdio"],
+      "extensions": [".ts", ".tsx"],
+    },
+  },
+  "provider": {
+    "vertex_anthropic": {
+      "npm": "@ai-sdk/google-vertex/anthropic",
+      "name": "Google Vertex Anthropic",
+      "options": {
+        "project": "{env:GOOGLE_CLOUD_PROJECT}",
+        "location": "{env:VERTEX_LOCATION}",
+      },
+      "models": {
+        "claude-opus-4-5": {
+          "id": "claude-opus-4-5@20251101",
+        },
+      },
+    },
+  },
+}
