@@ -1,5 +1,18 @@
 {
   "$schema": "https://opencode.ai/config.json",
+  "model": "openai/gpt-5.4",
+  // plugins
+  // not sure what this one is
+  // https://github.com/obra/superpowers/blob/main/docs/README.opencode.md
+  // https://github.com/spoons-and-mirrors/subtask2
+  // https://github.com/different-ai/opencode-scheduler
+  "plugin": [
+    // smart context management
+    // https://github.com/Opencode-DCP/opencode-dynamic-context-pruning
+    "@tarquinen/opencode-dcp@latest",
+    // Adds native web search
+    "opencode-websearch-cited@1.2.0",
+  ],
   "mcp": {
     // https://help.figma.com/hc/en-us/articles/32132100833559-Guide-to-the-Figma-MCP-server
     // "figma": {
@@ -25,6 +38,17 @@
     },
   },
   "provider": {
+    "openai": {
+      "options": {
+        // required for web search plugin
+        "websearch_cited": {
+          "model": "gpt-5.4",
+        },
+      },
+      "models": {
+        "gpt-5.4": {},
+      },
+    },
     "vertex_anthropic": {
       "npm": "@ai-sdk/google-vertex/anthropic",
       "name": "Google Vertex Anthropic",
@@ -39,4 +63,5 @@
       },
     },
   },
+  "agent": {},
 }

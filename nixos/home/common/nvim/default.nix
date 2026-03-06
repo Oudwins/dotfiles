@@ -8,6 +8,8 @@ let
 in {
   home.packages = with pkgs;
     [
+      # agents
+      gh # used to auto create PRs
       # nvim
       neovimPkg
       git
