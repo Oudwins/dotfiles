@@ -1,7 +1,7 @@
 tmx/.config/sops/**
 **/.direnv/
-tmx/.local/share
-tmx/.local/state
+tmx/.local/*
+!tmx/.local/bin/dscripts
 tmx/.config/configstore
 tmx/.config/gcloud
 tmx/.config/firebase
