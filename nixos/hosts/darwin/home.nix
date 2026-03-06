@@ -16,7 +16,8 @@
     home = config.home.homeDirectory;
     projectDirs = [ "Documents" "Documents2" ".droner/worktrees" ];
   in {
-    XDG_CONFIG_HOME = home;
+    OPENCODE_CONFIG = "${home}/.config/opencode/opencode.jsonc";
+    OPENCODE_CONFIG_DIR = "${home}/.config/opencode";
     # Opencode vertex ai
     GOOGLE_CLOUD_PROJECT = "xi-playground";
     GOOGLE_APPLICATION_CREDENTIALS =

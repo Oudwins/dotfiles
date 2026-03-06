@@ -64,4 +64,14 @@
     },
   },
   "agent": {},
+  "permission": {
+    "read": {
+      "*": "allow",
+      "*.env": "deny",
+      "*.env.*": "deny",
+      "*.env.example": "allow",
+    },
+    "doom_loop": "ask",
+    "external_directory": "allow",
+  },
 }
