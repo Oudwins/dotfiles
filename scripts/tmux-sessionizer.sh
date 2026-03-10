@@ -42,6 +42,19 @@ collect_candidates() {
     done < <(collect_project_paths)
 }
 
+create_project_session() {
+    local session_name=$1
+    local project_path=$2
+    local detached_flag=$3
+    local third_window_id
+
+    tmux new-session "$detached_flag" -s "$session_name" -c "$project_path"
+    tmux new-window -t "$session_name" -c "$project_path" > /dev/null
+    third_window_id=$(tmux new-window -P -F '#{window_id}' -t "$session_name" -c "$project_path")
+    tmux split-window -h -t "$third_window_id" -c "$project_path"
+    tmux select-window -t "$session_name":1
+}
+
 if [[ $# -eq 1 ]]; then
     selected_type=path
     selected=$1
@@ -68,12 +81,12 @@ selected_name=$(basename "$selected" | tr ' .' '__')
 tmux_running=$(pgrep tmux)
 
 if [[ -z $TMUX ]] && [[ -z $tmux_running ]]; then
-    tmux new-session -s "$selected_name" -c "$selected"
+    create_project_session "$selected_name" "$selected" ""
     exit 0
 fi
 
 if ! tmux has-session -t="$selected_name" 2> /dev/null; then
-    tmux new-session -ds "$selected_name" -c "$selected"
+    create_project_session "$selected_name" "$selected" "-d"
 fi
 
 if [[ -z $TMUX ]]; then
