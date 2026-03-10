@@ -28,13 +28,39 @@ collect_project_paths() {
     printf '%s\n' "${collected_paths[@]}" | sort -u
 }
 
+collect_tmux_sessions() {
+    tmux list-sessions -F $'session\t#S' 2> /dev/null || true
+}
+
+collect_candidates() {
+    local path
+
+    collect_tmux_sessions
+    while IFS= read -r path; do
+        [[ -n $path ]] || continue
+        printf 'path\t%s\n' "$path"
+    done < <(collect_project_paths)
+}
+
 if [[ $# -eq 1 ]]; then
+    selected_type=path
     selected=$1
 else
-    selected=$(collect_project_paths | fzf)
+    selection=$(collect_candidates | fzf --delimiter=$'\t' --with-nth=2 --tiebreak=index)
+    selected_type=${selection%%$'\t'*}
+    selected=${selection#*$'\t'}
 fi
 
 if [[ -z $selected ]]; then
+    exit 0
+fi
+
+if [[ $selected_type == session ]]; then
+    if [[ -z $TMUX ]]; then
+        tmux attach -t "$selected"
+    else
+        tmux switch-client -t "$selected"
+    fi
     exit 0
 fi
 
