@@ -14,13 +14,13 @@
 
   home.sessionVariables = let
     home = config.home.homeDirectory;
-    projectDirs = [ "open_source" "work" "personal" "projects" ];
-    obsidianDirs = [ "notes" ];
+    projectDirs = [ "Documents" "Documents2" ];
   in {
     XDG_CONFIG_HOME = home;
     # Opencode vertex ai
     GOOGLE_CLOUD_PROJECT = "xi-playground";
-    GOOGLE_APPLICATION_CREDENTIALS = "/Users/tmx/.config/gcloud/application_default_credentials.json"; 
+    GOOGLE_APPLICATION_CREDENTIALS =
+      "/Users/tmx/.config/gcloud/application_default_credentials.json";
     VERTEX_LOCATION = "us-east5";
     # CLAUDE CODE + VERTEX AI
     CLAUDE_CODE_USE_VERTEX = 1;
@@ -28,15 +28,11 @@
     ANTHROPIC_VERTEX_PROJECT_ID = "xi-playground";
     # TERMINAL = "alacritty";
     EDITOR = "nvim";
-    # CODE_EDITOR = "nvim";
     # this creates a string of "/home/tmx/projects:/home/tmx/{other_project_dir}"
     # This is used by a rofi script to open the code editor in that project
-    # CODE_PROJECT_DIRS = builtins.concatStringsSep ":" (map (dir: "${home}/${dir}") projectDirs);
-    # OBSIDIAN_VAULT_DIRS = builtins.concatStringsSep ":" (map (dir: "${home}/${dir}") obsidianDirs);
-    # LAUNCHER = "rofi -show drun";
-    # DMENU = "rofi -dmenu";
-    # SCREENSHOT = "flameshot gui";
-    # temporary fix for qbittorrent
+    CODE_PROJECTS_PARENT_DIRS =
+      builtins.concatStringsSep ":" (map (dir: "${home}/${dir}") projectDirs);
+    CODE_PROJECTS = "";
   };
 
   # Let Home Manager install and manage itself.
