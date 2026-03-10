@@ -15,8 +15,14 @@
 
   home.sessionVariables = let
     home = config.home.homeDirectory;
-    projectParentDirs =
-      [ "open_source" "work" "personal" "projects" ".config" ];
+    projectParentDirs = [
+      "open_source"
+      "work"
+      "personal"
+      "projects"
+      ".config"
+      ".droner/worktrees"
+    ];
     projects = [ "dotfiles" ];
     obsidianDirs = [ "notes" ];
   in {

@@ -14,7 +14,7 @@
 
   home.sessionVariables = let
     home = config.home.homeDirectory;
-    projectDirs = [ "Documents" "Documents2" ];
+    projectDirs = [ "Documents" "Documents2" ".droner/worktrees" ];
   in {
     XDG_CONFIG_HOME = home;
     # Opencode vertex ai
