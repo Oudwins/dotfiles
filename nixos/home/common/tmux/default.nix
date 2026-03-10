@@ -1,4 +1,4 @@
-{ config, pkgs, lib, inputs, ... }@args:
+{ config, pkgs, ... }:
 
 let
   # see: https://github.com/NixOS/nixpkgs/blob/fe2ecaf706a5907b5e54d979fbde4924d84b65fc/pkgs/misc/tmux-plugins/default.nix#L15
@@ -15,21 +15,9 @@ let
   };
 
   home = config.home.homeDirectory;
-  projectParentDirs = [
-    "open_source"
-    "work"
-    "personal"
-    "projects"
-    ".config"
-    "Documents"
-    ".droner/worktrees"
-  ];
-
-  projectParentDirsStr = builtins.concatStringsSep ","
-    (map (dir: "${home}/${dir}") projectParentDirs);
-in {
-  # required by sessionx plugin
-  home.packages = with pkgs; [ fzf bat ];
+in
+{
+  home.packages = with pkgs; [ fzf ];
 
   programs.tmux = {
     enable = true;
@@ -48,16 +36,6 @@ in {
       pkgs.tmuxPlugins.yank
       pkgs.tmuxPlugins.resurrect
       pkgs.tmuxPlugins.continuum
-      {
-        plugin = inputs.tmux-sessionx.packages.${pkgs.system}.default;
-        extraConfig = ''
-          set -g @sessionx-custom-paths '${projectParentDirsStr}'
-          set -g @sessionx-custom-paths-subdirectories 'true'
-          set -g @sessionx-fzf-builtin-tmux 'on'
-          set -g @sessionx-bind 'o'
-          set -g @sessionx-fzf-builtin-tmux 'off'
-        '';
-      }
     ];
     extraConfig = ''
       # allows mouse support
@@ -92,6 +70,8 @@ in {
       # set <leader>r to reload config
       unbind R
       bind R source-file ~/.config/tmux/tmux.conf \; display-message "Config reloaded..."
+      # open tmux sessionizer
+      bind-key -n C-o display-popup -E "${home}/dotfiles/scripts/tmux-sessionizer.sh"
       # set <leader>n to create droner job
       bind a run-shell "~/.config/tmux/droner-create.sh"
 
