@@ -15,12 +15,16 @@
   ],
   "mcp": {
     // https://help.figma.com/hc/en-us/articles/32132100833559-Guide-to-the-Figma-MCP-server
-    // "figma": {
-    //     "type": "remote",
-    //     "url": "https://mcp.figma.com/mcp",
-    //     "timeout": 60000,
-    //     "oauth": {},
-    //   },
+    "figma": {
+      "enabled": true,
+      "type": "remote",
+      "url": "https://mcp.figma.com/mcp",
+      "timeout": 60000,
+      "oauth": {
+        "clientId": "YrhrOrJCDyNE8SOw7x3jwr",
+        "clientSecret": "NrSeGMWQLKBtiGiqqwf862ZsiMr44O",
+      },
+    },
     // Linear mcp for tickets
     // context7 for up to date docs
     // sentry mcp for debugging production

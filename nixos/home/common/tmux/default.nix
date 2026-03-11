@@ -71,7 +71,7 @@ in
       unbind R
       bind R source-file ~/.config/tmux/tmux.conf \; display-message "Config reloaded..."
       # open tmux sessionizer
-      bind-key -n C-o display-popup -E "${home}/dotfiles/scripts/tmux-sessionizer.sh"
+      bind-key -n M-o display-popup -E "${home}/dotfiles/scripts/tmux-sessionizer.sh"
       # set <leader>n to create droner job
       bind a run-shell "~/.config/tmux/droner-create.sh"
 

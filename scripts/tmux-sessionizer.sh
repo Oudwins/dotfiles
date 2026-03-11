@@ -45,10 +45,9 @@ collect_candidates() {
 create_project_session() {
     local session_name=$1
     local project_path=$2
-    local detached_flag=$3
     local third_window_id
 
-    tmux new-session "$detached_flag" -s "$session_name" -c "$project_path"
+    tmux new-session -d -s "$session_name" -c "$project_path"
     tmux new-window -t "$session_name" -c "$project_path" > /dev/null
     third_window_id=$(tmux new-window -P -F '#{window_id}' -t "$session_name" -c "$project_path")
     tmux split-window -h -t "$third_window_id" -c "$project_path"
@@ -70,7 +69,7 @@ fi
 
 if [[ $selected_type == session ]]; then
     if [[ -z $TMUX ]]; then
-        tmux attach -t "$selected"
+        tmux attach-session -t "$selected"
     else
         tmux switch-client -t "$selected"
     fi
@@ -78,19 +77,13 @@ if [[ $selected_type == session ]]; then
 fi
 
 selected_name=$(basename "$selected" | tr ' .' '__')
-tmux_running=$(pgrep tmux)
-
-if [[ -z $TMUX ]] && [[ -z $tmux_running ]]; then
-    create_project_session "$selected_name" "$selected" ""
-    exit 0
-fi
 
 if ! tmux has-session -t="$selected_name" 2> /dev/null; then
-    create_project_session "$selected_name" "$selected" "-d"
+    create_project_session "$selected_name" "$selected"
 fi
 
 if [[ -z $TMUX ]]; then
-    tmux attach -t "$selected_name"
+    tmux attach-session -t "$selected_name"
 else
     tmux switch-client -t "$selected_name"
 fi
