@@ -14,7 +14,7 @@
       tmux_sessionizer_widget() {
         "${config.home.homeDirectory}/dotfiles/scripts/tmux-sessionizer.sh"
       }
-      bind -x '"\eo":tmux_sessionizer_widget'
+      bind -x '"\ek":tmux_sessionizer_widget'
       # Adds go to path
       export PATH="$PATH:${config.home.homeDirectory}/go/bin:${config.home.homeDirectory}/.npm/bin"
 
@@ -48,7 +48,7 @@
         zle reset-prompt
       }
       zle -N tmux_sessionizer_widget
-      bindkey '^[o' tmux_sessionizer_widget
+      bindkey '^[k' tmux_sessionizer_widget
       # Adds go to path
       export PATH="$PATH:${config.home.homeDirectory}/go/bin:${config.home.homeDirectory}/.npm/bin"
 
@@ -71,5 +71,7 @@
     nix-direnv.enable = true;
   };
 
-  programs.starship = { enable = true; };
+  programs.starship = {
+    enable = true;
+  };
 }
