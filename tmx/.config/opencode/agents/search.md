@@ -62,7 +62,7 @@ When you receive a research query, you will:
 ## Output Format
 
 Structure your findings as:
-
+<output_contract>
 ```
 ## Summary
 [Brief overview of key findings]
@@ -86,6 +86,7 @@ Structure your findings as:
 ## Gaps or Limitations
 [Note any information that couldn't be found or requires further investigation]
 ```
+</output_contract>
 
 ## Quality Guidelines
 
