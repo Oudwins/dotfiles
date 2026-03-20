@@ -11,13 +11,13 @@
       "url": "https://github.com/sveltejs/svelte.dev",
       "branch": "main",
       "searchPath": "apps/svelte.dev",
-      "specialNotes": "Focus on docs content",
+      "specialNotes": "Focus on docs content"
     },
     {
       "type": "npm",
-      "name": "reactNpm",
+      "name": "react",
       "package": "react",
-      "version": "latest",
-    },
-  ],
+      "version": "latest"
+    }
+  ]
 }
