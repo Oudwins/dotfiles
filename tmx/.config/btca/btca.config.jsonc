@@ -1,0 +1,25 @@
+{
+  "$schema": "https://btca.dev/btca.schema.json",
+  "provider": "opencode",
+  "model": "openai/gpt-5.4-mini",
+  "maxSteps": 40,
+  "dataDirectory": ".btca",
+  "resources": [
+    {
+      "name": "tailwindcss",
+      "specialNotes": "This is the tailwindcss docs website repo, not the actual tailwindcss repo. Use the docs to answer questions about tailwindcss.",
+      "type": "git",
+      "url": "https://github.com/tailwindlabs/tailwindcss.com",
+      "searchPath": "src/docs",
+      "branch": "main",
+    },
+    {
+      "type": "git",
+      "name": "nextjs",
+      "url": "https://github.com/vercel/next.js",
+      "branch": "canary",
+      "searchPath": "docs",
+      "specialNotes": "These are the docs for the next.js framework, not the actual next.js repo. Use the docs to answer questions about next.js.",
+    },
+  ],
+}
