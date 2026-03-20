@@ -3,6 +3,7 @@
   # We don't install opencode, claude code or codex here because these packages are updated a lot so would prefer to just install manually
 
   home.packages = with pkgs; [
+    jq
     bun
     btca
     beads
