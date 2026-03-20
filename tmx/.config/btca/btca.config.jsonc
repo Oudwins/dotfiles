@@ -1,0 +1,23 @@
+{
+  "$schema": "https://btca.dev/btca.schema.json",
+  "provider": "opencode",
+  "model": "openai/gpt-5.4-mini",
+  "maxSteps": 40,
+  "dataDirectory": ".btca",
+  "resources": [
+    {
+      "type": "git",
+      "name": "svelte",
+      "url": "https://github.com/sveltejs/svelte.dev",
+      "branch": "main",
+      "searchPath": "apps/svelte.dev",
+      "specialNotes": "Focus on docs content",
+    },
+    {
+      "type": "npm",
+      "name": "reactNpm",
+      "package": "react",
+      "version": "latest",
+    },
+  ],
+}
