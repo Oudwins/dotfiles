@@ -18,6 +18,15 @@
       "skillFolderHash": "78b2029cbf4a74fa798c97ea27bc02bdeb2e3237",
       "installedAt": "2026-03-17T20:41:46.828Z",
       "updatedAt": "2026-03-17T20:41:46.828Z"
+    },
+    "btca-cli": {
+      "source": "davis7dotsh/better-context",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/davis7dotsh/better-context.git",
+      "skillPath": "skills/btca-cli/SKILL.md",
+      "skillFolderHash": "47a9ec57ae3ce030be4180ae39f2a1c0e992c5b0",
+      "installedAt": "2026-03-20T07:04:05.045Z",
+      "updatedAt": "2026-03-20T07:04:05.045Z"
     }
   },
   "dismissed": {
