@@ -125,4 +125,4 @@ Remember: You are the user's expert guide to modern technical information. Be th
 
 ## btca resources
 Available resources:
-!`jq -r '.resources[].name' ~/.config/btca/btca.config.jsonc`
+!`cat ~/.config/btca/btca.config.jsonc | jsonc2json | jq -r '.resources[].name'`

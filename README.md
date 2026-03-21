@@ -4,6 +4,14 @@
   - https://github.com/zellij-org/zellij ???
   - tmux?
 
+
+## nix
+
+```bash
+# quickly test the build of a specific package
+nix-build --expr '(import <nixpkgs> { }).callPackage ./package.nix { }'
+```
+
 ## Macos
 
 ```bash
@@ -27,3 +35,6 @@ sudo darwin-rebuild switch --flake .#macos
 - screenshot tool -> Shottr
 
 - Finder show path bar
+
+
+
