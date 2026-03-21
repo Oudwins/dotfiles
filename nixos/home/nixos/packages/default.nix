@@ -9,7 +9,7 @@
     xclip
     tesseract4
     udiskie
-    alacritty
+    ghostty
     arandr
     flameshot
     gparted
@@ -43,5 +43,6 @@
     jdk21
     maven
     mpv-unwrapped
+    masterpdfeditor4
   ];
 }

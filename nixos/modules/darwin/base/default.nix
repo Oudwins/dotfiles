@@ -8,9 +8,7 @@
 
   programs.zsh.enable = true;
 
-  fonts.packages = with pkgs; [
-    nerd-fonts.jetbrains-mono
-  ];
+  fonts.packages = with pkgs; [ nerd-fonts.jetbrains-mono ];
 
   system.defaults = {
     dock = {
@@ -20,21 +18,13 @@
       expose-animation-duration = 0.0;
       launchanim = false;
       persistent-apps = [
-        {
-          app = "${pkgs.alacritty}/Applications/Alacritty.app";
-        }
-        {
-          app = "${pkgs.google-chrome}/Applications/Google Chrome.app";
-        }
-        {
-          app = "${pkgs.firefox}/Applications/Firefox.app";
-        }
-        {
-          app = "/Applications/cursor.app";
-        }
-        {
-          app = "/Applications/Telegram.app";
-        }
+        # {
+        #   app = "${pkgs.alacritty}/Applications/Alacritty.app";
+        # }
+        { app = "${pkgs.google-chrome}/Applications/Google Chrome.app"; }
+        { app = "${pkgs.firefox}/Applications/Firefox.app"; }
+        { app = "/Applications/cursor.app"; }
+        { app = "/Applications/Telegram.app"; }
       ];
     };
     NSGlobalDomain = {

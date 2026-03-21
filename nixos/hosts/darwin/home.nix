@@ -28,7 +28,7 @@
     CLAUDE_CODE_USE_VERTEX = 1;
     CLOUD_ML_REGION = "us-east5";
     ANTHROPIC_VERTEX_PROJECT_ID = "xi-playground";
-    # TERMINAL = "alacritty";
+    TERMINAL = "ghostty";
     EDITOR = "nvim";
     # this creates a string of "/home/tmx/projects:/home/tmx/{other_project_dir}"
     # This is used by a rofi script to open the code editor in that project

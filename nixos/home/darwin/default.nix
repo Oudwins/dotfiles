@@ -1,9 +1,8 @@
-{ ... }:
-{
+{ ... }: {
   imports = [
     ../common
     ./aerospace
-    ./alacritty
+    # ./alacritty
     ./packages
     ./shell
   ];
