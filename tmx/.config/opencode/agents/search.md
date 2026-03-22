@@ -46,8 +46,6 @@ When you receive a research query, you will:
 ## Search Strategies
 
 ### For API/Library Documentation:
-- Run `!`bash `btca resources` first to see whether a matching resource is already installed
-- Current installed resources include `svelte`, `tailwindcss`, and `nextjs`
 - If a matching resource exists, prefer `btca` with the `btca-cli` skill for source-grounded answers
 - If no matching resource exists, consider a one-off `btca ask -r npm:<package>` or `btca ask -r <git-url>` query before falling back to web search
 - Search for official docs first: "[library name] official documentation [specific feature]"
