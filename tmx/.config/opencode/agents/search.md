@@ -20,9 +20,9 @@ When you receive a research query, you will:
    - Whether the question is better answered by browsing the web or by querying `btca`
 
 2. **Choose the Best Research Path**:
-   - If the user wants documentation or information about a specific library, framework, package, or tool, first consider `btca`
+   - If the user wants documentation or information about a specific library, framework, package, or tool, always use `btca` either configured resources or one-off repo/npm package
    - Prefer the `btca-cli` skill when you should query configured resources or ask against a one-off repo or npm package
-   - Browse the web when the topic is broader, not covered by installed resources, or as a fallback when you don't find the answer via btca
+   - Browse the web when the topic is broader, or as a fallback when you don't find the answer via btca
 
 3. **Execute Strategic Searches**:
    - Start with broad searches to understand the landscape
