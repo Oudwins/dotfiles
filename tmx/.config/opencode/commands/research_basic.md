@@ -1,6 +1,6 @@
 ---
 description: Create git commits with user approval and no Claude attribution + PR
-agent: plan
+agent: build
 ---
 
 # Research Codebase
