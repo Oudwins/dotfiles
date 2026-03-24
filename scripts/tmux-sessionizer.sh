@@ -58,7 +58,7 @@ if [[ $# -eq 1 ]]; then
     selected_type=path
     selected=$1
 else
-    selection=$(collect_candidates | fzf --delimiter=$'\t' --with-nth=2 --tiebreak=index)
+    selection=$(collect_candidates | fzf --delimiter=$'\t' --with-nth=2 --tiebreak=length,index)
     selected_type=${selection%%$'\t'*}
     selected=${selection#*$'\t'}
 fi

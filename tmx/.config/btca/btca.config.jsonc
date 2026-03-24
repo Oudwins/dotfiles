@@ -9,7 +9,7 @@
       "url": "https://github.com/tailwindlabs/tailwindcss.com",
       "branch": "main",
       "searchPath": "src/docs",
-      "specialNotes": "This is the tailwindcss docs website repo, not the actual tailwindcss repo. Use the docs to answer questions about tailwindcss.",
+      "specialNotes": "This is the tailwindcss docs website repo, not the actual tailwindcss repo. Use the docs to answer questions about tailwindcss."
     },
     {
       "type": "git",
@@ -17,22 +17,28 @@
       "url": "https://github.com/vercel/next.js",
       "branch": "canary",
       "searchPath": "docs",
-      "specialNotes": "These are the docs for the next.js framework, not the actual next.js repo. Use the docs to answer questions about next.js.",
+      "specialNotes": "These are the docs for the next.js framework, not the actual next.js repo. Use the docs to answer questions about next.js."
     },
     {
       "type": "git",
       "name": "opencode",
-      "branch": "dev",
       "url": "https://github.com/anomalyco/opencode",
+      "branch": "dev"
     },
     {
       "type": "git",
       "name": "opencode-sdk-go",
       "url": "https://github.com/anomalyco/opencode-sdk-go",
-      "branch": "main",
+      "branch": "main"
     },
+    {
+      "type": "git",
+      "name": "zog",
+      "url": "https://github.com/Oudwins/zog",
+      "branch": "master",
+      "specialNotes": "zod-like golang library"
+    }
   ],
   "model": "openai/gpt-5.4-mini",
-  "provider": "opencode",
+  "provider": "opencode"
 }
-
