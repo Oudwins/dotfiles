@@ -6,6 +6,8 @@ $username\
 $hostname\
 ${custom.separator}\
 $directory\
+${custom.nix_shell_pure}\
+${custom.nix_shell_impure}\
 $git_branch\
 $git_status\
 $fill\
@@ -58,6 +60,14 @@ truncate_to_repo = false
 'Music' = ' '
 'Pictures' = ' '
 'work' = '💼'
+
+[custom.nix_shell_pure]
+format = '[ ](blue)'
+when = 'test "$IN_NIX_SHELL" = "pure"'
+
+[custom.nix_shell_impure]
+format = '[ ](yellow)'
+when = 'test "$IN_NIX_SHELL" = "impure"'
 
 [git_branch]
 style = 'fg:green'
