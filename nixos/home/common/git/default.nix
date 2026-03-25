@@ -11,7 +11,11 @@
         email = "tm@tristanmayo.com";
       };
       push = {
+        default = "current";
         autoSetupRemote = true;
+      };
+      pull = {
+        rebase = true;
       };
       pack = {
         windowMemory = "256m";
