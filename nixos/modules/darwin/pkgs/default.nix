@@ -22,6 +22,5 @@ in
     google-cloud
     python314
     terraform
-    ghostty-bin
   ];
 }

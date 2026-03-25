@@ -1,7 +1,10 @@
-{ pkgs, ... }:
+{ pkgs, ... }@args:
 
 {
-  nixpkgs.config.allowUnfree = true;
+  nixpkgs = {
+    overlays = builtins.attrValues args.outputs.overlays;
+    config.allowUnfree = true;
+  };
 
   nix.enable = true;
   nix.settings.experimental-features = "nix-command flakes";

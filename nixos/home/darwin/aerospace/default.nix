@@ -7,7 +7,7 @@
 {
   programs.aerospace = {
     enable = true;
-    userSettings = {
+    settings = {
       after-login-command = [ ];
       after-startup-command = [ ];
       enable-normalization-flatten-containers = true;

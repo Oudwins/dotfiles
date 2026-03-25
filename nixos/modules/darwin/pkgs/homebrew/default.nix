@@ -14,6 +14,7 @@
     "obs"
     "bruno"
     "font-liberation"
+    "ghostty"
   ];
 
   homebrew.brews = [

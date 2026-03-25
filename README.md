@@ -5,12 +5,6 @@
   - tmux?
 
 
-## nix
-
-```bash
-# quickly test the build of a specific package
-nix-build --expr '(import <nixpkgs> { }).callPackage ./package.nix { }'
-```
 
 ## Macos
 
@@ -38,3 +32,9 @@ sudo darwin-rebuild switch --flake .#macos
 
 
 
+## nix
+
+```bash
+# quickly test the build of a specific package
+nix-build --expr '(import <nixpkgs> { }).callPackage ./package.nix { }'
+```
