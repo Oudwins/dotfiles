@@ -43,7 +43,9 @@
     # Selection color
     selection-background = 7aa2f7
   '' + lib.optionalString pkgs.stdenv.isDarwin ''
-
+    # sessionizer
     keybind = cmd+k=esc:k
+    # droner
+    keybind = cmd+p=esc:p
   '';
 }

@@ -72,6 +72,8 @@ in
       bind R source-file ~/.config/tmux/tmux.conf \; display-message "Config reloaded..."
       # open tmux sessionizer
       bind-key -n M-k display-popup -E "${home}/dotfiles/scripts/tmux-sessionizer.sh"
+      # open droner tui
+      bind-key -n M-p display-popup -E -w 70% -h 45% -T "droner" "droner tui"
       # set <leader>n to create droner job
       bind a run-shell "~/.config/tmux/droner-create.sh"
 

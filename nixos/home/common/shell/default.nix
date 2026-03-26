@@ -14,7 +14,11 @@
       tmux_sessionizer_widget() {
         "${config.home.homeDirectory}/dotfiles/scripts/tmux-sessionizer.sh"
       }
+      droner_tui_widget() {
+        droner tui
+      }
       bind -x '"\ek":tmux_sessionizer_widget'
+      bind -x '"\ep":droner_tui_widget'
       # Adds go to path
       export PATH="$PATH:${config.home.homeDirectory}/go/bin:${config.home.homeDirectory}/.npm/bin"
 
@@ -47,8 +51,15 @@
         "${config.home.homeDirectory}/dotfiles/scripts/tmux-sessionizer.sh"
         zle reset-prompt
       }
+      droner_tui_widget() {
+        zle -I
+        droner tui
+        zle reset-prompt
+      }
       zle -N tmux_sessionizer_widget
+      zle -N droner_tui_widget
       bindkey '^[k' tmux_sessionizer_widget
+      bindkey '^[p' droner_tui_widget
       # Adds go to path
       export PATH="$PATH:${config.home.homeDirectory}/go/bin:${config.home.homeDirectory}/.npm/bin"
 
