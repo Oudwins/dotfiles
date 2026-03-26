@@ -67,7 +67,7 @@ in
       # Stay in CWD on split
       bind '"' split-window -v -c "#{pane_current_path}"
       bind % split-window -h -c "#{pane_current_path}"
-      # set <leader>r to reload config
+      # set <leader>R to reload config
       unbind R
       bind R source-file ~/.config/tmux/tmux.conf \; display-message "Config reloaded..."
       # open tmux sessionizer
