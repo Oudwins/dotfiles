@@ -29,18 +29,7 @@
     // context7 for up to date docs
     // sentry mcp for debugging production
   },
-  "lsp": {
-    "go": {
-      "disabled": false,
-      "command": ["gopls"],
-      "extensions": [".go"],
-    },
-    "typescript": {
-      "disabled": false,
-      "command": ["typescript-language-server", "--stdio"],
-      "extensions": [".ts", ".tsx"],
-    },
-  },
+  "lsp": {},
   "provider": {
     "openai": {
       "options": {

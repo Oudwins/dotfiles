@@ -1,19 +1,12 @@
-{
-  config,
-  pkgs,
-  lib,
-  ...
-}:
+{ config, pkgs, lib, ... }:
 
 let
   isLinux = pkgs.stdenv.isLinux;
   # isDarwin = pkgs.stdenv.isDarwin;
   # On NixOS we use unstable overlay, on Darwin pkgs is already unstable
   neovimPkg = if pkgs ? unstable then pkgs.unstable.neovim else pkgs.neovim;
-in
-{
-  home.packages =
-    with pkgs;
+in {
+  home.packages = with pkgs;
     [
       # agents
       gh # used to auto create PRs
@@ -43,8 +36,7 @@ in
       # Rust (require for some nvim pkgs)
       rustc
       cargo
-    ]
-    ++ lib.optionals isLinux [ xclip ];
+    ] ++ lib.optionals isLinux [ xclip ];
 
   programs.neovim.extraPackages = [
     "gcc"
@@ -60,14 +52,15 @@ in
     "icu"
     "nixd"
     "typescript-go"
-  ]
-  ++ lib.optionals isLinux [ "xclip" ];
+  ] ++ lib.optionals isLinux [ "xclip" ];
 
   # This makes it so telescope never ignores env files in search
   home.file.".ignore" = {
     text = ''
       !.env*
       !*/.env*
+      !NOTES.md
+      !*/.NOTES.md
     '';
   };
   # same as above but for ripgrep just in case
