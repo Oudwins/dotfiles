@@ -34,7 +34,7 @@
     bc
     vscode-fhs
     unstable.code-cursor
-    bruno
+    unstable.bruno
     gnupg
     awscli2
     beekeeper-studio
