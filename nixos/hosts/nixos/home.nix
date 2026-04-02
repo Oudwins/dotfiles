@@ -41,7 +41,7 @@
     GTK_THEME = "Adwaita:dark";
     QT_STYLE_OVERRIDE = lib.mkForce "Fusion";
     BROWSER = "brave";
-    DRONERD_URL = "http:localhost:57876";
+    DRONERD_URL = "http://localhost:57876";
   };
 
   programs.voxtype = {

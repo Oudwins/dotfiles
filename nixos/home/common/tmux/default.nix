@@ -42,6 +42,8 @@ in
       set -g mouse on
       # integrates clipboard
       set -s set-clipboard on
+      # keep droner url available to tmux run-shell bindings
+      set -ga update-environment " DRONERD_URL"
       ###
       # Key Bindings
       ###
@@ -75,8 +77,8 @@ in
       # open droner tui
       bind-key -n M-p display-popup -E -w 70% -h 45% -T "droner" "droner tui"
       # switch to adjacent droner session
-      bind-key -n M-[ run-shell "~/.config/tmux/droner-session-nav.sh prev"
-      bind-key -n M-] run-shell "~/.config/tmux/droner-session-nav.sh next"
+      bind-key -n M-[ run-shell "${home}/.config/tmux/droner-session-nav.sh prev"
+      bind-key -n M-] run-shell "${home}/.config/tmux/droner-session-nav.sh next"
       # set <leader>n to create droner job
       bind a run-shell "~/.config/tmux/droner-create.sh"
 
