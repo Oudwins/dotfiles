@@ -28,6 +28,35 @@ collect_project_paths() {
     printf '%s\n' "${collected_paths[@]}" | sort -u
 }
 
+# TODO use with droner
+collect_tmux_sessions_droner() {
+    local -A excluded_sessions
+    local session_name
+    local filter_available=0
+
+    if [[ -n ${DRONERD_URL:-} ]]; then
+        while IFS= read -r session_name; do
+            [[ -n $session_name ]] || continue
+            excluded_sessions["$session_name"]=1
+        done < <(
+            curl --silent --show-error --fail \
+                --connect-timeout 0.2 \
+                --max-time 0.4 \
+                "$DRONERD_URL/sessions?status=running" \
+            | jq -r '.sessions[].tmuxSession'
+        ) && filter_available=1
+    fi
+
+    while IFS= read -r session_name; do
+        [[ -n $session_name ]] || continue
+        if [[ $filter_available -eq 1 && -n ${excluded_sessions["$session_name"]:-} ]]; then
+            continue
+        fi
+
+        printf 'session\t%s\n' "$session_name"
+    done < <(tmux list-sessions -F '#S' 2> /dev/null || true)
+}
+
 collect_tmux_sessions() {
     tmux list-sessions -F $'session\t#S' 2> /dev/null || true
 }

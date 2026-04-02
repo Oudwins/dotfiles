@@ -74,6 +74,9 @@ in
       bind-key -n M-k display-popup -E "${home}/dotfiles/scripts/tmux-sessionizer.sh"
       # open droner tui
       bind-key -n M-p display-popup -E -w 70% -h 45% -T "droner" "droner tui"
+      # switch to adjacent droner session
+      bind-key -n M-[ run-shell "~/.config/tmux/droner-session-nav.sh prev"
+      bind-key -n M-] run-shell "~/.config/tmux/droner-session-nav.sh next"
       # set <leader>n to create droner job
       bind a run-shell "~/.config/tmux/droner-create.sh"
 
