@@ -15,8 +15,7 @@ let
   };
 
   home = config.home.homeDirectory;
-in
-{
+in {
   home.packages = with pkgs; [ fzf ];
 
   programs.tmux = {
@@ -42,8 +41,6 @@ in
       set -g mouse on
       # integrates clipboard
       set -s set-clipboard on
-      # keep droner url available to tmux run-shell bindings
-      set -ga update-environment " DRONERD_URL"
       ###
       # Key Bindings
       ###
