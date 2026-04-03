@@ -60,7 +60,7 @@ in {
       !.env*
       !*/.env*
       !NOTES.md
-      !*/.NOTES.md
+      !*/NOTES.md
     '';
   };
   # same as above but for ripgrep just in case
