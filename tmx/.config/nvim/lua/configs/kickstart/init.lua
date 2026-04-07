@@ -672,7 +672,7 @@ require('lazy').setup({
           -- editing fenced code blocks inside markdown (often with injected
           -- languages like ```bash). Disable TS highlighting for markdown for
           -- now; remove this once you upgrade Neovim/parsers and it's stable.
-          disable = { 'markdown', 'markdown_inline' },
+          -- disable = { 'markdown', 'markdown_inline' },
           -- Some languages depend on vim's regex highlighting system (such as Ruby) for indent rules.
           --  If you are experiencing weird indenting issues, add the language to
           --  the list of additional_vim_regex_highlighting and disabled languages for indent.

@@ -25,6 +25,11 @@
         "clientSecret": "NrSeGMWQLKBtiGiqqwf862ZsiMr44O",
       },
     },
+    "nextdevtools": {
+      "enabled": true,
+      "type": "local",
+      "command": ["npx", "-y", "next-devtools-mcp@latest"],
+    },
     // Linear mcp for tickets
     // context7 for up to date docs
     // sentry mcp for debugging production
