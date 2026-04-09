@@ -72,7 +72,9 @@ if ! tmux has-session -t "${target_session}" 2>/dev/null; then
   exit 0
 fi
 
-tmux switch-client -t "${target_session}" >/dev/null 2>&1 || {
-  debug "droner-session-nav: failed to switch to ${target_session}"
+target_window="${target_session}:1"
+
+tmux switch-client -t "${target_window}" >/dev/null 2>&1 || {
+  debug "droner-session-nav: failed to switch to ${target_window}"
   exit 0
 }
