@@ -15,6 +15,7 @@ You are tasked with conducting comprehensive research across the codebase to ans
 - DO NOT recommend refactoring, optimization, or architectural changes
 - ONLY describe what exists, where it exists, how it works, and how components interact
 - You are creating a technical map/documentation of the existing system
+- DO NOT Read other documents in the `thoughts` folder unless they are specifically mentioned by the user
 
 ## Initial Setup:
 
