@@ -8,6 +8,7 @@ agent: build
 
 You are tasked with creating a plan document for the task. 
 
+## Steps
 <SOP>
 1. Begin by asking any clarifying questions that might be needed to get a shared understanding of the task
 2. Create the plan in `./thoughts/shared/plan` folder
@@ -24,7 +25,13 @@ You are tasked with creating a plan document for the task.
 
 
 
+## Creating the document
 <plan-document-criteria>
 - The plan should be very detailed. References to files, folders, links etc. It should include code blocks where appropriate. In short it should contain anything a new hire should need to implement the change
 - The language should be efficient, use bullet points and to the point language. Avoid long paragraphs
 </plan-document-criteria>
+
+
+## Guardrails
+
+- Do not read any other files in the thoughts directory.
