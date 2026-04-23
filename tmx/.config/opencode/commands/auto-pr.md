@@ -72,6 +72,7 @@ Remember to use the head branch from the git repo (generally main or master) to 
 
 - DO NOT add co-authorship footer to commits
 - DO NOT add any mention of yourself to commits, descriptions, titles, etc.
+- DO NOT CREATE A BRANCH UNDER ANY CIRCUSTANCES UNLESS THE USER SPECIFICALLY ASKS YOU TO. You should operate on the existing/current branch by default
 
 
 -----

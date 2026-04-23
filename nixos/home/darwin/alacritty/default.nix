@@ -75,6 +75,16 @@
           mods = "Command";
           chars = "\\u001bp";
         }
+        {
+          key = "LeftBracket";
+          mods = "Command";
+          chars = "\\u001b[";
+        }
+        {
+          key = "RightBracket";
+          mods = "Command";
+          chars = "\\u001b]";
+        }
       ];
 
       # Optional: Make Option key behave as Alt/Meta as well

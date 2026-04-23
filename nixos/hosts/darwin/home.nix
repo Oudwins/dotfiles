@@ -12,6 +12,15 @@
   # release notes.
   home.stateVersion = "23.11"; # Please read the comment before changing.
 
+  home.file.".docker/config.json".text = builtins.toJSON {
+    auths = { };
+    cliPluginsExtraDirs = [ "/opt/homebrew/lib/docker/cli-plugins" ];
+    credHelpers = {
+      "us-central1-docker.pkg.dev" = "gcloud";
+    };
+    currentContext = "colima";
+  };
+
   home.sessionVariables = let
     home = config.home.homeDirectory;
     projectDirs = [ "Documents" "Documents2" ".droner/worktrees" ];
@@ -19,6 +28,7 @@
   in {
     OPENCODE_CONFIG = "${home}/.config/opencode/opencode.jsonc";
     OPENCODE_CONFIG_DIR = "${home}/.config/opencode";
+    DOCKER_CLI_PLUGIN_EXTRA_DIRS = "/opt/homebrew/lib/docker/cli-plugins";
     # Opencode vertex ai
     GOOGLE_CLOUD_PROJECT = "xi-playground";
     GOOGLE_APPLICATION_CREDENTIALS =
