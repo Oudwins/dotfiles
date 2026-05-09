@@ -1,0 +1,5 @@
+{
+  "lastChangelogVersion": "0.74.0",
+  "defaultProvider": "ollama",
+  "defaultModel": "qwen3-coder:30b"
+}
