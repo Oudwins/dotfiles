@@ -5,6 +5,15 @@
   - tmux?
 
 
+```bash
+# Connect to tubby
+sudo tailscale set --exit-node=tubby
+# Disconnect
+sudo tailscale set --exit-node=
+
+```
+
+
 
 ## Macos
 

@@ -1,6 +1,8 @@
 { config, pkgs, ... }:
 
 {
+  networking.firewall.checkReversePath = "loose";
+
   services.teamviewer.enable = true;
 
   services.flatpak.enable = true;
@@ -33,6 +35,7 @@
   services.tailscale = {
     enable = true;
     package = pkgs.unstable.tailscale;
+    useRoutingFeatures = "client";
   };
 
   services.ratbagd.enable = true;
