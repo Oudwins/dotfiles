@@ -57,6 +57,7 @@ in {
   # This makes it so telescope never ignores env files in search
   home.file.".ignore" = {
     text = ''
+      !thoughts/*
       !.env*
       !*/.env*
       !NOTES.md
