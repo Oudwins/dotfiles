@@ -62,6 +62,7 @@ in {
       !*/.env*
       !NOTES.md
       !*/NOTES.md
+      !playground/*
     '';
   };
   # same as above but for ripgrep just in case
