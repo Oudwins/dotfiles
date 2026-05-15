@@ -88,7 +88,7 @@ in {
       bind-key -T copy-mode-vi y send-keys -X copy-selection-and-cancel
 
       # needed for pi.dev
-      set -g extended-keys on`
+      set -g extended-keys on
     '';
   };
 }
