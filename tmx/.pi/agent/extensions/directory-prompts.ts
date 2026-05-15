@@ -18,6 +18,9 @@ type Frontmatter = {
 };
 
 const PROMPT_FILE = "PROMPT.md";
+const SKILL_FILE = "SKILL.md";
+const PROMPT_FILES = [PROMPT_FILE, SKILL_FILE] as const;
+const PROMPT_FILE_NAMES = new Set<string>(PROMPT_FILES);
 const COMPANION_LIMIT = 100;
 const IGNORED_DIRS = new Set([".git", "node_modules", "dist", "build", "coverage"]);
 
@@ -103,15 +106,8 @@ async function discoverDirectoryPrompts(
 
       const name = entry.name;
       const dir = path.join(root.path, name);
-      const promptPath = path.join(dir, PROMPT_FILE);
-
-      try {
-        const stat = await fs.stat(promptPath);
-        if (!stat.isFile()) continue;
-      } catch (error) {
-        if (isNotFound(error)) continue;
-        throw error;
-      }
+      const promptPath = await findPromptFile(dir);
+      if (!promptPath) continue;
 
       if (nativeNames.has(name)) {
         console.warn(`Skipped directory prompt /${name} because a native prompt /${name} exists.`);
@@ -140,6 +136,20 @@ async function discoverDirectoryPrompts(
   }
 
   return [...byName.values()].sort((a, b) => a.name.localeCompare(b.name));
+}
+
+async function findPromptFile(dir: string): Promise<string | undefined> {
+  for (const file of PROMPT_FILES) {
+    const promptPath = path.join(dir, file);
+    try {
+      const stat = await fs.stat(promptPath);
+      if (stat.isFile()) return promptPath;
+    } catch (error) {
+      if (isNotFound(error)) continue;
+      throw error;
+    }
+  }
+  return undefined;
 }
 
 function registerDirectoryPrompt(pi: ExtensionAPI, prompt: DirectoryPrompt): void {
@@ -241,7 +251,7 @@ async function listCompanionFiles(dir: string): Promise<string[]> {
       if (entry.isDirectory()) {
         if (IGNORED_DIRS.has(entry.name)) continue;
         await walk(absolute, relative);
-      } else if (entry.isFile() && entry.name !== PROMPT_FILE) {
+      } else if (entry.isFile() && !PROMPT_FILE_NAMES.has(entry.name)) {
         files.push(relative);
       }
     }
