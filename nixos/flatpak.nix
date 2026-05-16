@@ -1,9 +1,9 @@
-{ config, pkgs, ... }:
-{
+{ config, pkgs, ... }: {
   services.flatpak = {
     enable = true;
     packages = [
       # "app.zen_browser.zen"
+      # "org.mozilla.Thunderbird"
     ];
   };
 }
