@@ -3,9 +3,7 @@
 {
   programs.brave = {
     enable = true;
-    commandLineArgs = [
-      "--password-store=basic"
-    ];
+    commandLineArgs = [ "--password-store=basic" ];
   };
 
   programs.mpv = {
@@ -22,11 +20,9 @@
 
   programs.rofi = {
     enable = true;
-    theme = config.home.homeDirectory + "/dotfiles/tmx/.config/rofi/themes/erebus.rasi";
-    plugins = [
-      pkgs.rofi-calc
-      pkgs.rofi-emoji
-    ];
+    theme = config.home.homeDirectory
+      + "/dotfiles/tmx/.config/rofi/themes/erebus.rasi";
+    plugins = [ pkgs.rofi-calc pkgs.rofi-emoji ];
     extraConfig = {
       kb-clear-line = "Control+c,Control+u";
       kb-row-up = "Up,Control+k,Shift+Tab";
@@ -44,11 +40,10 @@
 
   dconf.settings = {
     "org/gnome/desktop/background" = {
-      picture-uri-dark = "file://${pkgs.nixos-artwork.wallpapers.nineish-dark-gray.src}";
+      picture-uri-dark =
+        "file://${pkgs.nixos-artwork.wallpapers.nineish-dark-gray.src}";
     };
-    "org/gnome/desktop/interface" = {
-      color-scheme = "prefer-dark";
-    };
+    "org/gnome/desktop/interface" = { color-scheme = "prefer-dark"; };
   };
 
   gtk = {
