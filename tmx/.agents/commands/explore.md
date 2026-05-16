@@ -1,19 +1,15 @@
 ---
 name: explore
-description: Explore conceptual implementation options
-agent: plan
+description: Use this when the user wants to explore multiple possibilities to implement something or is unsure which approach to take.
 ---
 
-I want to do something but I am unsure exactly how it should be done. Lets explore multiple possibilities. You should prioritize presenting as many and as varied approaches as possible over making every approach "good". 
+I want to do something but I am unsure exactly how it should be done. Let's explore multiple possibilities. You should prioritize presenting as many and as varied approaches as possible over making every approach "good". 
 
 The general flow you should follow for this exploration is:
 
-1. Gather context about what we want to implement. Use subagents and skills to research the topic both inside the codebase and on the web
+1. Gather context about the goal, the existing codebase, and relevant external constraints. Use subagents, skills, code search, and web research as appropriate.
 2. Ask me as many clarifying questions as you need to help guide the design
-3. Consider multiple approaches, research each approach to make sure it is possible
+3. Identify multiple approaches and research each enough to confirm basic feasibility.
 4. Present multiple strategies for achieving the goal. Aim to make these varied. Each approach outline should be sufficiently detailed to be clearly distinguishable from the rest.
 5. From here I may ask clarifying questions then we will pick an approach.
-6. Once we have picked a strategy please validate it. Do more in depth research to make sure that it is viable, the the assumptions we are making are correct and it will work. Present the findings of this research as confirmation with sources (references to files, websites, other code bases, etc).
-
-
-What I want to implement is: 
+6. Once we have picked a strategy, validate it with deeper research. Confirm that it is viable, that the assumptions are correct, and that the approach should work. Present the findings with sources, such as file references, documentation, websites, or comparable codebases.
