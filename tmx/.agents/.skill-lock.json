@@ -1,47 +1,23 @@
 {
   "version": 3,
-  "skills": {
-    "tdd": {
-      "source": "mattpocock/skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/mattpocock/skills.git",
-      "skillPath": "tdd/SKILL.md",
-      "skillFolderHash": "28d7822c112f22cf499099881856fdec07bc83a8",
-      "installedAt": "2026-03-17T20:40:29.447Z",
-      "updatedAt": "2026-03-17T20:40:29.447Z"
-    },
-    "improve-codebase-architecture": {
-      "source": "mattpocock/skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/mattpocock/skills.git",
-      "skillPath": "improve-codebase-architecture/SKILL.md",
-      "skillFolderHash": "78b2029cbf4a74fa798c97ea27bc02bdeb2e3237",
-      "installedAt": "2026-03-17T20:41:46.828Z",
-      "updatedAt": "2026-03-17T20:41:46.828Z"
-    },
-    "btca-cli": {
-      "source": "davis7dotsh/better-context",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/davis7dotsh/better-context.git",
-      "skillPath": "skills/btca-cli/SKILL.md",
-      "skillFolderHash": "47a9ec57ae3ce030be4180ae39f2a1c0e992c5b0",
-      "installedAt": "2026-03-20T07:04:05.045Z",
-      "updatedAt": "2026-03-20T07:04:05.045Z"
-    }
-  },
+  "skills": {},
   "dismissed": {
     "findSkillsPrompt": true
   },
   "lastSelectedAgents": [
     "amp",
+    "antigravity",
     "cline",
     "codex",
     "cursor",
+    "deepagents",
+    "dexto",
+    "firebender",
     "gemini-cli",
     "github-copilot",
     "kimi-cli",
     "opencode",
-    "warp",
-    "claude-code"
+    "warp"
   ]
 }
+
