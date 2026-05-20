@@ -37,7 +37,7 @@
     # CLAUDE CODE + VERTEX AI
     CLAUDE_CODE_USE_VERTEX = 1;
     CLOUD_ML_REGION = "us-east5";
-    ANTHROPIC_VERTEX_PROJECT_ID = "xi-playground";
+    ANTHROPIC_VERTEX_PROJECT_ID = "eleven-vertex-internal";
     TERMINAL = "ghostty";
     EDITOR = "nvim";
     # this creates a string of "/home/tmx/projects:/home/tmx/{other_project_dir}"
