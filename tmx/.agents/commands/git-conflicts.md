@@ -1,5 +1,8 @@
-
-# Resolve Merge Conflicts <!-- omit in toc -->
+---
+name: git-conflicts
+description: Fix git conflicts
+---
+# Resolve Merge Conflicts
 
 Your job is to resolve merge conflicts in the current branch of the current repo.
 
