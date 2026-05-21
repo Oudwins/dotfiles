@@ -1,7 +1,9 @@
 ---
 name: git-conflicts
 description: Fix git conflicts
+agent: build
 ---
+
 # Resolve Merge Conflicts
 
 Your job is to resolve merge conflicts in the current branch of the current repo.
