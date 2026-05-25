@@ -91,6 +91,7 @@
       "*.env.example": "allow",
     },
     "doom_loop": "ask",
+    "question": "deny",
     "external_directory": "allow",
   },
 }
