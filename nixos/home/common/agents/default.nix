@@ -7,6 +7,7 @@
     bun
     btca
     beads
+    "1mcp"
     jsonc2json
     # Opencode for code linting
     typescript-language-server

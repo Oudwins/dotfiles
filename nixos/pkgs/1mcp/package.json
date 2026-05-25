@@ -1,0 +1,121 @@
+{
+  "name": "@1mcp/agent",
+  "version": "0.32.0",
+  "description": "One MCP server to aggregate them all - A unified Model Context Protocol server implementation",
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "mcp-client",
+    "model-context-protocol",
+    "agent",
+    "proxy",
+    "server",
+    "cli",
+    "ai",
+    "llm",
+    "model-aggregation",
+    "typescript"
+  ],
+  "author": "William Xu <xuzp@1mcp.app>",
+  "homepage": "https://github.com/1mcp-app/agent",
+  "bugs": {
+    "url": "https://github.com/1mcp-app/agent/issues"
+  },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/1mcp-app/agent.git"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "bin": {
+    "1mcp": "./build/index.js"
+  },
+  "files": [
+    "build"
+  ],
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.ts": [
+      "bash -c 'tsc --noEmit --project tsconfig.test.json'"
+    ],
+    "*.{js,ts,cjs}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{md,json,yml,yaml}": [
+      "prettier --write"
+    ]
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.25.1",
+    "@toon-format/toon": "^2.1.0",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "axios": "^1.12.2",
+    "body-parser": "^2.2.0",
+    "boxen": "^8.0.1",
+    "chalk": "^5.6.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.2.1",
+    "handlebars": "^4.7.8",
+    "https-proxy-agent": "^9.0.0",
+    "json5": "^2.2.3",
+    "ora": "^9.0.0",
+    "prompts": "^2.4.2",
+    "semver": "^7.7.3",
+    "smol-toml": "^1.6.0",
+    "source-map-support": "^0.5.21",
+    "tiktoken": "^1.0.22",
+    "uuid": "^14.0.0",
+    "winston": "^3.17.0",
+    "winston-transport": "^4.9.0",
+    "yargs": "^18.0.0",
+    "yargs-parser": "^22.0.0",
+    "zod": "^4.1.8"
+  },
+  "scripts": {
+    "dev": "./scripts/dev-start.sh",
+    "start": "node --env-file=.env build/index.js",
+    "build": "./scripts/build.sh",
+    "clean": "rm -rf build",
+    "clean:sea": "rm -f 1mcp 1mcp.exe sea-prep.blob build/bundled.cjs",
+    "watch": "tsc --watch --project tsconfig.build.json",
+    "inspector": "npx -y @modelcontextprotocol/inspector",
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix",
+    "format": "prettier --write \"src/**/*.{js,ts}\" \"test/**/*.{js,ts}\"",
+    "format:check": "prettier --check \"src/**/*.{js,ts}\" \"test/**/*.{js,ts}\"",
+    "typecheck": "tsc --noEmit --project tsconfig.test.json",
+    "test": "pnpm test:unit",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest",
+    "test:unit:coverage": "vitest run --coverage",
+    "test:e2e": "vitest run --config vitest.e2e.config.ts",
+    "test:e2e:watch": "vitest --config vitest.e2e.config.ts",
+    "test:e2e:coverage": "vitest run --config vitest.e2e.config.ts --coverage",
+    "test:e2e:performance": "node scripts/test-e2e-performance.js",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs",
+    "sea:build": "node scripts/build-sea.cjs",
+    "sea:binary": "node scripts/build-binary.cjs",
+    "sea:binary:macos": "node scripts/build-binary.cjs darwin-arm64",
+    "sea:binary:macos:x64": "node scripts/build-binary.cjs darwin-x64",
+    "sea:binary:linux": "node scripts/build-binary.cjs linux-x64",
+    "sea:binary:linux:arm64": "node scripts/build-binary.cjs linux-arm64",
+    "sea:binary:win": "node scripts/build-binary.cjs win32-x64",
+    "sea:binary:win:arm64": "node scripts/build-binary.cjs win32-arm64",
+    "archive": "node scripts/archive.cjs",
+    "version:update": "node scripts/update-version.cjs",
+    "build:binaries": "pnpm sea:build && pnpm sea:binary",
+    "build:binaries:archived": "pnpm build:binaries && pnpm archive"
+  }
+}
