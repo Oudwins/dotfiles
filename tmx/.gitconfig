@@ -5,5 +5,16 @@
 	autocrlf = input
 [push]
 	autoSetupRemote = true
+[pull]
+	rebase = true
+[branch "main"]
+	rebase = false
+	mergeOptions = --ff-only
+[branch "master"]
+	rebase = false
+	mergeOptions = --ff-only
 [http]
 	postBuffer = 524288000
+[safe]
+	directory = /private/tmp/xi-static-checks-9548
+	directory = /private/tmp/xi-static-checks-9548
