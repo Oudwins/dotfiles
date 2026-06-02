@@ -1,6 +1,1 @@
-{ ... }:
-{
-  imports = [
-    ./base
-  ];
-}
+{ ... }: { imports = [ ./base ./flatpak.nix ]; }

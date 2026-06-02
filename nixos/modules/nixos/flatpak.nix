@@ -3,7 +3,7 @@
     enable = true;
     packages = [
       # "app.zen_browser.zen"
-      # "org.mozilla.Thunderbird"
+      "org.mozilla.Thunderbird"
     ];
   };
 }
