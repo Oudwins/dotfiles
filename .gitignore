@@ -18,3 +18,13 @@ tmx/.config/tmux/tmux.conf
 tmx/.gitconfig
 tmx/.config/alacritty/
 tmx/.zshrc
+
+# Local/generated files
+thoughts/shared/plan/
+tmx/.config/btca/
+tmx/.config/elevenscribe/
+tmx/.config/ghostty/config.ghostty
+tmx/.config/graphite/aliases
+tmx/.config/graphite/auth
+tmx/.config/graphite/user_config
+tmx/.config/tokscale/cache/
