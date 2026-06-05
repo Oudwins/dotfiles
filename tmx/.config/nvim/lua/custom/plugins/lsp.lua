@@ -362,19 +362,29 @@ return {
             -- doesn't work :(
             require('tailwindcss-colors').buf_attach(bufnr)
           end,
-          root_dir = util.root_pattern '.git',
-          on_new_config = function(new_config, new_root_dir)
+          root_dir = function(bufnr, on_dir)
+            local fname = vim.api.nvim_buf_get_name(bufnr)
+            local root = util.root_pattern('.git')(fname)
+            if root then
+              on_dir(root)
+            end
+          end,
+          before_init = function(_, config)
             -- Override tailwind config for elevenlabs/marketing-website monorepo
-            local handle = io.popen('git -C ' .. vim.fn.shellescape(new_root_dir) .. ' remote get-url origin 2>/dev/null')
+            local root_dir = config.root_dir
+            if not root_dir then
+              return
+            end
+
+            local handle = io.popen('git -C ' .. vim.fn.shellescape(root_dir) .. ' remote get-url origin 2>/dev/null')
             if handle then
               local remote = handle:read('*a'):gsub('%s+$', '')
               handle:close()
               if remote:match 'elevenlabs/marketing%-website' then
-                local config_path = new_root_dir .. '/frontend-next/tailwind.v2.config.ts'
-                new_config.settings = new_config.settings or {}
-                new_config.settings.tailwindCSS = new_config.settings.tailwindCSS or {}
-                new_config.settings.tailwindCSS.experimental = new_config.settings.tailwindCSS.experimental or {}
-                new_config.settings.tailwindCSS.experimental.configFile = config_path
+                config.settings = config.settings or {}
+                config.settings.tailwindCSS = config.settings.tailwindCSS or {}
+                config.settings.tailwindCSS.experimental = config.settings.tailwindCSS.experimental or {}
+                config.settings.tailwindCSS.experimental.configFile = 'frontend-next/tailwind.v2.config.ts'
               end
             end
           end,
