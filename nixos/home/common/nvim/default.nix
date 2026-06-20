@@ -63,6 +63,7 @@ in {
       !NOTES.md
       !*/NOTES.md
       !playground/*
+      !*/playground/*
     '';
   };
   # same as above but for ripgrep just in case

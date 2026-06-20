@@ -15,6 +15,7 @@
     ./../../modules/nixos/users/tmx
     ./../../modules/nixos/base
     ./../../modules/nixos/desktop
+    ./../../modules/nixos/flatpak.nix
     ./../../modules/nixos/services
     ./../../modules/nixos/virtualization
     ./../../modules/nixos/filesystems
