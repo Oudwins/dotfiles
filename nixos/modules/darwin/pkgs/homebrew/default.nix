@@ -26,7 +26,6 @@
     "k6"
     "pnpm"
     "node"
-    "syncthing"
     "uv"
     "poppler"
     "ffmpeg"

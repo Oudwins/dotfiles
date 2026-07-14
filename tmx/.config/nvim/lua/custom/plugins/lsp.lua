@@ -483,6 +483,7 @@ return {
         -- FORMATTERS
         'stylua', -- Used to format Lua code
         'prettierd',
+        'sqlfmt',
         -- LINTERS
         'jsonlint',
         'tflint',

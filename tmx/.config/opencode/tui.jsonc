@@ -1,0 +1,6 @@
+{
+  "$schema": "https://opencode.ai/tui.json",
+  "keybinds": {
+    "app_toggle_session_directory_filter": "<leader>f"
+  }
+}
