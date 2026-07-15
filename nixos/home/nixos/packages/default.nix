@@ -44,5 +44,6 @@
     maven
     mpv-unwrapped
     masterpdfeditor4
+    audacity
   ];
 }
