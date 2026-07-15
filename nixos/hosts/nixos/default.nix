@@ -16,6 +16,7 @@
     ./../../modules/nixos/base
     ./../../modules/nixos/desktop
     ./../../modules/nixos/flatpak.nix
+    ./../../modules/nixos/gaming.nix
     ./../../modules/nixos/services
     ./../../modules/nixos/virtualization
     ./../../modules/nixos/filesystems
