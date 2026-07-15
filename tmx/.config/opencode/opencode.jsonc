@@ -25,6 +25,12 @@
         "clientSecret": "NrSeGMWQLKBtiGiqqwf862ZsiMr44O",
       },
     },
+    "linear": {
+      "enabled": false,
+      "type": "remote",
+      "url": "https://mcp.linear.app/mcp",
+      "timeout": 60000,
+    },
     // "nextdevtools": {
     //   "enabled": true,
     //   "type": "local",
