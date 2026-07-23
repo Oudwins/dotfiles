@@ -1,5 +1,5 @@
 ---
-name: experiment-summary
+name: posthog-experiment-summary
 description: Fetch a PostHog experiment's primary metrics via MCP and draft a Slack-style results message for the team.
 ---
 

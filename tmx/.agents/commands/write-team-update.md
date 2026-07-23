@@ -7,12 +7,15 @@ agent: build
 Write a short team update based on linear issues using the linear MCP and github cli to find relevant context. Each task/issue should be prefixed with an emoji for its state
 
 :resolved: -> completed/measuring
+:review: -> for things in review. If there is a PR lets also add the link to it. 
 :hourglass_flowing_sand: -> in progress
 :to-do: -> todo
 :no_entry: -> blocked
 
 
-The order of the issues should be as above, first resolved, then in progress then todo and finally blocked. Give a short description for each as per the example below. For blocked you probably don't want to write anything as most of the time you will not have context on why these things are blocked. Leave it for me
+The order of the issues should be as above, first resolved, then in progress then todo and finally blocked. Give a short description for each as per the example below. For blocked you probably don't want to write anything as most of the time you will not have context on why these things are blocked. Leave it for me.
+
+For the resolved issues you should only take the issues resolved since last update. Updates are on monday, wednesday and friday each week. The output should not be md as its for slack, so no md style links.
 
 
 Example update: 

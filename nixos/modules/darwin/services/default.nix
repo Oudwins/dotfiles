@@ -6,7 +6,9 @@
     serviceConfig = {
       Label = "com.colima.default";
       RunAtLoad = true;
-      KeepAlive = true;
+      KeepAlive = {
+        SuccessfulExit = true;
+      };
       StandardOutPath = "/tmp/colima.default.stdout.log";
       StandardErrorPath = "/tmp/colima.default.stderr.log";
       EnvironmentVariables = {

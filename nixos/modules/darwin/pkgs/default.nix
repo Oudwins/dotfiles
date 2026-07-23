@@ -13,7 +13,6 @@ in
     sshs
     carapace
     firefox
-    google-chrome
     stow
     colima
     bun

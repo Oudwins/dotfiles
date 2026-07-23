@@ -24,7 +24,7 @@
         # {
         #   app = "${pkgs.alacritty}/Applications/Alacritty.app";
         # }
-        { app = "${pkgs.google-chrome}/Applications/Google Chrome.app"; }
+        { app = "/Applications/Google Chrome.app"; }
         { app = "${pkgs.firefox}/Applications/Firefox.app"; }
         { app = "/Applications/cursor.app"; }
         { app = "/Applications/Telegram.app"; }
