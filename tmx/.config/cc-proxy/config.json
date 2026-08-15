@@ -1,0 +1,16 @@
+{
+  "listen": "127.0.0.1:8317",
+  "require_api_key": false,
+  "api_key_env": "CC_PROXY_API_KEY",
+  "auth_dir": "~/.config/cc-proxy/auth",
+  "providers": {
+    "claude": {
+      "enabled": true,
+      "models": ["claude-fable-5", "claude-opus-4-8", "claude-opus-5"]
+    },
+    "openai": {
+      "enabled": true,
+      "models": ["*"]
+    }
+  }
+}

@@ -31,6 +31,12 @@
       "url": "https://mcp.linear.app/mcp",
       "timeout": 60000,
     },
+    "posthog": {
+      "enabled": false,
+      "type": "remote",
+      "url": "https://mcp.posthog.com/mcp",
+      "timeout": 60000,
+    },
     // "nextdevtools": {
     //   "enabled": true,
     //   "type": "local",
@@ -53,15 +59,15 @@
         "gpt-5.6-sol": {},
       },
     },
-    "vertex_anthropic": {
-      "npm": "@ai-sdk/google-vertex/anthropic",
-      "name": "Google Vertex Anthropic",
-      "options": {
-        "project": "eleven-vertex-internal",
-        "location": "{env:VERTEX_LOCATION}",
-      },
-      "models": {},
-    },
+    // "vertex_anthropic": {
+    //   "npm": "@ai-sdk/google-vertex/anthropic",
+    //   "name": "Google Vertex Anthropic",
+    //   "options": {
+    //     "project": "eleven-vertex-internal",
+    //     "location": "{env:VERTEX_LOCATION}",
+    //   },
+    //   "models": {},
+    // },
     "ollama": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "Ollama (local)",
@@ -92,6 +98,7 @@
       },
       "models": {
         "claude-opus-4-8": { "name": "Claude Opus 4.8" },
+        "claude-opus-5": { "name": "Claude Opus 5" },
         "claude-fable-5": { "name": "Claude Fable 5" },
       },
     },
