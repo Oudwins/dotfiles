@@ -110,6 +110,7 @@ mykeyboardlayout = awful.widget.keyboardlayout()
 -- {{{ Wibar
 -- Create a textclock widget
 mytextclock = wibox.widget.textclock()
+awful.spawn.with_shell("pgrep -x blueman-applet >/dev/null || blueman-applet")
 
 -- Create a wibox for each screen and add it
 local taglist_buttons = gears.table.join(
@@ -213,6 +214,7 @@ awful.screen.connect_for_each_screen(function(s)
     -- Battery widget 
     -- from https://github.com/deficient/battery-widget
     local battery_widget = require("battery-widget")
+    local bluetooth_widget = require("bluetooth-widget")
     -- spawn wifi widget
     awful.spawn("nm-applet");
     -- Add widgets to the wibox
@@ -232,6 +234,7 @@ awful.screen.connect_for_each_screen(function(s)
             battery_widget {
                 -- todo
             },
+            bluetooth_widget,
             mytextclock,
             s.mylayoutbox,
         },

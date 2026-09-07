@@ -28,6 +28,9 @@
   in {
     OPENCODE_CONFIG = "${home}/.config/opencode/opencode.jsonc";
     OPENCODE_CONFIG_DIR = "${home}/.config/opencode";
+    OPENCODE_CONFIG_CONTENT = builtins.toJSON {
+      agent.ui-developer.model = "cc-proxy/claude-opus-5";
+    };
     DOCKER_CLI_PLUGIN_EXTRA_DIRS = "/opt/homebrew/lib/docker/cli-plugins";
     # Opencode vertex ai
     GOOGLE_CLOUD_PROJECT = "xi-playground";

@@ -6,17 +6,17 @@
 {
   imports = [
     ./hardware-configuration.nix
-    # tutorial -> https://www.youtube.com/watch?v=UPWkQ3LUDOU
-    args.inputs.xremap-flake.nixosModules.default # makes remap service available
     args.inputs.sops-nix.nixosModules.sops
     ./../../modules/common/base
     ./../../modules/common/sops
     ./../../modules/common/agents
     ./../../modules/nixos/users/tmx
     ./../../modules/nixos/base
+    ./../../modules/nixos/bluetooth.nix
     ./../../modules/nixos/desktop
     ./../../modules/nixos/flatpak.nix
     ./../../modules/nixos/gaming.nix
+    ./../../modules/nixos/streaming.nix
     ./../../modules/nixos/services
     ./../../modules/nixos/virtualization
     ./../../modules/nixos/filesystems
@@ -41,27 +41,15 @@
   # networking.proxy.default = "http://user:password@proxy:port/";
   # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
 
-  # Key remapping. Only available because of xremap import above (see imports)
-  # services.xremap = {
-  #   enable = true;
-  #   withX11 = true;
-  #   watch = true; # watches for new devices that connect
-  #   userName = "tmx";
-  #   yamlConfig = ''
-  #     modmap:
-  #       - name: CapsLock to Esc
-  #         remap:
-  #           CapsLock: Esc
-  #   '';
-  # };
-
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
     vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
     wget
-  ];
 
+    # graphene
+    android-tools
+  ];
   services.openssh = {
     enable = true;
     openFirewall = true;

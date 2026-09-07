@@ -28,3 +28,6 @@ tmx/.config/graphite/aliases
 tmx/.config/graphite/auth
 tmx/.config/graphite/user_config
 tmx/.config/tokscale/cache/
+
+# Managed by Company
+tmx/.npmrc

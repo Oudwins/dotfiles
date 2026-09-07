@@ -50,4 +50,3 @@ nix-build --expr '(import <nixpkgs> { }).callPackage ./package.nix { }'
 ```
 # Notes
 
-- 1MCP config uses environment variable substitution. Add `PAYLOAD_STAGING_MCP_TOKEN`, `PAYLOAD_PRODUCTION_MCP_TOKEN`, `FIGMA_MCP_CLIENT_ID`, and `FIGMA_MCP_CLIENT_SECRET` before using `tmx/.config/1mcp/mcp.json`.

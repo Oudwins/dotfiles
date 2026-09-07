@@ -1,13 +1,14 @@
 { config, pkgs, lib, ... }@args: {
   imports = [ ];
   # We don't install opencode, claude code or codex here because these packages are updated a lot so would prefer to just install manually
+  # opencode: npm i -g opencode-ai
+  # pi: npm install -g --ignore-scripts @earendil-works/pi-coding-agent
 
   home.packages = with pkgs; [
     jq
     bun
     btca
     beads
-    pkgs."1mcp"
     jsonc2json
     # Opencode for code linting
     typescript-language-server

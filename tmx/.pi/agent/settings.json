@@ -1,6 +1,11 @@
 {
-  "lastChangelogVersion": "0.74.0",
+  "lastChangelogVersion": "0.84.2",
   "defaultProvider": "openai",
-  "defaultModel": "gpt-5.5"
+  "defaultModel": "gpt-5.6-sol",
+  "defaultThinkingLevel": "xhigh",
+  "packages": [
+    "npm:pi-mono-multi-edit"
+  ],
+  "theme": "dark",
+  "tuiMode": "fullscreen"
 }
-

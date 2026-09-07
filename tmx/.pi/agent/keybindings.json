@@ -1,0 +1,26 @@
+{
+  "app.editor.external": [],
+  "app.message.copy": [],
+  "app.message.followUp": [],
+  "app.model.cycleForward": [],
+  "app.model.cycleBackward": [],
+  "app.thinking.cycle": [],
+  "app.thinking.toggle": [],
+
+  "tui.input.newLine": ["shift+enter", "ctrl+enter", "alt+enter", "ctrl+j"],
+  "tui.editor.undo": ["ctrl+-", "super+z"],
+  "tui.editor.deleteWordBackward": ["ctrl+w", "ctrl+backspace", "alt+backspace"],
+  "tui.editor.deleteWordForward": ["alt+d", "alt+delete", "ctrl+delete"],
+
+  "tui.select.up": ["up", "ctrl+p"],
+  "tui.select.down": ["down", "ctrl+n"],
+
+  "tui.altScreen.pageUp": ["pageUp", "ctrl+alt+b"],
+  "tui.altScreen.pageDown": ["pageDown", "ctrl+alt+f"],
+  "tui.altScreen.halfPageUp": "ctrl+alt+u",
+  "tui.altScreen.halfPageDown": "ctrl+alt+d",
+  "tui.altScreen.lineUp": "ctrl+alt+y",
+  "tui.altScreen.lineDown": "ctrl+alt+e",
+  "tui.altScreen.top": ["home", "ctrl+g"],
+  "tui.altScreen.bottom": ["end", "ctrl+alt+g"]
+}

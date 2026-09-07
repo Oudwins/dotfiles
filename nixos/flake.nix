@@ -3,12 +3,12 @@
 
   inputs = {
     # NixOS uses stable
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-25.11";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-26.05";
     # Darwin uses unstable
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
     # Home manager for NixOS (follows stable)
-    home-manager.url = "github:nix-community/home-manager/release-25.11";
+    home-manager.url = "github:nix-community/home-manager/release-26.05";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
     # Home manager for Darwin (follows unstable)
@@ -25,9 +25,6 @@
     tmux-sessionx.url = "github:omerxx/tmux-sessionx";
 
     # CUSTOM STUFF
-    # xremap
-    xremap-flake.url = "github:xremap/nix-flake";
-    voxtype.url = "github:peteonrails/voxtype";
     sops-nix = {
       url = "github:mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";

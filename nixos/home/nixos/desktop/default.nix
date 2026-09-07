@@ -52,10 +52,17 @@
       name = "Adwaita-dark";
       package = pkgs.gnome-themes-extra;
     };
+    gtk4.theme = config.gtk.theme;
   };
 
   qt.enable = true;
   qt.platformTheme.name = "gtk";
   qt.style.name = "adwaita-dark";
   qt.style.package = pkgs.adwaita-qt;
+
+  # This stupid thing is needed because work laptop adds stuff to the npmrc which breaks npm
+  home.file.".npmrc".text = ''
+    prefix=~/.npm
+    script-shell=/bin/sh
+  '';
 }

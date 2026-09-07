@@ -1,0 +1,7 @@
+matches:
+  - trigger: ":job:no"
+    replace: |
+      Thank you for reaching out. This looks like a super interesting role. However, at this time, I am not considering new opportunities. I have a lot of personal things going on. I will reach out when that changes and I'm sure we can work together on this or some other position.
+  - trigger: ":job:low"
+    replace: |
+      Thank you for reaching out. This looks like an interesting role. However, at this time, I am not considering new opportunities. I have a lot of personal things going on. Additionally the compensation band is quite a bit far from what I would be able to consider.

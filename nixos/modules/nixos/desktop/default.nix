@@ -22,7 +22,6 @@
 
   services.autorandr.enable = true;
   programs.dconf.enable = true;
-  programs.light.enable = true;
 
   programs.thunar.enable = true;
   programs.thunar.plugins = [ pkgs.xfce.thunar-archive-plugin ];
@@ -64,5 +63,6 @@
   environment.systemPackages = with pkgs; [
     awesome
     adwaita-icon-theme
+    brightnessctl
   ];
 }

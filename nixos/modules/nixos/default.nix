@@ -1,1 +1,1 @@
-{ ... }: { imports = [ ./base ./flatpak.nix ]; }
+{ ... }: { imports = [ ./base ./bluetooth.nix ./flatpak.nix ]; }

@@ -7,6 +7,10 @@
     "beekeeper-studio-5.3.4"
     "dotnet-sdk-6.0.428"
     "dotnet-runtime-6.0.36"
+    "docker-28.5.2"
+    "librewolf-152.0.2-1"
+    "librewolf-unwrapped-152.0.2-1"
+
   ];
 
   networking.networkmanager.enable = true;

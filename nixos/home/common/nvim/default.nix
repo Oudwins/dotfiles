@@ -32,7 +32,7 @@ in {
       python3
       typescript
       markdownlint-cli
-      typescript-go
+      (lib.lowPrio typescript-go)
       # Rust (require for some nvim pkgs)
       rustc
       cargo

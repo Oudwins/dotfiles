@@ -9,7 +9,7 @@
   "plugin": [
     // smart context management
     // https://github.com/Opencode-DCP/opencode-dynamic-context-pruning
-    "@tarquinen/opencode-dcp@latest",
+    // "@tarquinen/opencode-dcp@latest",
     // Adds native web search
     "opencode-websearch-cited@1.2.0",
   ],

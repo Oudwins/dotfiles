@@ -15,7 +15,6 @@
     gparted
     geeqie
     onlyoffice-desktopeditors
-    obs-studio
     kdePackages.ark
     unstable.qbittorrent
     gimp
