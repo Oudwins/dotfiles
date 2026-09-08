@@ -14,37 +14,12 @@
     "opencode-websearch-cited@1.2.0",
   ],
   "mcp": {
-    // https://help.figma.com/hc/en-us/articles/32132100833559-Guide-to-the-Figma-MCP-server
-    "figma": {
-      "enabled": false,
-      "type": "remote",
-      "url": "https://mcp.figma.com/mcp",
-      "timeout": 60000,
-      "oauth": {
-        "clientId": "YrhrOrJCDyNE8SOw7x3jwr",
-        "clientSecret": "NrSeGMWQLKBtiGiqqwf862ZsiMr44O",
-      },
-    },
-    "linear": {
-      "enabled": false,
-      "type": "remote",
-      "url": "https://mcp.linear.app/mcp",
+    "executor": {
+      "enabled": true,
+      "type": "local",
+      "command": ["executor", "mcp"],
       "timeout": 60000,
     },
-    "posthog": {
-      "enabled": false,
-      "type": "remote",
-      "url": "https://mcp.posthog.com/mcp",
-      "timeout": 60000,
-    },
-    // "nextdevtools": {
-    //   "enabled": true,
-    //   "type": "local",
-    //   "command": ["npx", "-y", "next-devtools-mcp@latest"],
-    // },
-    // Linear mcp for tickets
-    // context7 for up to date docs
-    // sentry mcp for debugging production
   },
   "lsp": {},
   "provider": {
@@ -52,11 +27,12 @@
       "options": {
         // required for web search plugin
         "websearch_cited": {
-          "model": "gpt-5.4",
+          "model": "gpt-5.6-sol",
         },
       },
       "models": {
         "gpt-5.6-sol": {},
+        "gpt-6-astra": {},
       },
     },
     // "vertex_anthropic": {

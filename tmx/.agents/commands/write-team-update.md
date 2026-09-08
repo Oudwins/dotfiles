@@ -15,7 +15,9 @@ Write a short team update based on linear issues using the linear MCP and github
 
 The order of the issues should be as above, first resolved, then in progress then todo and finally blocked. Give a short description for each as per the example below. For blocked you probably don't want to write anything as most of the time you will not have context on why these things are blocked. Leave it for me.
 
-For the resolved issues you should only take the issues resolved since last update. Updates are on monday, wednesday and friday each week. The output should not be md as its for slack, so no md style links.
+For the resolved issues you should only take the issues resolved since last update. Updates are on wednesday and friday each week. The output should not be md as its for slack, so no md style links. Wednesday should be (friday, wednesday] so friday exclusive to wednesday inclusive. Friday should be (wednesday, friday].
+
+Make sure to check all the PRs I merged/created since the last relevant update day. Because sometimes i forget to add a linear ticket for them
 
 
 Example update: 

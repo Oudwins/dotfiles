@@ -49,4 +49,3 @@ sudo darwin-rebuild switch --flake .#macos
 nix-build --expr '(import <nixpkgs> { }).callPackage ./package.nix { }'
 ```
 # Notes
-

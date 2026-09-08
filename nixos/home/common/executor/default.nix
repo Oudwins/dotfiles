@@ -14,6 +14,67 @@ let
     ;
   cfg = config.services.executor;
 
+  oauthClientType = types.submodule {
+    options = {
+      authorizationUrl = mkOption {
+        type = types.str;
+        description = "OAuth authorization endpoint.";
+      };
+
+      tokenUrl = mkOption {
+        type = types.str;
+        description = "OAuth token endpoint.";
+      };
+
+      clientId = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = "OAuth client ID for a pre-registered client.";
+      };
+
+      clientSecret = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = "OAuth client secret stored in the Nix store.";
+      };
+
+      registrationEndpoint = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = "RFC 7591 dynamic client registration endpoint. When set, Executor registers its own client instead of using fixed credentials.";
+      };
+
+      clientName = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = "Client name sent during dynamic client registration.";
+      };
+
+      scopes = mkOption {
+        type = types.listOf types.str;
+        default = [ ];
+        description = "OAuth scopes requested during dynamic client registration.";
+      };
+
+      resource = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = "OAuth resource indicator.";
+      };
+    };
+  };
+
+  # Executor's register-dynamic endpoint ignores the requested slug and derives
+  # one from the registration endpoint's host, e.g. api.figma.com becomes
+  # dcr-api-figma-com.
+  dcrClientSlug =
+    endpoint:
+    let
+      withoutScheme = lib.removePrefix "https://" (lib.removePrefix "http://" endpoint);
+      host = lib.head (lib.splitString "/" withoutScheme);
+    in
+    "dcr-" + lib.concatStringsSep "-" (lib.splitString "." host);
+
   mcpServerType = types.submodule (
     { name, ... }:
     {
@@ -62,6 +123,12 @@ let
           ];
           default = "none";
           description = "Authentication method offered when connecting the MCP server.";
+        };
+
+        oauthClients = mkOption {
+          type = types.attrsOf oauthClientType;
+          default = { };
+          description = "Fixed OAuth clients registered for this MCP server.";
         };
 
         headers = mkOption {
@@ -192,9 +259,41 @@ let
       // lib.optionalAttrs (server.transport == "stdio" && server.cwd != null) {
         inherit (server) cwd;
       };
+      oauthClientPayloads = lib.mapAttrsToList (name: client: {
+        owner = "org";
+        slug = "${slug}-${name}";
+        grant = "authorization_code";
+        inherit (client)
+          authorizationUrl
+          tokenUrl
+          clientId
+          clientSecret
+          resource
+          ;
+        originIntegration = slug;
+      }) (lib.filterAttrs (_: client: client.registrationEndpoint == null) server.oauthClients);
+      oauthDcrClientPayloads = lib.mapAttrsToList (name: client: {
+        owner = "org";
+        slug = dcrClientSlug client.registrationEndpoint;
+        inherit (client)
+          registrationEndpoint
+          authorizationUrl
+          tokenUrl
+          clientName
+          scopes
+          resource
+          ;
+        originIntegration = slug;
+      }) (lib.filterAttrs (_: client: client.registrationEndpoint != null) server.oauthClients);
     in
     {
-      inherit slug addPayload serverConfig;
+      inherit
+        slug
+        addPayload
+        serverConfig
+        oauthClientPayloads
+        oauthDcrClientPayloads
+        ;
       needsDefaultConnection =
         server.authentication == "none" && server.secretEnvironmentVariables == [ ];
     };
@@ -212,7 +311,7 @@ let
 
   executorCommand = pkgs.writeShellScriptBin "executor" ''
     export EXECUTOR_DATA_DIR=${lib.escapeShellArg cfg.dataDir}
-    export EXECUTOR_SCOPE_DIR=${lib.escapeShellArg "${config.xdg.configHome}/executor"}
+    export EXECUTOR_SCOPE_DIR=${lib.escapeShellArg cfg.scopeDir}
     export EXECUTOR_DISABLE_ANALYTICS=1
     export EXECUTOR_DISABLE_UPDATE_CHECK=1
     exec ${lib.getExe cfg.package} "$@"
@@ -282,29 +381,104 @@ let
             --data-binary "$payload" \
             "$api_base/api/connections" >/dev/null
         fi
+
+        while IFS= read -r oauth_client; do
+          request \
+            --request POST \
+            --data-binary "$oauth_client" \
+            "$api_base/api/oauth/clients" >/dev/null
+        done < <(jq --compact-output '.oauthClientPayloads[]' <<<"$server")
+
+        while IFS= read -r oauth_client; do
+          request \
+            --request POST \
+            --data-binary "$oauth_client" \
+            "$api_base/api/oauth/clients/register-dynamic" >/dev/null
+        done < <(jq --compact-output '.oauthDcrClientPayloads[]' <<<"$server")
       done < <(jq --compact-output '.servers[]' "$desired")
 
+      managed_servers='[]'
+      managed_oauth_clients='[]'
+      legacy_managed=0
       if [[ -f "$managed_file" ]]; then
-        while IFS= read -r slug; do
-          if ! jq --exit-status --arg slug "$slug" 'any(.servers[]; .slug == $slug)' "$desired" >/dev/null; then
-            request --request DELETE "$api_base/api/mcp/servers/$slug" >/dev/null
-          fi
-        done < <(jq --raw-output '.[]' "$managed_file")
+        if jq --exit-status 'type == "array"' "$managed_file" >/dev/null; then
+          managed_servers="$(jq --compact-output '.' "$managed_file")"
+          legacy_managed=1
+        else
+          managed_servers="$(jq --compact-output '.servers // []' "$managed_file")"
+          managed_oauth_clients="$(jq --compact-output '.oauthClients // []' "$managed_file")"
+        fi
       fi
+
+      oauth_clients="$(request "$api_base/api/oauth/clients")"
+      while IFS= read -r slug; do
+        if ! jq --exit-status --arg slug "$slug" 'any(.servers[]; .slug == $slug)' "$desired" >/dev/null; then
+          request --request DELETE "$api_base/api/mcp/servers/$slug" >/dev/null
+
+          if [[ "$legacy_managed" == 1 ]]; then
+            while IFS= read -r oauth_client_slug; do
+              request \
+                --request DELETE \
+                --data-binary '{"owner":"org"}' \
+                "$api_base/api/oauth/clients/$oauth_client_slug" >/dev/null
+            done < <(jq --raw-output --arg prefix "$slug-" '.[] | select(.slug | startswith($prefix)) | .slug' <<<"$oauth_clients")
+          fi
+        fi
+      done < <(jq --raw-output '.[]' <<<"$managed_servers")
+
+      while IFS= read -r oauth_client_slug; do
+        if ! jq --exit-status --arg slug "$oauth_client_slug" \
+          'any(.servers[] | (.oauthClientPayloads[], .oauthDcrClientPayloads[]); .slug == $slug)' \
+          "$desired" >/dev/null; then
+          request \
+            --request DELETE \
+            --data-binary '{"owner":"org"}' \
+            "$api_base/api/oauth/clients/$oauth_client_slug" >/dev/null
+        fi
+      done < <(jq --raw-output '.[]' <<<"$managed_oauth_clients")
 
       mkdir -p "$data_dir"
       next_managed="$(mktemp "$data_dir/.managed-mcps.XXXXXX")"
-      jq '[.servers[].slug]' "$desired" >"$next_managed"
+      jq '{
+        servers: [.servers[].slug],
+        oauthClients: [.servers[].oauthClientPayloads[].slug] + [.servers[].oauthDcrClientPayloads[].slug]
+      }' "$desired" >"$next_managed"
       mv "$next_managed" "$managed_file"
     '';
   };
 
   serviceEnvironment = {
     EXECUTOR_DATA_DIR = cfg.dataDir;
-    EXECUTOR_SCOPE_DIR = "${config.xdg.configHome}/executor";
+    EXECUTOR_SCOPE_DIR = cfg.scopeDir;
     EXECUTOR_SUPERVISED = "1";
     EXECUTOR_DISABLE_ANALYTICS = "1";
     EXECUTOR_DISABLE_UPDATE_CHECK = "1";
+  };
+
+  launchdCommand = pkgs.writeShellApplication {
+    name = "executor-service";
+    text = ''
+      ${lib.getExe cfg.package} daemon run \
+        --foreground \
+        --hostname ${lib.escapeShellArg cfg.host} \
+        --port ${toString cfg.port} &
+      daemon_pid=$!
+
+      # Invoked indirectly by the signal traps below.
+      # shellcheck disable=SC2329
+      cleanup() {
+        kill "$daemon_pid" 2>/dev/null || true
+        wait "$daemon_pid" 2>/dev/null || true
+      }
+      trap cleanup EXIT INT TERM
+
+      ${lib.getExe reconcile}
+
+      status=0
+      wait "$daemon_pid" || status=$?
+      trap - EXIT INT TERM
+      exit "$status"
+    '';
   };
 in
 {
@@ -324,6 +498,7 @@ in
       description = "Address on which Executor listens.";
     };
 
+    # DEFAULT PORT
     port = mkOption {
       type = types.port;
       default = 4788;
@@ -334,6 +509,12 @@ in
       type = types.str;
       default = "${config.xdg.dataHome}/executor";
       description = "Mutable Executor database and authentication directory.";
+    };
+
+    scopeDir = mkOption {
+      type = types.str;
+      default = "${config.xdg.configHome}/executor";
+      description = "Directory identifying the Executor workspace.";
     };
 
     mcpServers = mkOption {
@@ -362,7 +543,21 @@ in
           assertion = server.transport != "stdio" || server.authentication == "none";
           message = "services.executor.mcpServers.${slug}.authentication is only supported for remote MCP servers";
         }
-      ]) cfg.mcpServers
+        {
+          assertion = server.oauthClients == { } || server.authentication == "oauth2";
+          message = "services.executor.mcpServers.${slug}.oauthClients requires authentication = \"oauth2\"";
+        }
+      ]
+      ++ lib.flatten (
+        lib.mapAttrsToList (cname: client: [
+          {
+            assertion =
+              (client.registrationEndpoint == null && client.clientId != null && client.clientSecret != null)
+              || (client.registrationEndpoint != null && client.clientId == null && client.clientSecret == null);
+            message = "services.executor.mcpServers.${slug}.oauthClients.${cname}: set exactly one of clientId/clientSecret (fixed client) or registrationEndpoint (dynamic registration)";
+          }
+        ]) server.oauthClients
+      )) cfg.mcpServers
     );
 
     home.packages = [ executorCommand ];
@@ -387,31 +582,11 @@ in
     launchd.agents.executor = mkIf pkgs.stdenv.hostPlatform.isDarwin {
       enable = true;
       config = {
-        ProgramArguments = [
-          (lib.getExe cfg.package)
-          "daemon"
-          "run"
-          "--foreground"
-          "--hostname"
-          cfg.host
-          "--port"
-          (toString cfg.port)
-        ];
+        ProgramArguments = [ (lib.getExe launchdCommand) ];
         EnvironmentVariables = serviceEnvironment;
         KeepAlive = true;
         ProcessType = "Background";
         RunAtLoad = true;
-      };
-    };
-
-    launchd.agents.executor-reconcile = mkIf pkgs.stdenv.hostPlatform.isDarwin {
-      enable = true;
-      config = {
-        ProgramArguments = [ (lib.getExe reconcile) ];
-        KeepAlive.SuccessfulExit = false;
-        ProcessType = "Background";
-        RunAtLoad = true;
-        ThrottleInterval = 5;
       };
     };
   };
