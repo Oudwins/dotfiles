@@ -3,7 +3,7 @@
     "harness": {
       "providers": {
         "openCode": {
-          "defaultModel": "openai/gpt-5.6-sol"
+          "defaultModel": "openai/gpt-6-astra"
         }
       }
     }

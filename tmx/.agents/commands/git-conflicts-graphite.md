@@ -6,17 +6,16 @@ agent: build
 
 # Resolve Graphite Merge Conflicts
 
-Your job is to resolve merge conflicts caused by an interrupted Graphite CLI command, usually `gt restack`.
+Your job is to resolve merge conflicts.
 
 ## 1. Preparation
 
-Assume I already ran a Graphite command like:
+Determine if there is an active conflict.
 
-```bash
-gt restack
-```
+if no active conflict then most likely this branch has conflict with main before it can be merged. So run `gt sync` / `gt restack` to sync with origin and surface the conflict.
 
-If this command is being invoked, Graphite stopped with a message like:
+
+Graphite normally shows this kind of message when a conflict appears:
 
 ```text
 Hit conflict restacking <branch> on main.
