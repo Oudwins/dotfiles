@@ -1,8 +1,4 @@
 ## To add at some point
-
-- Terminal multiplexer:
-  - https://github.com/zellij-org/zellij ???
-  - tmux?
 - https://github.com/junhoyeo/tokscale
 
 
