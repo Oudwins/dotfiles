@@ -16,7 +16,8 @@ You are tasked with completing the user's request, commiting the changes and cre
 5. Call the simplifier agent to review your changes and address its concerns
 6. Commit changes
 7. Push the branch to the remote repository
-8. Create a PR with the github cli
+8. Create a PR with the github cli. Set it as ready for review
+9. Babysit the PR 
 
 
 ## Creating the changes
@@ -67,6 +68,10 @@ gh pr create --base main --head feature-branch --title "Your PR title" --body "D
 ```
 
 Remember to use the head branch from the git repo (generally main or master) to target the PR against. It should be the following: !`git remote show origin | grep "HEAD"`
+
+### Baby sitting a PR
+Wait for CI & review bots to run and leave feedback. Fix CI issues and address review bot feedback if logical and true
+
 
 ### Constraints
 
