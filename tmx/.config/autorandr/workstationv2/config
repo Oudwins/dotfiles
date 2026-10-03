@@ -9,8 +9,9 @@ crtc 1
 mode 2560x1440
 pos 0x0
 rate 59.95
+x-prop-broadcast_rgb Automatic
 x-prop-colorspace Default
-x-prop-max_bpc 16
+x-prop-max_bpc 8
 x-prop-non_desktop 0
 x-prop-scaling_mode None
 x-prop-underscan off

@@ -12,7 +12,6 @@ in {
       gh # used to auto create PRs
       # nvim
       neovimPkg
-      git
       fd
       unzip
       ripgrep
