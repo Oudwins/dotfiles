@@ -38,7 +38,6 @@
       "/Users/tmx/.config/gcloud/application_default_credentials.json";
     VERTEX_LOCATION = "us-east5";
     # CLAUDE CODE + VERTEX AI
-    CLAUDE_CODE_USE_VERTEX = 1;
     CLOUD_ML_REGION = "us-east5";
     ANTHROPIC_VERTEX_PROJECT_ID = "eleven-vertex-internal";
     TERMINAL = "ghostty";

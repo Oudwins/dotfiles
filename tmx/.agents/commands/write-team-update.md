@@ -48,24 +48,29 @@ Examples:
 Use the reconciled task list and verified Linear states. Keep each description short and grounded in the evidence, following the example below. Prefix each entry with its state emoji and group entries in this order:
 
 :resolved: -> completed/measuring
-:review: -> in review
+:review: -> in review 
 :hourglass_flowing_sand: -> in progress
 :to-do: -> todo
 :no_entry: -> blocked
 
 Only include resolved work completed since the previous update boundary. Creating or updating an issue now for older completed work does not make that work newly completed. For blocked items, include the task name and leave the explanation for me unless the reason is explicit in the sources.
 
-The output is for Slack: use plain text with Slack formatting, not Markdown headings or Markdown-style links. For every task that has PRs, include all applicable PR links regardless of status, with only the PR number as the label: <https://github.com/owner/repo/pull/123|#123>. For multiple PRs, include each link, for example <https://github.com/owner/repo/pull/123|#123> <https://github.com/owner/repo/pull/456|#456>.
+When adding links to PRs include them as markdown links in the following format: [#PR_NUMBER](link). For example: [Click here](https://example.com).
 
 Return the draft for me to send. If there are coverage gaps or unresolved reconciliation problems, note them separately from the copyable update.
+
+PLEASE MAKE SURE THAT ONLY ONE LINE ITEM PER PIECE OF WORK. For stacked PRs we can treat as one but never join other work into one line item. Makes it harder to read
 
 
 Example update: 
 ```txt
-:resolved:  Termline cluster membership overrides system. Initial PR sets up must be connected overrides. We will also require must not be connected and must be root.  Of those, the second will be tricky have some ideas but want to discuss with @Mihail Feraru (thank you for always dealing with my crazy ramblings)
-:review: Twilio hardening checklist progress. I'm sending a PR to XI and with that we should be good. Although there is no way to manually trigger the twilio alerts so I left one alert at very low to test and doesn't seem to have triggered.... Other than this everything is setup, we have XI using the new twilio project for verify and using a new phone number I purchased there. I also figured out the issue with n8n....
+:resolved:  Termline cluster membership overrides system. Initial PR sets up must be connected overrides. We will also require must not be connected and must be root.  Of those, the second will be tricky have some ideas but want to discuss with @Mihail Feraru (thank you for always dealing with my crazy ramblings). [#5053](https://github.com/elevenlabs/marketing-website/pull/5053)
+:review: Twilio hardening checklist progress. I'm sending a PR to XI and with that we should be good. Although there is no way to manually trigger the twilio alerts so I left one alert at very low to test and doesn't seem to have triggered.... Other than this everything is setup, we have XI using the new twilio project for verify and using a new phone number I purchased there. I also figured out the issue with n8n.... [#5054](https://github.com/elevenlabs/marketing-website/pull/5054), [#5055](https://github.com/elevenlabs/marketing-website/pull/5055)
 
-:hourglass_flowing_sand: More termline missing table permissions terraform PR. Some more work needs to be done for this. Speaking to Stav & Alex Holt. Huge thank you to @Gergely Bihary for your help!
+
+
+:hourglass_flowing_sand: More termline missing table permissions terraform PR. Some more work needs to be done for this. Speaking to Stav & Alex Holt. Huge thank you to @Gergely Bihary for your help! [#4012](https://github.com/elevenlabs/marketing-website/pull/4012)
+
 :hourglass_flowing_sand: Ship one sample sfx page via termline. I think I will pick something since Rich is out to test.
 :hourglass_flowing_sand: Help @Dorian with auth for vertex for elevenhacks
 
