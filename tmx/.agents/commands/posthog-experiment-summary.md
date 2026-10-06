@@ -14,7 +14,7 @@ The user will give you an experiment reference (a PostHog experiment URL, an exp
 <SOP>
 1. Resolve the experiment ID.
    - From a URL like `https://<region>.posthog.com/project/<project>/experiments/<id>` the `<id>` is the experiment ID.
-   - If given only a name, use the PostHog MCP to find it (`experiment-get-all` / `experiment-list`).
+   - If given only a name, use the PostHog MCP VIA EXECUTOR to find it (`experiment-get-all` / `experiment-list`).
 2. Fetch the data via the PostHog MCP server. ALWAYS read the tool's JSON descriptor/schema before calling it.
    - `experiment-get` — variants (control + test variants), status, start/end dates, metric definitions.
    - `experiment-results-get` — the actual metric results (`metrics.primary.results`, `metrics.secondary.results`). The large payload is written to a file; read it.
@@ -56,6 +56,7 @@ The user will give you an experiment reference (a PostHog experiment URL, an exp
 ### Template
 
 ```
+[Experiment update: {very short description}]
 Hey team following up on the <experiment> experiment after ~<N> days. Here's how the variations did vs control:
 
 **Variation 1 — <variant-key> (<plain-english descriptor>)**
@@ -73,6 +74,9 @@ Hey team following up on the <experiment> experiment after ~<N> days. Here's how
 :red_circle: -Y% <Metric> (sig)
 
 :white_circle: -Z% <Metric> (flat)
+
+
+**Overall result so far: {:red_circle: or :large_green_circle: depending on if good or bad}
 
 <1-3 sentence read: winner, trade-off, next step.>
 

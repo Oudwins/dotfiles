@@ -28,9 +28,6 @@
   in {
     OPENCODE_CONFIG = "${home}/.config/opencode/opencode.jsonc";
     OPENCODE_CONFIG_DIR = "${home}/.config/opencode";
-    OPENCODE_CONFIG_CONTENT = builtins.toJSON {
-      agent.ui-developer.model = "cc-proxy/claude-opus-5";
-    };
     DOCKER_CLI_PLUGIN_EXTRA_DIRS = "/opt/homebrew/lib/docker/cli-plugins";
     # Opencode vertex ai
     GOOGLE_CLOUD_PROJECT = "xi-playground";
@@ -49,6 +46,13 @@
     CODE_PROJECTS =
       builtins.concatStringsSep ":" (map (dir: "${home}/${dir}") projects);
   };
+
+  # Preserve JSON quotes instead of nesting them in sessionVariables' double quotes.
+  home.sessionVariablesExtra = ''
+    export OPENCODE_CONFIG_CONTENT=${lib.escapeShellArg (builtins.toJSON {
+      agent.ui-developer.model = "cc-proxy/claude-opus-5-5";
+    })}
+  '';
 
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;

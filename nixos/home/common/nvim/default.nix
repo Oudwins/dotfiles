@@ -17,6 +17,8 @@ in {
       unzip
       ripgrep
       gnumake
+      # nvim-treesitter (main) builds parsers with this
+      tree-sitter
       # marksman lsp requires this
       icu
 

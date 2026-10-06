@@ -617,6 +617,10 @@ require('lazy').setup({
         require('mini.comment').setup {
           options = {
             custom_commentstring = function()
+              local ok, parser = pcall(vim.treesitter.get_parser, 0, nil, { error = false })
+              if not ok or not parser then
+                return vim.bo.commentstring
+              end
               return require('ts_context_commentstring').calculate_commentstring() or vim.bo.commentstring
             end,
           },
@@ -643,11 +647,13 @@ require('lazy').setup({
     },
     { -- Highlight, edit, and navigate code
       'nvim-treesitter/nvim-treesitter',
+      branch = 'main',
+      lazy = false,
       build = ':TSUpdate',
-      main = 'nvim-treesitter.configs', -- Sets main module to use for opts
       -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
-      opts = {
-        ensure_installed = {
+      config = function()
+        local ts = require 'nvim-treesitter'
+        ts.install {
           'bash',
           'c',
           'diff',
@@ -663,24 +669,43 @@ require('lazy').setup({
           'javascript',
           'tsx', -- Required for context-aware commenting in TSX
           'go',
-        },
-        -- Autoinstall languages that are not installed
-        auto_install = true,
-        highlight = {
-          enable = true,
-          -- WORKAROUND(2026-02-22): Neovim 0.11.x can throw
-          -- "Index out of bounds" from the Tree-sitter highlighter when
-          -- editing fenced code blocks inside markdown (often with injected
-          -- languages like ```bash). Disable TS highlighting for markdown for
-          -- now; remove this once you upgrade Neovim/parsers and it's stable.
-          -- disable = { 'markdown', 'markdown_inline' },
+        }
+
+        local available = ts.get_available()
+        local function attach(buf, lang)
+          if not pcall(vim.treesitter.start, buf, lang) then
+            return
+          end
           -- Some languages depend on vim's regex highlighting system (such as Ruby) for indent rules.
-          --  If you are experiencing weird indenting issues, add the language to
-          --  the list of additional_vim_regex_highlighting and disabled languages for indent.
-          additional_vim_regex_highlighting = { 'ruby' },
-        },
-        indent = { enable = true, disable = { 'ruby' } },
-      },
+          if lang == 'ruby' then
+            vim.bo[buf].syntax = 'on'
+          else
+            vim.bo[buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+          end
+        end
+
+        vim.api.nvim_create_autocmd('FileType', {
+          group = vim.api.nvim_create_augroup('kickstart-treesitter', { clear = true }),
+          callback = function(args)
+            local lang = vim.treesitter.language.get_lang(args.match)
+            if not lang then
+              return
+            end
+            if vim.list_contains(ts.get_installed(), lang) then
+              attach(args.buf, lang)
+            elseif vim.list_contains(available, lang) then
+              -- Autoinstall languages that are not installed
+              ts.install(lang):await(function()
+                vim.schedule(function()
+                  if vim.api.nvim_buf_is_valid(args.buf) then
+                    attach(args.buf, lang)
+                  end
+                end)
+              end)
+            end
+          end,
+        })
+      end,
       -- There are additional nvim-treesitter modules that you can use to interact
       -- with nvim-treesitter. You should go explore a few and see what interests you:
       --
