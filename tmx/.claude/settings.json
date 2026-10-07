@@ -1,0 +1,12 @@
+{
+  "env": {
+    "CLAUDE_CODE_USE_VERTEX": "0"
+  },
+  "permissions": {
+    "allow": [],
+    "deny": []
+  },
+  "skipDangerousModePermissionPrompt": true,
+  "model": "claude-opus-5-5",
+  "autoMemoryEnabled": false
+}

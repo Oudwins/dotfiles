@@ -7,23 +7,23 @@
 }:
 
 let
-  version = "1.5.40";
+  version = "1.6.10";
   sources = {
     aarch64-darwin = {
       suffix = "darwin-arm64";
-      hash = "sha512-YpauyrLrsRMjkYgkTSue5EqRThlaUr2n3Y3NrSwov8ZTM+vCpVEy0TGmwStWuPbH8c5O3bxEPcuhvYppVKpMVA==";
+      hash = "sha512-rPuEL8ibW7k6jkAa714wAiiw3YGWtQ4btMmCSDdLGzEIBj2FoBNjOu76okIF10H3fYbrituss0VeX5KEPFbv/w==";
     };
     x86_64-darwin = {
       suffix = "darwin-x64";
-      hash = "sha512-anqq/E6OajthonkAoVvFXfCCmckgASVn1tnmnsYaO/+mnNPp5vLNsewlFakYogC7dYej9HE3CATUL6IqWVbQmg==";
+      hash = "sha512-KA7sGlSV/3uXL5ZOv8YJd1HBoYR3DPDxQlVcsxzF+jdLjvDTKrl+n2eQ3imzlYMwps80AqDHk+rcFg8zEJXI7w==";
     };
     aarch64-linux = {
       suffix = "linux-arm64";
-      hash = "sha512-FKc4LDJRYFUpRiECVRf0xd2Q40QtGw7Vwc780gADtIDX4UiAHL++MAONO0A0/j/mL7KG0AjeT/Lpi+m08x/kHg==";
+      hash = "sha512-SyzZsunGUhgwZoFEiWVqEIPV3h25SHKToWLrwId3p7FJqGuP/9ixMeOeXZ1CIS9j2kCws3F5iSUi3DQQ/6uxdw==";
     };
     x86_64-linux = {
       suffix = "linux-x64";
-      hash = "sha512-oUSJ9fgO/up2/Bh13BVFWBiDlYozyCGTir/mZ8T5rU+l1Knn+OXEsPD+nCZx2E+2Mdn6aZiiYEXXVU/CsUzisw==";
+      hash = "sha512-njvy/LzUWlVdDXuKTTGX6NCKhDpKdRjMf2T7KqumaZd2A7ZqXoIl65qeAyklFU+kkalLS6QW1Xs3lSSj+nfAPw==";
     };
   };
   source =
