@@ -11,8 +11,8 @@
     // smart context management
     // https://github.com/Opencode-DCP/opencode-dynamic-context-pruning
     // "@tarquinen/opencode-dcp@latest",
-    // Adds native web search
-    "opencode-websearch-cited@1.2.0",
+    // Disabled: this plugin hardcodes public OpenAI endpoints and bypasses the proxy.
+    // "opencode-websearch-cited@1.2.0",
   ],
   "mcp": {
     "executor": {
@@ -26,25 +26,14 @@
   "provider": {
     "openai": {
       "options": {
-        // required for web search plugin
-        "websearch_cited": {
-          "model": "gpt-5.6-sol",
-        },
+        "baseURL": "http://127.0.0.1:8317/v1",
+        "apiKey": "local",
       },
       "models": {
-        "gpt-5.6-sol": {},
         "gpt-6-astra": {},
+        "gpt-5.6-terra": {},
       },
     },
-    // "vertex_anthropic": {
-    //   "npm": "@ai-sdk/google-vertex/anthropic",
-    //   "name": "Google Vertex Anthropic",
-    //   "options": {
-    //     "project": "eleven-vertex-internal",
-    //     "location": "{env:VERTEX_LOCATION}",
-    //   },
-    //   "models": {},
-    // },
     "ollama": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "Ollama (local)",
@@ -68,9 +57,9 @@
     },
     "cc-proxy": {
       "npm": "@ai-sdk/anthropic",
-      "name": "cc-proxy",
+      "name": "CLIProxyAPI (Claude)",
       "options": {
-        "baseURL": "http://localhost:8317/v1",
+        "baseURL": "http://127.0.0.1:8317/v1",
         "apiKey": "local",
       },
       "models": {

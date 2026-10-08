@@ -29,14 +29,10 @@
     OPENCODE_CONFIG = "${home}/.config/opencode/opencode.jsonc";
     OPENCODE_CONFIG_DIR = "${home}/.config/opencode";
     DOCKER_CLI_PLUGIN_EXTRA_DIRS = "/opt/homebrew/lib/docker/cli-plugins";
-    # Opencode vertex ai
     GOOGLE_CLOUD_PROJECT = "xi-playground";
     GOOGLE_APPLICATION_CREDENTIALS =
       "/Users/tmx/.config/gcloud/application_default_credentials.json";
-    VERTEX_LOCATION = "us-east5";
-    # CLAUDE CODE + VERTEX AI
     CLOUD_ML_REGION = "us-east5";
-    ANTHROPIC_VERTEX_PROJECT_ID = "eleven-vertex-internal";
     TERMINAL = "ghostty";
     EDITOR = "nvim";
     # this creates a string of "/home/tmx/projects:/home/tmx/{other_project_dir}"

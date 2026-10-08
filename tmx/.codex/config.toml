@@ -1,0 +1,18 @@
+model_provider = "cliproxyapi"
+model = "gpt-6-astra"
+model_reasoning_effort = "high"
+
+[model_providers.cliproxyapi]
+name = "CLIProxyAPI"
+base_url = "http://127.0.0.1:8317/v1"
+model_catalog_url = "http://127.0.0.1:8317/v1/models"
+wire_api = "responses"
+requires_openai_auth = false
+experimental_bearer_token = "local"
+supports_websockets = false
+
+[features]
+api_key_model_discovery = true
+
+[tui]
+screen_reader_detection_done = true

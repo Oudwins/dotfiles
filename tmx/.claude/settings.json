@@ -1,6 +1,9 @@
 {
   "env": {
-    "CLAUDE_CODE_USE_VERTEX": "0"
+    "CLAUDE_CODE_USE_VERTEX": "0",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8317",
+    "ANTHROPIC_AUTH_TOKEN": "local",
+    "CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY": "1"
   },
   "permissions": {
     "allow": [],
