@@ -9,7 +9,10 @@
     ./ghostty
     ./agents
     ./executor
+    ./cli-proxy-api
   ];
+
+  services.cli-proxy-api.enable = true;
 
   services.executor = {
     enable = true;
