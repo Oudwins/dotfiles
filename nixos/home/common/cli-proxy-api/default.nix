@@ -8,16 +8,38 @@
 let
   cfg = config.services.cli-proxy-api;
   command = pkgs.writeShellScriptBin "cli-proxy-api" ''
+    set -e
     umask 077
     export WRITABLE_PATH=${lib.escapeShellArg cfg.stateDir}
     ${pkgs.coreutils}/bin/mkdir -p "$WRITABLE_PATH"
+
+    config_args=()
+    explicit_config=false
+    for arg in "$@"; do
+      case "$arg" in
+        -config|--config|-config=*|--config=*) explicit_config=true ;;
+      esac
+    done
+    if [ "$explicit_config" = false ]; then
+      inputs=(${lib.escapeShellArg cfg.configFile})
+      if [ -f ${lib.escapeShellArg cfg.secretsFile} ]; then
+        inputs+=(${lib.escapeShellArg cfg.secretsFile})
+      fi
+      temporary_config="$(${pkgs.coreutils}/bin/mktemp "$WRITABLE_PATH/.config.XXXXXX")"
+      trap '${pkgs.coreutils}/bin/rm -f "$temporary_config"' EXIT
+      ${lib.getExe pkgs.yq-go} eval-all '. as $item ireduce ({}; . * $item)' "''${inputs[@]}" > "$temporary_config"
+      ${pkgs.coreutils}/bin/mv -f "$temporary_config" "$WRITABLE_PATH/config.yaml"
+      trap - EXIT
+      config_args=(--config "$WRITABLE_PATH/config.yaml")
+    fi
+
     cd "$WRITABLE_PATH" || exit 1
     # discover is a subcommand rather than a flag.
     if [ "''${1-}" = discover ]; then
       shift
-      exec ${lib.getExe cfg.package} discover --config ${lib.escapeShellArg cfg.configFile} "$@"
+      exec ${lib.getExe cfg.package} discover "''${config_args[@]}" "$@"
     fi
-    exec ${lib.getExe cfg.package} --config ${lib.escapeShellArg cfg.configFile} "$@"
+    exec ${lib.getExe cfg.package} "''${config_args[@]}" "$@"
   '';
 in
 {
@@ -32,6 +54,11 @@ in
       type = lib.types.str;
       default = "${config.home.homeDirectory}/.cli-proxy-api/config.yaml";
       description = "Mutable YAML configuration, managed outside Nix (for example with Stow).";
+    };
+    secretsFile = lib.mkOption {
+      type = lib.types.str;
+      default = "${config.home.homeDirectory}/.cli-proxy-api/secrets.yaml";
+      description = "Optional local YAML overrides, merged with configFile at launch without putting secrets in the Nix store.";
     };
     stateDir = lib.mkOption {
       type = lib.types.str;
