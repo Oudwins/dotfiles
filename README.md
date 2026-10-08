@@ -53,7 +53,9 @@ systemd on Linux. The settings in `tmx/.cli-proxy-api/config.yaml` are tracked i
 and symlinked to `~/.cli-proxy-api/config.yaml` by Stow, not managed by Nix.
 The installed `cli-proxy-api` launcher merges those settings with an optional
 `~/.cli-proxy-api/secrets.yaml` at launch (including login commands). Secrets override
-settings: nested mappings merge, while lists are replaced. The merged file lives at
+settings: nested mappings merge, while lists are replaced, except that upstream
+`api-keys.<provider>` groups merge by `name` (unique and nonempty within each file).
+The merged file lives at
 `~/.local/state/cli-proxy-api/config.yaml`, has mode 600, and never enters the Nix store.
 `--config /another/file.yaml` bypasses this merge and uses that file directly.
 
@@ -78,11 +80,38 @@ sudo darwin-rebuild switch --flake ./nixos#macos
 sudo nixos-rebuild switch --flake ./nixos#nixos
 ```
 
-Commit ordinary settings in `config.yaml`. Keep client keys, upstream API-key groups
+Commit ordinary settings in `config.yaml`. Keep client keys, upstream API keys
 and management secrets in `secrets.yaml`, which is Git-ignored but still linked by
 Stow. `secrets.example.yaml` is only a starter template. Never put real secrets in
 the tracked settings, the template, or Nix expressions. Without a real client key,
 the placeholder in the tracked settings keeps proxy endpoints disabled.
+
+For example, keep the OpenAI URL and model list in `config.yaml`:
+
+```yaml
+api-keys:
+  openai-compatibility:
+    - name: openai
+      base-url: https://api.openai.com/v1
+      models:
+        - name: gpt-4.1
+          alias: gpt-4.1
+```
+
+Supply only the matching group's credentials in `secrets.yaml`:
+
+```yaml
+api-keys:
+  openai-compatibility:
+    - name: openai
+      keys:
+        - api-key: sk-YOUR_OPENAI_KEY
+```
+
+Groups are matched within each provider type, never by list position. Unmatched
+groups are retained, including groups added only in the secrets file. A secrets
+entry can override ordinary group fields too; nested lists such as `keys` and
+`models` still replace their tracked counterparts when explicitly supplied.
 
 Authenticate a provider, then point clients at `http://127.0.0.1:8317/v1` with your
 client key:

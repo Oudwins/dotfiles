@@ -27,7 +27,23 @@ let
       fi
       temporary_config="$(${pkgs.coreutils}/bin/mktemp "$WRITABLE_PATH/.config.XXXXXX")"
       trap '${pkgs.coreutils}/bin/rm -f "$temporary_config"' EXIT
-      ${lib.getExe pkgs.yq-go} eval-all '. as $item ireduce ({}; . * $item)' "''${inputs[@]}" > "$temporary_config"
+      if ! ${lib.getExe pkgs.yq-go} eval-all --exit-status '
+        ([.api-keys[]? | .[]? | select((.name | tag) != "!!str" or .name == "")] | length == 0) and
+        ([.api-keys[]? | group_by(.name)[] | select(length > 1)] | length == 0)
+      ' "''${inputs[@]}" > /dev/null; then
+        echo "api-keys provider groups must have unique, nonempty names within each file." >&2
+        exit 1
+      fi
+      # Index provider groups by name while merging, then restore their lists.
+      # All other lists keep the normal replacement semantics.
+      ${lib.getExe pkgs.yq-go} eval-all '
+        (with(select(has("api-keys"));
+          .api-keys |= with_entries(.value |= ([.[] | {"key": .name, "value": .}] | from_entries))
+        )) as $item ireduce ({}; . * $item) |
+        with(select(has("api-keys"));
+          .api-keys |= with_entries(.value |= ([to_entries[] | .value]))
+        )
+      ' "''${inputs[@]}" > "$temporary_config"
       ${pkgs.coreutils}/bin/mv -f "$temporary_config" "$WRITABLE_PATH/config.yaml"
       trap - EXIT
       config_args=(--config "$WRITABLE_PATH/config.yaml")

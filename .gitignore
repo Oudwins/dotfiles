@@ -20,6 +20,9 @@ tmx/.config/alacritty/
 tmx/.zshrc
 
 # Local/generated files
+tmx/.cli-proxy-api/*
+!tmx/.cli-proxy-api/config.yaml
+!tmx/.cli-proxy-api/secrets.example.yaml
 thoughts/shared/plan/
 tmx/.config/btca/
 tmx/.config/elevenscribe/

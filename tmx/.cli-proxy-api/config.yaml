@@ -1,0 +1,63 @@
+# Tracked settings. Put real keys in the Git-ignored secrets.yaml alongside this file.
+# https://help.router-for.me/configuration/options.html
+config-version: 8
+
+server:
+  host: "127.0.0.1"
+  port: 8317
+
+access:
+  # Overridden by secrets.yaml. This placeholder disables proxy endpoints until configured.
+  api-keys:
+    - "your-api-key-1"
+
+api-keys:
+  openai-compatibility:
+    - name: openai
+      base-url: "https://api.openai.com/v1"
+      models:
+        # Latest non-deprecated text LLMs per family/tier, checked 2026-10-08.
+        # https://developers.openai.com/api/docs/models
+        # Responses-only Pro models and restricted specialists are excluded.
+        - name: "gpt-6-astra"
+          alias: "gpt-6-astra"
+        # Chat Completions does not support tool calling for Sol.
+        - name: "gpt-6.1-sol"
+          alias: "gpt-6.1-sol"
+        # Luna tool calling via Chat Completions requires reasoning_effort: none.
+        - name: "gpt-6-luna"
+          alias: "gpt-6-luna"
+        - name: "gpt-5.6-terra"
+          alias: "gpt-5.6-terra"
+
+oauth:
+  # Keep mutable OAuth tokens outside the Stow-managed dotfiles tree.
+  auth-dir: "~/.local/share/cli-proxy-api/auth"
+  providers:
+    aistudio:
+      ws-auth: true
+
+management:
+  allow-remote: false
+  # Keep the real management key in secrets.yaml; empty disables the management API.
+  secret-key: ""
+  disable-control-panel: true
+
+routing:
+  strategy: "round-robin"
+  # Keep a conversation on the same credential for prompt-cache reuse.
+  session-affinity: true
+  session-affinity-ttl: "1h"
+
+requests:
+  streaming:
+    keepalive-seconds: 15
+    bootstrap-retries: 1
+
+observability:
+  logs:
+    debug: false
+    request-log: false
+    logging-to-file: true
+    logs-max-total-size-mb: 100
+    error-logs-max-files: 10
