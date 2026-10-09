@@ -1,10 +1,12 @@
 {
-  "lastChangelogVersion": "0.84.2",
-  "defaultProvider": "openai",
+  "lastChangelogVersion": "1.1.0",
+  "defaultProvider": "cliproxyapi",
   "defaultModel": "gpt-6-astra",
   "defaultThinkingLevel": "xhigh",
+  "transport": "websocket-cached",
   "packages": [
-    "npm:pi-mono-multi-edit"
+    "npm:pi-mono-multi-edit",
+    "npm:@router-for-me/pi-cliproxyapi-provider@1.4.21"
   ],
   "theme": "dark",
   "tuiMode": "fullscreen"

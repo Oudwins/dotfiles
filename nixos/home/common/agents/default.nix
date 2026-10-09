@@ -4,6 +4,9 @@
   # opencode: npm i -g opencode-ai
   # pi: npm install -g --ignore-scripts @earendil-works/pi-coding-agent
 
+  # OpenCode's stable runtime gates Responses WebSockets behind this flag.
+  home.sessionVariables.OPENCODE_EXPERIMENTAL_WEBSOCKETS = "1";
+
   home.packages = with pkgs; [
     jq
     bun

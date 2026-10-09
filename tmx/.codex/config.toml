@@ -9,10 +9,13 @@ model_catalog_url = "http://127.0.0.1:8317/v1/models"
 wire_api = "responses"
 requires_openai_auth = false
 experimental_bearer_token = "local"
-supports_websockets = false
+supports_websockets = true
 
 [features]
 api_key_model_discovery = true
 
 [tui]
 screen_reader_detection_done = true
+
+[projects."/Users/tmx/dotfiles"]
+trust_level = "trusted"
