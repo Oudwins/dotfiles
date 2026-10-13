@@ -15,18 +15,23 @@
     // "opencode-websearch-cited@1.2.0",
   ],
   "mcp": {
-    "executor": {
-      "enabled": true,
-      "type": "local",
-      "command": ["executor", "mcp"],
-      "timeout": 60000,
+    "servers": {
+      "executor": {
+        "type": "remote",
+        "url": "http://mcp.tristanmayo.com:4788/mcp",
+        "oauth": false,
+        "headers": {
+          "Authorization": "Bearer {env:EXECUTOR_MCP_TOKEN}",
+        },
+        "timeout": { "startup": 60000, "catalog": 60000 },
+      },
     },
   },
   "lsp": {},
   "provider": {
     "openai": {
       "options": {
-        "baseURL": "http://127.0.0.1:8317/v1",
+        "baseURL": "http://llmproxy.tristanmayo.com:8317/v1",
         "apiKey": "local",
         "transport": "websocket",
       },
@@ -60,7 +65,7 @@
       "npm": "@ai-sdk/anthropic",
       "name": "CLIProxyAPI (Claude)",
       "options": {
-        "baseURL": "http://127.0.0.1:8317/v1",
+        "baseURL": "http://llmproxy.tristanmayo.com:8317/v1",
         "apiKey": "local",
       },
       "models": {

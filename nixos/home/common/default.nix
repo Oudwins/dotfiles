@@ -12,10 +12,7 @@
     ./cli-proxy-api
   ];
 
-  services.cli-proxy-api.enable = true;
-
   services.executor = {
-    enable = true;
     dataDir = "${config.home.homeDirectory}/.executor";
     scopeDir = "${config.home.homeDirectory}/.executor";
     mcpServers = {

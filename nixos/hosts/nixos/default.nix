@@ -1,7 +1,7 @@
 # Edit this configuration file to define what should be installed on
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
-{ config, pkgs, ... }@args:
+{ config, lib, pkgs, ... }@args:
 
 {
   imports = [
@@ -10,6 +10,8 @@
     ./../../modules/common/base
     ./../../modules/common/sops
     ./../../modules/common/agents
+    ./../../modules/common/llmproxy
+    ./../../modules/common/mcpproxy
     ./../../modules/nixos/users/tmx
     ./../../modules/nixos/base
     ./../../modules/nixos/bluetooth.nix
@@ -32,6 +34,10 @@
   boot.kernelParams = [ "console=ttyS0,115200" "console=tty1" ];
 
   networking.hostName = "nixos"; # Define your hostname.
+  networking.hosts = lib.mkMerge [
+    { ${config.llmProxy.address} = [ "llmproxy.tristanmayo.com" ]; }
+    { ${config.mcpProxy.address} = [ "mcp.tristanmayo.com" ]; }
+  ];
   networking.extraHosts = ''
     ${builtins.readFile ./../../hosts-file}
   '';

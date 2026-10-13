@@ -1,8 +1,10 @@
-{ ... }:
+{ config, lib, pkgs, ... }:
 
 {
   imports = [
     ../../modules/darwin
+    ../../modules/common/llmproxy
+    ../../modules/common/mcpproxy
     # ./config-files/aerospace.nix
   ];
   # services.aerospace.enable = false;
@@ -11,4 +13,12 @@
   home-manager.backupFileExtension = "backup";
   system.stateVersion = 6;
   system.primaryUser = "tmx";
+
+  # nix-darwin has no networking.hosts option; preserve other hosts-file entries.
+  system.activationScripts.postActivation.text = ''
+    ${pkgs.python3}/bin/python3 ${../../modules/common/llmproxy/update-hosts.py} llmproxy.tristanmayo.com ${lib.escapeShellArg config.llmProxy.address}
+    ${pkgs.python3}/bin/python3 ${../../modules/common/llmproxy/update-hosts.py} mcp.tristanmayo.com ${lib.escapeShellArg config.mcpProxy.address}
+    /usr/bin/dscacheutil -flushcache
+    /usr/bin/killall -HUP mDNSResponder || true
+  '';
 }

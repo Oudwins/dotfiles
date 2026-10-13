@@ -1,5 +1,5 @@
 {
-  "baseUrl": "http://127.0.0.1:8317",
+  "baseUrl": "http://llmproxy.tristanmayo.com:8317",
   "apiKey": "local",
   "fast": false,
   "pause": false

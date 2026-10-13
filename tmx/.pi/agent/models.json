@@ -1,7 +1,7 @@
 {
   "providers": {
     "openai": {
-      "baseUrl": "http://127.0.0.1:8317/v1",
+      "baseUrl": "http://llmproxy.tristanmayo.com:8317/v1",
       "apiKey": "local",
       "models": [
         {
@@ -16,7 +16,7 @@
       ]
     },
     "anthropic": {
-      "baseUrl": "http://127.0.0.1:8317",
+      "baseUrl": "http://llmproxy.tristanmayo.com:8317",
       "apiKey": "local",
       "models": [
         {

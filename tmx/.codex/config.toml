@@ -4,8 +4,8 @@ model_reasoning_effort = "high"
 
 [model_providers.cliproxyapi]
 name = "CLIProxyAPI"
-base_url = "http://127.0.0.1:8317/v1"
-model_catalog_url = "http://127.0.0.1:8317/v1/models"
+base_url = "http://llmproxy.tristanmayo.com:8317/v1"
+model_catalog_url = "http://llmproxy.tristanmayo.com:8317/v1/models"
 wire_api = "responses"
 requires_openai_auth = false
 experimental_bearer_token = "local"
@@ -13,6 +13,11 @@ supports_websockets = true
 
 [features]
 api_key_model_discovery = true
+
+[mcp_servers.executor]
+url = "http://mcp.tristanmayo.com:4788/mcp"
+bearer_token_env_var = "EXECUTOR_MCP_TOKEN"
+startup_timeout_sec = 60
 
 [tui]
 screen_reader_detection_done = true
