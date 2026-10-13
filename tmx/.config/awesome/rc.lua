@@ -111,6 +111,17 @@ mykeyboardlayout = awful.widget.keyboardlayout()
 -- Create a textclock widget
 mytextclock = wibox.widget.textclock()
 awful.spawn.with_shell("pgrep -x blueman-applet >/dev/null || blueman-applet")
+awful.spawn("nm-applet")
+
+-- Awesome has one system tray; keep it on the screen being used.
+local systray = wibox.widget.systray()
+systray:set_screen(awful.screen.focused())
+client.connect_signal("focus", function(c)
+    systray:set_screen(c.screen)
+end)
+screen.connect_signal("removed", function()
+    systray:set_screen("primary")
+end)
 
 -- Create a wibox for each screen and add it
 local taglist_buttons = gears.table.join(
@@ -210,13 +221,14 @@ awful.screen.connect_for_each_screen(function(s)
 
     -- Create the wibox
     s.mywibox = awful.wibar({ position = "top", screen = s })
+    s.mywibox:connect_signal("mouse::enter", function()
+        systray:set_screen(s)
+    end)
 
     -- Battery widget 
     -- from https://github.com/deficient/battery-widget
     local battery_widget = require("battery-widget")
     local bluetooth_widget = require("bluetooth-widget")
-    -- spawn wifi widget
-    awful.spawn("nm-applet");
     -- Add widgets to the wibox
     s.mywibox:setup {
         layout = wibox.layout.align.horizontal,
@@ -230,7 +242,7 @@ awful.screen.connect_for_each_screen(function(s)
         { -- Right widgets
             layout = wibox.layout.fixed.horizontal,
             mykeyboardlayout,
-            wibox.widget.systray(),
+            systray,
             battery_widget {
                 -- todo
             },

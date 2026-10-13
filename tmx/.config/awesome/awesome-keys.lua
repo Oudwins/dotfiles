@@ -119,8 +119,8 @@ local globalkeys = gears.table.join(
     awful.key({ }, "XF86AudioLowerVolume", function ()
        awful.util.spawn("amixer set Master 5%-", false) end),
     -- Brightness
-    awful.key({ }, "XF86MonBrightnessUp", function () awful.util.spawn("light -A 5") end),
-    awful.key({ }, "XF86MonBrightnessDown", function () awful.util.spawn("light -U 5") end),
+    awful.key({ }, "XF86MonBrightnessUp", function () awful.spawn({ "brightnessctl", "set", "+5%" }) end),
+    awful.key({ }, "XF86MonBrightnessDown", function () awful.spawn({ "brightnessctl", "set", "5%-" }) end),
     -- END OF BRIGHTNESS & AUDIO CONTROLS
     awful.key({ vars.modkey,           }, "u", awful.client.urgent.jumpto,
               {description = "jump to urgent client", group = "client"}),
