@@ -49,7 +49,7 @@ oauth:
       ws-auth: true
 
 management:
-  allow-remote: false
+  allow-remote: true
   # Keep the real management key in secrets.yaml; empty disables the management API.
   secret-key: "key"
   disable-control-panel: false
