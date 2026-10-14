@@ -1,0 +1,18 @@
+listen:
+  host: 127.0.0.1
+  port: 28760
+
+allowedHosts:
+  - payload.eleven2.dev
+
+strategies:
+  eleven-payload-mcp:
+    command:
+      - gcloud
+      - auth
+      - print-identity-token
+      - --audiences=344165917057-a9qd6r8vm8n4e53tebm2ccmr80lgnr8r.apps.googleusercontent.com
+      - --impersonate-service-account=payload-cms-devs@eleven-dev-390412.iam.gserviceaccount.com
+    output: token
+    ttl: 55m
+    timeout: 60s
