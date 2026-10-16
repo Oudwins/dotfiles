@@ -173,3 +173,33 @@ Build just the package with `nix build ./nixos#cli-proxy-api`.
 The standalone package has upstream defaults and does not merge secrets. Use the
 Home Manager-installed launcher, or pass `--config ~/.local/state/cli-proxy-api/config.yaml`
 after the launcher has generated the merged file.
+
+## mcp-auth-proxy (macOS and Linux)
+
+Nix builds [mcp-auth-proxy](https://github.com/Oudwins/mcp-auth-proxy) and runs it as a
+user service (launchd on macOS, systemd on Linux) listening on `127.0.0.1:28760`. The
+port is below both the macOS and Linux ephemeral ranges, so outbound connections
+cannot take it. Settings live in `tmx/.mcp-auth-proxy/config.yaml`, tracked in Git and
+symlinked to `~/.mcp-auth-proxy/config.yaml` by Stow (not managed by Nix); change the
+port there. The proxy has no client auth, so keep it on loopback.
+
+Point an MCP client at it with a strategy and target header. Strategy
+`eleven-payload-mcp` mints the Payload IAP token with `gcloud` (needs the one-time
+gcloud setup from the marketing-website README):
+
+```json
+{
+  "type": "http",
+  "url": "http://127.0.0.1:28760/",
+  "headers": {
+    "X-Proxy-Strategy": "eleven-payload-mcp",
+    "X-Proxy-Target": "https://payload.eleven2.dev/api/mcp",
+    "Proxy-Authorization": "Bearer {{token}}",
+    "Authorization": "Bearer <payload mcp api key>"
+  }
+}
+```
+
+Check a strategy with `mcp-auth-proxy check`; logs are in `~/Library/Logs/mcp-auth-proxy*.log`.
+Restart after editing the config. Pinned to a commit in `nixos/pkgs/mcp-auth-proxy/package.nix`:
+bump `rev`, `hash` and `vendorHash` together.

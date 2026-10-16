@@ -7,4 +7,5 @@ pkgs: {
   cli-proxy-api = pkgs.callPackage ./cli-proxy-api/package.nix { };
   executor = pkgs.callPackage ./executor/package.nix { };
   jsonc2json = pkgs.callPackage ./jsonc2json/package.nix { };
+  mcp-auth-proxy = pkgs.callPackage ./mcp-auth-proxy/package.nix { };
 }

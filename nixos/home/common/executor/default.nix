@@ -447,6 +447,36 @@ let
     '';
   };
 
+  # Executor reads its bearer token from auth.json, so seed it from the secret
+  # before the daemon starts. The secret may still be decrypting at login.
+  installAuthToken = pkgs.writeShellApplication {
+    name = "executor-install-auth-token";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.jq
+    ];
+    text = ''
+      token_file=${lib.escapeShellArg cfg.authTokenFile}
+      auth_dir=${lib.escapeShellArg "${cfg.dataDir}/server-control"}
+
+      for _ in {1..30}; do
+        [[ -s "$token_file" ]] && break
+        sleep 1
+      done
+
+      if [[ ! -s "$token_file" ]]; then
+        echo "Executor auth token not found at $token_file" >&2
+        exit 1
+      fi
+
+      umask 077
+      mkdir -p "$auth_dir"
+      next_auth="$(mktemp "$auth_dir/.auth.XXXXXX")"
+      jq --null-input --rawfile token "$token_file" '{ token: ($token | rtrimstr("\n")) }' >"$next_auth"
+      mv "$next_auth" "$auth_dir/auth.json"
+    '';
+  };
+
   serviceEnvironment = {
     EXECUTOR_DATA_DIR = cfg.dataDir;
     EXECUTOR_SCOPE_DIR = cfg.scopeDir;
@@ -458,6 +488,7 @@ let
   launchdCommand = pkgs.writeShellApplication {
     name = "executor-service";
     text = ''
+      ${lib.optionalString (cfg.authTokenFile != null) (lib.getExe installAuthToken)}
       ${lib.getExe cfg.package} daemon run \
         --foreground \
         --hostname ${lib.escapeShellArg cfg.host} \
@@ -522,6 +553,12 @@ in
       default = { };
       description = "MCP servers managed declaratively by Executor.";
     };
+
+    authTokenFile = mkOption {
+      type = types.nullOr types.str;
+      default = null;
+      description = "File holding the bearer token, written to auth.json before the daemon starts. When null, Executor generates its own token.";
+    };
   };
 
   config = mkIf cfg.enable {
@@ -566,10 +603,11 @@ in
     systemd.user.services.executor = mkIf pkgs.stdenv.hostPlatform.isLinux {
       Unit = {
         Description = "Executor MCP gateway";
-        After = [ "network-online.target" ];
-        Wants = [ "network-online.target" ];
+        After = [ "network-online.target" ] ++ lib.optional (cfg.authTokenFile != null) "sops-nix.service";
+        Wants = [ "network-online.target" ] ++ lib.optional (cfg.authTokenFile != null) "sops-nix.service";
       };
       Service = {
+        ExecStartPre = mkIf (cfg.authTokenFile != null) (lib.getExe installAuthToken);
         ExecStart = "${lib.getExe cfg.package} daemon run --foreground --hostname ${cfg.host} --port ${toString cfg.port}";
         ExecStartPost = "${lib.getExe reconcile}";
         Environment = lib.mapAttrsToList (name: value: "${name}=${value}") serviceEnvironment;

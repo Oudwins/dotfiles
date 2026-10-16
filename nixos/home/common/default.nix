@@ -9,8 +9,12 @@
     ./ghostty
     ./agents
     ./executor
+    ./sops
     ./cli-proxy-api
+    ./mcp-auth-proxy
   ];
+
+  services.mcp-auth-proxy.enable = true;
 
   services.executor = {
     dataDir = "${config.home.homeDirectory}/.executor";
