@@ -21,9 +21,9 @@
       "personal"
       "projects"
       ".config"
-      ".droner/worktrees"
     ];
     projects = [ "dotfiles" ];
+    worktreeParentDirs = [ ".droner/worktrees" ];
     obsidianDirs = [ "notes" ];
   in {
     TERMINAL = "ghostty";
@@ -33,6 +33,8 @@
       (map (dir: "${home}/${dir}") projectParentDirs);
     CODE_PROJECTS =
       builtins.concatStringsSep ":" (map (dir: "${home}/${dir}") projects);
+    CODE_WORKTREES_PARENT_DIRS = builtins.concatStringsSep ":"
+      (map (dir: "${home}/${dir}") worktreeParentDirs);
     OBSIDIAN_VAULT_DIRS =
       builtins.concatStringsSep ":" (map (dir: "${home}/${dir}") obsidianDirs);
     LAUNCHER = "rofi -show drun";
