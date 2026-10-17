@@ -7,8 +7,8 @@ collect_project_paths() {
     local -a project_dirs
     local -a collected_paths
 
-    if [[ -n ${CODE_PROJECTS_PARENT_DIRS:-} ]]; then
-        IFS=: read -r -a parent_dirs <<< "$CODE_PROJECTS_PARENT_DIRS"
+    if [[ -n ${CODE_PROJECTS_PARENT_DIRS:-}${CODE_WORKTREES_PARENT_DIRS:-} ]]; then
+        IFS=: read -r -a parent_dirs <<< "${CODE_PROJECTS_PARENT_DIRS:-}:${CODE_WORKTREES_PARENT_DIRS:-}"
         for entry in "${parent_dirs[@]}"; do
             [[ -d $entry ]] || continue
             while IFS= read -r -d '' child; do

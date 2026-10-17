@@ -23,8 +23,9 @@
 
   home.sessionVariables = let
     home = config.home.homeDirectory;
-    projectDirs = [ "Documents" "Documents2" ".droner/worktrees" ];
+    projectDirs = [ "Documents" "Documents2" ];
     projects = [ "dotfiles" ];
+    worktreeParentDirs = [ ".droner/worktrees" ];
   in {
     OPENCODE_CONFIG = "${home}/.config/opencode/opencode.jsonc";
     OPENCODE_CONFIG_DIR = "${home}/.config/opencode";
@@ -41,6 +42,8 @@
       builtins.concatStringsSep ":" (map (dir: "${home}/${dir}") projectDirs);
     CODE_PROJECTS =
       builtins.concatStringsSep ":" (map (dir: "${home}/${dir}") projects);
+    CODE_WORKTREES_PARENT_DIRS = builtins.concatStringsSep ":"
+      (map (dir: "${home}/${dir}") worktreeParentDirs);
   };
 
   # Preserve JSON quotes instead of nesting them in sessionVariables' double quotes.
