@@ -1,22 +1,6 @@
 {
-  "colorPalette": "blue",
   "autoRefreshEnabled": false,
-  "autoRefreshMs": 60000,
-  "includeUnusedModels": false,
-  "nativeTimeoutMs": 300000,
-  "scanner": {
-    "opencodeDbPaths": [],
-    "extraScanPaths": {},
-    "bucketTimezone": "America/Panama"
-  },
-  "defaultClients": [],
-  "light": {
-    "writeCache": false
-  },
-  "usage": {
-    "disabledProviders": []
-  },
-  "minutelyTabEnabled": false,
+  "autoRefreshMs": 50000,
   "autosubmit": {
     "enabled": false,
     "intervalMinutes": 1440,
@@ -34,6 +18,22 @@
     "lastRunAtMs": null,
     "lastError": null
   },
+  "colorPalette": "blue",
+  "defaultClients": [],
+  "includeUnusedModels": false,
+  "light": {
+    "writeCache": false
+  },
+  "minutelyTabEnabled": false,
   "modelAliases": {},
-  "tuiLightMode": false
+  "nativeTimeoutMs": 300000,
+  "scanner": {
+    "opencodeDbPaths": [],
+    "extraScanPaths": {},
+    "bucketTimezone": "America/Panama"
+  },
+  "tuiLightMode": false,
+  "usage": {
+    "disabledProviders": []
+  }
 }

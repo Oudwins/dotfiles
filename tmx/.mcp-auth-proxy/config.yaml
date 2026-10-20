@@ -3,15 +3,31 @@ listen:
   port: 28760
 
 allowedHosts:
-  - payload.eleven2.dev
+  - "*.eleven2.dev"
+  - "eleven2.dev"
+  - "*.elevenlabs.io"
+  - "elevenlabs.io"
 
 strategies:
-  eleven-payload-mcp:
+  eleven-payload-staging:
     command:
       - gcloud
       - auth
       - print-identity-token
+      - --include-email
       - --audiences=344165917057-a9qd6r8vm8n4e53tebm2ccmr80lgnr8r.apps.googleusercontent.com
+      - --impersonate-service-account=payload-cms-devs@eleven-dev-390412.iam.gserviceaccount.com
+    output: token
+    ttl: 55m
+    timeout: 60s
+
+  eleven-payload-production:
+    command:
+      - gcloud
+      - auth
+      - print-identity-token
+      - --include-email
+      - --audiences=1032416323924-4foq4mc4dld1avutothpgn6b5uk80rc3.apps.googleusercontent.com
       - --impersonate-service-account=payload-cms-devs@eleven-dev-390412.iam.gserviceaccount.com
     output: token
     ttl: 55m

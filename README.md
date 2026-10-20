@@ -88,21 +88,26 @@ the placeholder in the tracked settings keeps proxy endpoints disabled.
 
 For example, keep the OpenAI URL and model list in `config.yaml`:
 
+Use `api-keys.codex` for the official OpenAI Responses API with ordinary API keys;
+this keeps reasoning and tool calls on upstream `/v1/responses`. The generic
+`openai-compatibility` route instead uses upstream Chat Completions, even when
+clients call the proxy's Responses endpoint.
+
 ```yaml
 api-keys:
-  openai-compatibility:
+  codex:
     - name: openai
       base-url: https://api.openai.com/v1
       models:
-        - name: gpt-4.1
-          alias: gpt-4.1
+        - name: gpt-6-astra
+          alias: gpt-6-astra
 ```
 
 Supply only the matching group's credentials in `secrets.yaml`:
 
 ```yaml
 api-keys:
-  openai-compatibility:
+  codex:
     - name: openai
       keys:
         - api-key: sk-YOUR_OPENAI_KEY
@@ -113,21 +118,81 @@ groups are retained, including groups added only in the secrets file. A secrets
 entry can override ordinary group fields too; nested lists such as `keys` and
 `models` still replace their tracked counterparts when explicitly supplied.
 
-Authenticate a provider, then point clients at `http://127.0.0.1:8317/v1` with your
+Authenticate a provider, then point clients at `http://llmproxy.tristanmayo.com:8317/v1` with your
 client key:
 
 ```bash
 cli-proxy-api --codex-login
 # Or: cli-proxy-api --claude-login
 # Headless: cli-proxy-api --codex-device-login --no-browser
-curl -H "Authorization: Bearer YOUR_CLIENT_KEY" http://127.0.0.1:8317/v1/models
+curl -H "Authorization: Bearer YOUR_CLIENT_KEY" http://llmproxy.tristanmayo.com:8317/v1/models
 ```
 
 OAuth credentials live in `~/.local/share/cli-proxy-api/auth`, outside the dotfiles
 tree. Runtime logs and panel assets use `~/.local/state/cli-proxy-api` by default.
 Services and login commands create private files using `umask 077`.
 
-### Service control
+### Executor MCP across machines
+
+All four coding agents use streamable HTTP at
+`http://mcp.tristanmayo.com:4788/mcp`. Set the Executor machine's IP in
+`nixos/hosts/<host>/default.nix`:
+
+```nix
+mcpProxy.address = "127.0.0.1"; # Default: local Executor.
+# mcpProxy.address = "192.168.1.50"; # Remote Executor; disables the local service.
+```
+
+Rebuild Nix to apply the hosts-file mapping. On macOS, activation preserves
+unrelated entries and creates `/etc/hosts.before-mcp` before the first change.
+The server still listens on loopback by default. For remote clients, set
+`home-manager.users.tmx.services.executor.host` to a trusted private interface
+on the server and allow TCP port `4788`, or use a secure tunnel. Do not expose
+plain HTTP and its bearer token to an untrusted network.
+
+The bearer token is stored with sops in `nixos/secrets/home.yaml` (`executor/token`)
+and decrypted by Home Manager to `~/.config/sops-nix/secrets/executor/token` using
+`~/.ssh/id_ed25519`. The Executor service writes it into `auth.json` before
+starting, and login shells export it as `EXECUTOR_MCP_TOKEN`, so every machine
+shares one token. To add a machine, put its `ssh-to-age` public key in
+`nixos/.sops.yaml` and run `sops updatekeys secrets/home.yaml` from `nixos/` on a
+machine that can already decrypt it. To rotate, run `sops secrets/home.yaml` and
+rebuild. Claude Code's global entry lives outside
+this repository in `~/.claude.json`. To configure a new machine:
+
+```sh
+claude mcp add-json --scope user executor '{"type":"http","url":"http://mcp.tristanmayo.com:4788/mcp","headers":{"Authorization":"Bearer ${EXECUTOR_MCP_TOKEN}"}}'
+```
+
+Restart agent sessions after setting the token. Hosts-file changes select the
+server without changing agent configuration.
+
+### Shared address across machines
+
+All coding-agent clients use `llmproxy.tristanmayo.com` on port `8317`. Set one
+Nix option in the machine's `nixos/hosts/<host>/default.nix`:
+
+```nix
+llmProxy.address = "127.0.0.1"; # Default: map the hostname locally and run CLIProxyAPI.
+```
+
+On a remote client, set that option to the proxy server's stable IP instead. Nix
+updates the hosts-file mapping and disables the local proxy service; no agent
+settings need changing. IPv6 loopback (`::1`) also selects the local service, but
+requires a matching server listener in the YAML settings.
+
+NixOS uses `networking.hosts`. On macOS, activation maintains a marked block in
+`/etc/hosts`, preserves all unrelated entries, and saves the original file as
+`/etc/hosts.before-llmproxy` before its first change. Rebuild Nix to apply the mapping
+before starting clients with the new hostname. New Nix files must be staged first,
+or use `--flake path:./nixos#macos` / `--flake path:./nixos#nixos` while testing.
+
+This does not change `server.host: 127.0.0.1`, open firewall ports, or configure TLS.
+Before using a remote client, make the proxy reachable on a trusted private
+interface or through a secure tunnel/reverse proxy. A hosts-file entry alone does
+not expose or encrypt the service; do not publish the unauthenticated API online.
+
+### Restarting the service
 
 ```bash
 # macOS
@@ -176,30 +241,48 @@ after the launcher has generated the merged file.
 
 ## mcp-auth-proxy (macOS and Linux)
 
-Nix builds [mcp-auth-proxy](https://github.com/Oudwins/mcp-auth-proxy) and runs it as a
-user service (launchd on macOS, systemd on Linux) listening on `127.0.0.1:28760`. The
-port is below both the macOS and Linux ephemeral ranges, so outbound connections
-cannot take it. Settings live in `tmx/.mcp-auth-proxy/config.yaml`, tracked in Git and
-symlinked to `~/.mcp-auth-proxy/config.yaml` by Stow (not managed by Nix); change the
-port there. The proxy has no client auth, so keep it on loopback.
+Nix installs [mcp-auth-proxy](https://github.com/Oudwins/mcp-auth-proxy) and, as a
+convenience, also runs `mcp-auth-proxy http` as a user service (launchd on macOS,
+systemd on Linux) listening on `127.0.0.1:28760`. The port is below both the macOS and
+Linux ephemeral ranges, so outbound connections cannot take it. Settings live in
+`tmx/.mcp-auth-proxy/config.yaml`, tracked in Git and symlinked to
+`~/.mcp-auth-proxy/config.yaml` by Stow (not managed by Nix); change the port there.
+The HTTP server has no client auth, so keep it on loopback.
 
-Point an MCP client at it with a strategy and target header. Strategy
-`eleven-payload-mcp` mints the Payload IAP token with `gcloud` (needs the one-time
-gcloud setup from the marketing-website README):
+The default mode is stdio: the MCP client spawns the binary, no port or service is
+needed. Strategies `eleven-payload-staging` and `eleven-payload-production` mint the
+Payload IAP token with `gcloud` (needs the one-time gcloud setup from the marketing-website
+README). Each strategy has its own IAP audience and both need `--include-email`; use the
+strategy that matches the target host (`payload.eleven2.dev` or `payload.elevenlabs.io`):
+
+```json
+{
+  "command": "mcp-auth-proxy",
+  "args": [
+    "-s", "eleven-payload-production",
+    "-t", "https://payload.elevenlabs.io/api/mcp",
+    "-H", "Proxy-Authorization: Bearer {{token}}",
+    "-H", "Authorization: Bearer ${env:PAYLOAD_MCP_API_KEY}"
+  ]
+}
+```
+
+To use the always-on HTTP service instead, point an `http` MCP client at it with a
+strategy and target header:
 
 ```json
 {
   "type": "http",
   "url": "http://127.0.0.1:28760/",
   "headers": {
-    "X-Proxy-Strategy": "eleven-payload-mcp",
-    "X-Proxy-Target": "https://payload.eleven2.dev/api/mcp",
+    "X-Proxy-Strategy": "eleven-payload-production",
+    "X-Proxy-Target": "https://payload.elevenlabs.io/api/mcp",
     "Proxy-Authorization": "Bearer {{token}}",
     "Authorization": "Bearer <payload mcp api key>"
   }
 }
 ```
 
-Check a strategy with `mcp-auth-proxy check`; logs are in `~/Library/Logs/mcp-auth-proxy*.log`.
+Check a strategy with `mcp-auth-proxy check`; service logs are in `~/Library/Logs/mcp-auth-proxy*.log`.
 Restart after editing the config. Pinned to a commit in `nixos/pkgs/mcp-auth-proxy/package.nix`:
 bump `rev`, `hash` and `vendorHash` together.
