@@ -1,7 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  // "model": "openai/gpt-6-astra",
-  "model": "cc-proxy/claude-opus-5-5",
+  "model": "openai/gpt-6-astra",
   // plugins
   // not sure what this one is
   // https://github.com/obra/superpowers/blob/main/docs/README.opencode.md
@@ -11,35 +10,40 @@
     // smart context management
     // https://github.com/Opencode-DCP/opencode-dynamic-context-pruning
     // "@tarquinen/opencode-dcp@latest",
-    // Disabled: this plugin hardcodes public OpenAI endpoints and bypasses the proxy.
-    // "opencode-websearch-cited@1.2.0",
+    // Adds native web search
+    "opencode-websearch-cited@1.2.0",
   ],
   "mcp": {
-    "servers": {
-      "executor": {
-        "type": "remote",
-        "url": "http://mcp.tristanmayo.com:4788/mcp",
-        "oauth": false,
-        "headers": {
-          "Authorization": "Bearer {env:EXECUTOR_MCP_TOKEN}",
-        },
-        "timeout": { "startup": 60000, "catalog": 60000 },
-      },
+    "executor": {
+      "enabled": true,
+      "type": "local",
+      "command": ["executor", "mcp"],
+      "timeout": 60000,
     },
   },
   "lsp": {},
   "provider": {
     "openai": {
       "options": {
-        "baseURL": "http://llmproxy.tristanmayo.com:8317/v1",
-        "apiKey": "local",
-        "transport": "websocket",
+        // required for web search plugin
+        "websearch_cited": {
+          "model": "gpt-5.6-sol",
+        },
       },
       "models": {
+        "gpt-5.6-sol": {},
         "gpt-6-astra": {},
-        "gpt-5.6-terra": {},
       },
     },
+    // "vertex_anthropic": {
+    //   "npm": "@ai-sdk/google-vertex/anthropic",
+    //   "name": "Google Vertex Anthropic",
+    //   "options": {
+    //     "project": "eleven-vertex-internal",
+    //     "location": "{env:VERTEX_LOCATION}",
+    //   },
+    //   "models": {},
+    // },
     "ollama": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "Ollama (local)",
@@ -63,14 +67,15 @@
     },
     "cc-proxy": {
       "npm": "@ai-sdk/anthropic",
-      "name": "CLIProxyAPI (Claude)",
+      "name": "cc-proxy",
       "options": {
-        "baseURL": "http://llmproxy.tristanmayo.com:8317/v1",
+        "baseURL": "http://localhost:8317/v1",
         "apiKey": "local",
       },
       "models": {
-        "claude-opus-5-5": { "name": "Claude Opus 5.5" },
-        "claude-fable-5-1": { "name": "Claude Fable 5.1" },
+        "claude-opus-4-8": { "name": "Claude Opus 4.8" },
+        "claude-opus-5": { "name": "Claude Opus 5" },
+        "claude-fable-5": { "name": "Claude Fable 5" },
       },
     },
     // "vibeproxy": {
