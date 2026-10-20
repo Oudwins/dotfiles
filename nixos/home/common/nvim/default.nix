@@ -1,7 +1,7 @@
 { config, pkgs, lib, ... }:
 
 let
-  isLinux = pkgs.stdenv.isLinux;
+  isLinux = pkgs.stdenv.hostPlatform.isLinux;
   # isDarwin = pkgs.stdenv.isDarwin;
   # On NixOS we use unstable overlay, on Darwin pkgs is already unstable
   neovimPkg = if pkgs ? unstable then pkgs.unstable.neovim else pkgs.neovim;
@@ -33,7 +33,6 @@ in {
       python3
       typescript
       markdownlint-cli
-      (lib.lowPrio typescript-go)
       # Rust (require for some nvim pkgs)
       rustc
       cargo
@@ -52,7 +51,6 @@ in {
     "markdownlint-cli"
     "icu"
     "nixd"
-    "typescript-go"
   ] ++ lib.optionals isLinux [ "xclip" ];
 
   # This makes it so telescope never ignores env files in search
