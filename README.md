@@ -1,3 +1,51 @@
+## Agent commands and skills
+
+Commands and automatically selected skills live in separate Stow packages:
+
+- `agent-commands/.agents/skills/<name>/`: manually invoked commands.
+- `agent-skills/.agents/skills/<name>/`: ordinary skills.
+
+Each directory contains `SKILL.md` with `name` and `description` frontmatter,
+plus any supporting files. Commands additionally set
+`disable-model-invocation: true` in that frontmatter and include
+`agents/openai.yaml` containing:
+
+```yaml
+policy:
+  allow_implicit_invocation: false
+```
+
+Run `./updateSymlinks.sh` to merge both packages into `~/.agents/skills/`.
+Each package also has `.claude/skills/<name>` symlinks pointing to its canonical
+`.agents/skills/<name>` directories, exposing the same collection to Claude Code.
+Invoke commands
+with `/name` in Claude Code or `$name` in Codex. Pi's prompts link points only to
+the commands package through `tmx/.agents/commands`; its directory-prompts
+extension provides `/name` commands with companion-file support.
+
+Edit the source package directly; nothing is generated or copied. Use matching
+kebab-case directory and skill names, unique across both packages. When adding a
+command, also add its Claude link (use `agent-skills` for an ordinary skill):
+
+```sh
+ln -s ../../.agents/skills/my-command agent-commands/.claude/skills/my-command
+./updateSymlinks.sh
+```
+
+The former
+`research_basic` and `research_basic_inline` prompts are now `research-basic`
+and `research-basic-inline`. Existing filename-based names are otherwise kept.
+Use ordinary user instructions for inputs and ask the agent to run shell commands
+as part of the workflow rather than relying on client-specific substitutions.
+OpenCode's commands link is retained, but directory-format commands are not
+adapted for OpenCode.
+
+The Stow script uses its own checkout as the common Stow directory, allowing
+Stow to merge shared destination directories across packages. It can be rerun
+after adding or removing commands and their Claude links. It also migrates links
+from the previous single-package layout; unrelated files in
+the home directory remain subject to Stow's normal conflict checks.
+
 ## To add at some point
 - https://github.com/junhoyeo/tokscale
 
