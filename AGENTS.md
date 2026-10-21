@@ -8,6 +8,9 @@ nixos/*
 # this holds the dotfiles and is symlinked recursively tmx/* to ~/
 # So tmx/.config becomes ~/.config
 tmx/* 
+# Separate Stow packages for automatic skills and manually invoked commands.
+# Both contribute to ~/.agents/skills; Claude uses the same collection.
+agent-{skills,commands}/*
 ```
 
 ## Configuration management
@@ -18,7 +21,17 @@ tmx/*
   For example, `tmx/.config/app/config.yaml` becomes `~/.config/app/config.yaml`.
 - GNU Stow creates symlinks from the home directory to these files; it does not
   move or copy them. Run `./updateSymlinks.sh` from this repository to apply them.
-  The script runs `stow -d tmx -t ~ .` from `~/dotfiles`.
+  The script restows `tmx`, `agent-skills`, and `agent-commands` from its own
+  checkout. All three are packages in the same Stow directory so their shared
+  destination directories can merge.
+- Agent skills and commands are an exception to the `tmx/` source layout:
+  store them in `agent-skills/.agents/skills/<name>/` and
+  `agent-commands/.agents/skills/<name>/`, respectively. Both use
+  `SKILL.md`; commands also require `disable-model-invocation: true` in its
+  frontmatter and `policy.allow_implicit_invocation: false` in
+  `agents/openai.yaml`. Keep directory names and skill names identical.
+  Each package also needs a `.claude/skills/<name>` symlink pointing to
+  `../../.agents/skills/<name>` so Claude discovers the same entry.
 - Keep mutable settings in the Stow-managed files rather than generating them
   with Nix/Home Manager, unless that application's configuration is explicitly
   Nix-managed already. Do not manage the same path with both Stow and Nix.

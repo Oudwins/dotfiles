@@ -1,11 +1,11 @@
 #!/bin/sh
 
-# Define the directory
-directory="$HOME/dotfiles/"
+set -eu
 
-# Change directory
-cd "$directory" || exit
+# Resolve this checkout instead of assuming it lives at ~/dotfiles.
+directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+cd "$directory"
 
-# Execute the command
-#echo "currently working in '${pwd}'"
-stow -d tmx -t ~ .
+# A common Stow directory lets packages merge their shared destinations.
+# Restowing also migrates links created by the previous single-package layout.
+stow --restow -d "$directory" -t "$HOME" tmx agent-skills agent-commands
