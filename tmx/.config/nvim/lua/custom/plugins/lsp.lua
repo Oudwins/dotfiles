@@ -301,7 +301,7 @@ return {
         --
         -- tsgo. Works great but doesn't have code actions
         tsgo = {
-          cmd = { 'tsgo', '--lsp', '--stdio' },
+          cmd = { 'tsc', '--lsp', '--stdio' },
           filetypes = {
             'javascript',
             'javascriptreact',

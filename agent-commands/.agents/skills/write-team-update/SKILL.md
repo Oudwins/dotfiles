@@ -17,6 +17,13 @@ Use my local timezone and determine my identity in each service. Read all releva
 
 The wider Slack window provides context and helps discover missing work; it does not extend the resolved-items window. If a source is unavailable, mention the coverage gap briefly rather than treating it as having no activity.
 
+Please only reference activity that is relevant to my work at elevenlabs. For example cleaning laptop space is not relevant.
+
+Apply this ownership and significance filter before deduplicating tasks or changing Linear:
+- Include substantive work I owned or materially implemented or investigated, not everything I touched.
+- Exclude routine PR reviews, approvals, merges of someone else's work, quick advice, and small one-off Payload edits. Helping someone briefly does not make their task my work. Only include review/support work when I explicitly owned a substantive effort and the sources show a material contribution.
+- Use incidental help as context only. Do not create or assign issues to me, change someone else's task status, or add update entries just because I reviewed a PR or helped with a CMS change.
+
 ## Deduplicate into tasks
 
 Build one combined task list before making Linear changes or drafting the update. Match work across Linear, GitHub, agent sessions, and Slack using issue IDs, PR URLs, repositories/branches, and the actual goal and scope of the work. Search Linear for matching issues, including unassigned and completed issues, before creating anything. Do not rely on titles alone or combine unrelated work just because it has a similar title.
@@ -30,12 +37,13 @@ For each deduplicated task:
 1. Reuse the matching Linear issue. If there is none, create an issue in the appropriate team/project, assign it to me, and give it a concise title and evidence-based description with relevant source links. Infer the team/project from the repository and related issues; ask if it cannot be determined reliably.
 2. Connect every applicable GitHub PR to the Linear issue using the MCP's supported PR-linking or attachment tools. Check existing links first so rerunning this command does not create duplicate issues or attachments. If the MCP cannot create a native PR association, attach the PR URL using the supported Linear link mechanism and clearly report that limitation.
 3. Fetch the team's workflow states and update the issue to the appropriate actual state based on the latest evidence:
-   - Completed/measuring: the task is complete or explicitly measuring outcomes. A merged PR is evidence of completed implementation, but do not mark the whole issue complete if related PRs or required work remain unfinished.
+   - Completed/measuring: the task is complete or explicitly measuring outcomes. For a scoped implementation task, merged code is completion unless there is positive evidence of unfinished work within that same scope. Do not mark a broader issue complete if its explicitly required work remains unfinished.
    - In review: the required implementation is ready for review in an open, non-draft PR, with no evidence of remaining implementation work.
    - In progress: work has started, including work in agent sessions, draft PRs, or remaining implementation work.
    - Todo: planned work that has not started.
    - Blocked: explicitly blocked according to the issue or recent evidence; do not infer a blocker from inactivity.
-   A closed, unmerged PR is not evidence of completion. Resolve conflicting signals using the latest substantive evidence; if the status remains unclear, leave an existing issue's status unchanged and flag the uncertainty.
+   Missing evidence of deployment, a production migration, or verification is not evidence that those steps are unfinished or assigned to me. Do not invent rollout requirements or keep/reopen a task In Progress solely because you have not confirmed them. Carry forward remaining work only when sources explicitly establish that it is unfinished and part of my task. A generic PR checklist or suggested follow-up does not automatically extend the task's scope.
+   A closed, unmerged PR is not evidence of completion. Resolve conflicting signals using the latest substantive evidence; if the status remains unclear, leave an existing issue's status unchanged and flag the uncertainty separately from the copyable update.
 4. Verify the resulting issue, links, and status. Report failed or unsupported changes rather than claiming they succeeded.
 
 Examples:
@@ -45,7 +53,9 @@ Examples:
 
 ## Write the update
 
-Use the reconciled task list and verified Linear states. Keep each description short and grounded in the evidence, following the example below. Prefix each entry with its state emoji and group entries in this order:
+Use the reconciled task list and verified Linear states. Describe my substantive outcome or actual remaining work, not the reconciliation process. Do not write status-audit entries such as "STT template-field implementation merged; production migration verification remains" based only on missing evidence. If the implementation task is complete, write the outcome plainly, for example "Moved STT page content from blocks into template fields." If completion is genuinely uncertain, put that uncertainty in the separate reconciliation notes rather than inventing an ongoing-work entry.
+
+Keep each description short and grounded in the evidence, following the example below. Prefix each entry with its state emoji and group entries in this order:
 
 :resolved: -> completed/measuring
 :review: -> in review 
@@ -59,7 +69,7 @@ When adding links to PRs include them as markdown links in the following format:
 
 Return the draft for me to send. If there are coverage gaps or unresolved reconciliation problems, note them separately from the copyable update.
 
-PLEASE MAKE SURE THAT ONLY ONE LINE ITEM PER PIECE OF WORK. For stacked PRs we can treat as one but never join other work into one line item. Makes it harder to read
+PLEASE MAKE SURE THAT ONLY ONE LINE ITEM PER PIECE OF WORK. For stacked PRs we can treat as one but never join other work into one line item. Makes it harder to read. For example if in a thread I set out to refactor a piece of code and add a feature. Those should be TWO different bullet points. Maybe I added the feature but didn't get to the refactor yet so the added feature goes in the done category and the refactor goes in the in progress category
 
 
 Example update: 
@@ -72,7 +82,6 @@ Example update:
 :hourglass_flowing_sand: More termline missing table permissions terraform PR. Some more work needs to be done for this. Speaking to Stav & Alex Holt. Huge thank you to @Gergely Bihary for your help! [#4012](https://github.com/elevenlabs/marketing-website/pull/4012)
 
 :hourglass_flowing_sand: Ship one sample sfx page via termline. I think I will pick something since Rich is out to test.
-:hourglass_flowing_sand: Help @Dorian with auth for vertex for elevenhacks
 
 :to-do: Explore a way to have preseeded agent conversations. No progress here yet
 :to-do: Investigate issue with EL not being able to send you to contact sales

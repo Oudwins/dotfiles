@@ -52,6 +52,7 @@ The user will give you an experiment reference (a PostHog experiment URL, an exp
 
 - `:large_green_circle:` positive / win
 - `:red_circle:` negative / regression
+- `:large_yellow_circle:` not significant but high confidence that it will converge to positive
 - `:white_circle:` flat / neutral
 
 ### Template
@@ -65,6 +66,8 @@ Hey team following up on the <experiment> experiment after ~<N> days. Here's how
 :large_green_circle: +X% <Metric> (sig)
 
 :red_circle: -Y% <Metric> (sig)
+
+:large_yellow_circle:  +15% <Metric> (not sig but trending in the right direction, will 80% confidence means that it will likely converge to positive)
 
 :white_circle: -Z% <Metric> (flat)
 
