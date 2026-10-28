@@ -4,7 +4,7 @@
   imports = [
     ../../modules/darwin
     ../../modules/common/llmproxy
-    ../../modules/common/mcpproxy
+    ../../modules/common/mcp-gateway
     # ./config-files/aerospace.nix
   ];
   # services.aerospace.enable = false;
@@ -17,7 +17,6 @@
   # nix-darwin has no networking.hosts option; preserve other hosts-file entries.
   system.activationScripts.postActivation.text = ''
     ${pkgs.python3}/bin/python3 ${../../modules/common/llmproxy/update-hosts.py} llmproxy.tristanmayo.com ${lib.escapeShellArg config.llmProxy.address}
-    ${pkgs.python3}/bin/python3 ${../../modules/common/llmproxy/update-hosts.py} mcp.tristanmayo.com ${lib.escapeShellArg config.mcpProxy.address}
     /usr/bin/dscacheutil -flushcache
     /usr/bin/killall -HUP mDNSResponder || true
   '';

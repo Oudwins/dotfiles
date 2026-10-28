@@ -15,8 +15,8 @@ supports_websockets = true
 api_key_model_discovery = true
 
 [mcp_servers.executor]
-url = "http://mcp.tristanmayo.com:4788/mcp"
-bearer_token_env_var = "EXECUTOR_MCP_TOKEN"
+url = "http://127.0.0.1:28760/"
+http_headers = { "X-Proxy-Strategy" = "executor" }
 startup_timeout_sec = 60
 
 [tui]

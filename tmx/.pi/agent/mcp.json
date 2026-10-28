@@ -1,9 +1,9 @@
 {
   "mcpServers": {
     "executor": {
-      "url": "http://mcp.tristanmayo.com:4788/mcp",
+      "url": "http://127.0.0.1:28760/",
       "headers": {
-        "Authorization": "Bearer ${EXECUTOR_MCP_TOKEN}"
+        "X-Proxy-Strategy": "executor"
       },
       "timeout": 60
     }

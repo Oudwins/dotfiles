@@ -182,17 +182,20 @@ Services and login commands create private files using `umask 077`.
 
 ### Executor MCP across machines
 
-All four coding agents use streamable HTTP at
-`http://mcp.tristanmayo.com:4788/mcp`. Set the Executor machine's IP in
+Claude Code, Codex and pi reach Executor through the local mcp-auth-proxy service
+(see below) at `http://127.0.0.1:28760/` with the header `X-Proxy-Strategy: executor`.
+They hold no token and no Executor address. The `executor` strategy in
+`tmx/.mcp-auth-proxy/config.yaml` reads the token file, adds the `Authorization`
+header and forwards to `${env:EXECUTOR_MCP_URL}`. Set that URL per machine in
 `nixos/hosts/<host>/default.nix`:
 
 ```nix
-mcpProxy.address = "127.0.0.1"; # Default: local Executor.
-# mcpProxy.address = "192.168.1.50"; # Remote Executor; disables the local service.
+mcp-gateway.address = "http://127.0.0.1:4788/mcp"; # Default: local Executor.
+# mcp-gateway.address = "https://executor.example.com/mcp"; # Remote Executor; disables the local service.
 ```
 
-Rebuild Nix to apply the hosts-file mapping. On macOS, activation preserves
-unrelated entries and creates `/etc/hosts.before-mcp` before the first change.
+Nix passes it to the proxy service and exports it as a session variable, because
+`mcp-auth-proxy` stdio and `check` load the same config and fail without it.
 The server still listens on loopback by default. For remote clients, set
 `home-manager.users.tmx.services.executor.host` to a trusted private interface
 on the server and allow TCP port `4788`, or use a secure tunnel. Do not expose
@@ -201,19 +204,17 @@ plain HTTP and its bearer token to an untrusted network.
 The bearer token is stored with sops in `nixos/secrets/home.yaml` (`executor/token`)
 and decrypted by Home Manager to `~/.config/sops-nix/secrets/executor/token` using
 `~/.ssh/id_ed25519`. The Executor service writes it into `auth.json` before
-starting, and login shells export it as `EXECUTOR_MCP_TOKEN`, so every machine
-shares one token. To add a machine, put its `ssh-to-age` public key in
-`nixos/.sops.yaml` and run `sops updatekeys secrets/home.yaml` from `nixos/` on a
-machine that can already decrypt it. To rotate, run `sops secrets/home.yaml` and
-rebuild. Claude Code's global entry lives outside
-this repository in `~/.claude.json`. To configure a new machine:
+starting, and the proxy reads it on first use and again after a 401, so every
+machine shares one token and no process environment holds it. To add a machine,
+put its `ssh-to-age` public key in `nixos/.sops.yaml` and run
+`sops updatekeys secrets/home.yaml` from `nixos/` on a machine that can already
+decrypt it. To rotate, run `sops secrets/home.yaml` and rebuild. Claude Code's
+global entry lives outside this repository in `~/.claude.json`. To configure a
+new machine:
 
 ```sh
-claude mcp add-json --scope user executor '{"type":"http","url":"http://mcp.tristanmayo.com:4788/mcp","headers":{"Authorization":"Bearer ${EXECUTOR_MCP_TOKEN}"}}'
+claude mcp add-json --scope user executor '{"type":"http","url":"http://127.0.0.1:28760/","headers":{"X-Proxy-Strategy":"executor"}}'
 ```
-
-Restart agent sessions after setting the token. Hosts-file changes select the
-server without changing agent configuration.
 
 ### Shared address across machines
 

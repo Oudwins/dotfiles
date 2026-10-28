@@ -32,6 +32,11 @@ in
       default = "${config.home.homeDirectory}/.mcp-auth-proxy/config.yaml";
       description = "YAML configuration holding the listen address, allowedHosts and strategies, managed outside Nix (with Stow). The listen port lives there.";
     };
+    environment = lib.mkOption {
+      type = lib.types.attrsOf lib.types.str;
+      default = { };
+      description = "Extra environment for the service, such as values the config reads with \${env:NAME}.";
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -45,7 +50,7 @@ in
       };
       Service = {
         ExecStart = "${lib.getExe cfg.package} http -c ${lib.escapeShellArg cfg.configFile}";
-        Environment = [ "PATH=${servicePath}" ];
+        Environment = [ "PATH=${servicePath}" ] ++ lib.mapAttrsToList (name: value: "${name}=${value}") cfg.environment;
         Restart = "always";
         RestartSec = 5;
       };
@@ -61,7 +66,7 @@ in
           "-c"
           cfg.configFile
         ];
-        EnvironmentVariables.PATH = servicePath;
+        EnvironmentVariables = { PATH = servicePath; } // cfg.environment;
         KeepAlive = true;
         RunAtLoad = true;
         ThrottleInterval = 5;

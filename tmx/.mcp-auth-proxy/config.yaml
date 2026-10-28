@@ -32,3 +32,11 @@ strategies:
     output: token
     ttl: 55m
     timeout: 60s
+
+  # Executor's URL is set per machine by the mcp-gateway.address Nix option.
+  executor:
+    command: 'cat "$HOME/.config/sops-nix/secrets/executor/token"'
+    ttl: 1h
+    target: ${env:EXECUTOR_MCP_URL}
+    headers:
+      Authorization: Bearer {{token}}

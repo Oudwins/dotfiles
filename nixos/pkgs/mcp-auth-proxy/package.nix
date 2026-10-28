@@ -6,13 +6,13 @@
 
 buildGoModule {
   pname = "mcp-auth-proxy";
-  version = "0-unstable-2026-10-14-stdio";
+  version = "0-unstable-2026-10-27-strategy-target";
 
   src = fetchFromGitHub {
     owner = "Oudwins";
     repo = "mcp-auth-proxy";
-    rev = "28e62a2ff3973b5680ea9adc40713f514eac23fb";
-    hash = "sha256-L9pEzoLBE0peH/WzfjIsIKMcU49CLoT+ZUsH9gsaemE=";
+    rev = "039e0be798bedcbac978b4c90d4a780768bb202f";
+    hash = "sha256-xVqt+Fj/6HHWTlEguanAAyLv1h3tuf8wDW3PyTyZ/bM=";
   };
 
   vendorHash = "sha256-LsLZmSEKUEwbSXpiwXc+ureGTzXGcT3667P6tVhBXqU=";
@@ -20,7 +20,7 @@ buildGoModule {
   ldflags = [
     "-s"
     "-w"
-    "-X main.version=0-unstable-2026-10-14-stdio"
+    "-X main.version=0-unstable-2026-10-27-strategy-target"
   ];
 
   meta = {

@@ -11,7 +11,7 @@
     ./../../modules/common/sops
     ./../../modules/common/agents
     ./../../modules/common/llmproxy
-    ./../../modules/common/mcpproxy
+    ./../../modules/common/mcp-gateway
     ./../../modules/nixos/users/tmx
     ./../../modules/nixos/base
     ./../../modules/nixos/bluetooth.nix
@@ -34,10 +34,7 @@
   boot.kernelParams = [ "console=ttyS0,115200" "console=tty1" ];
 
   networking.hostName = "nixos"; # Define your hostname.
-  networking.hosts = lib.mkMerge [
-    { ${config.llmProxy.address} = [ "llmproxy.tristanmayo.com" ]; }
-    { ${config.mcpProxy.address} = [ "mcp.tristanmayo.com" ]; }
-  ];
+  networking.hosts.${config.llmProxy.address} = [ "llmproxy.tristanmayo.com" ];
   networking.extraHosts = ''
     ${builtins.readFile ./../../hosts-file}
   '';
