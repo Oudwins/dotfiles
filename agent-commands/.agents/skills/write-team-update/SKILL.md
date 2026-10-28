@@ -4,7 +4,7 @@ description: Reconcile work across Linear, GitHub, agent sessions, and Slack, th
 disable-model-invocation: true
 ---
 
-Write a short team update about my work, using the Linear MCP, GitHub CLI, local OpenCode and Pi conversations, and Slack MCP. First gather activity and deduplicate it into tasks, then reconcile Linear, then write the update. This command includes creating and updating Linear issues and linking PRs, not just suggesting those changes.
+Write a short team update about my work, using the Linear MCP, GitHub CLI, local T3 Code, OpenCode, and Pi conversations, and Slack MCP. First gather activity and deduplicate it into tasks, then reconcile Linear, then write the update. This command includes creating and updating Linear issues and linking PRs, not just suggesting those changes.
 
 ## Gather activity
 
@@ -12,6 +12,7 @@ Use my local timezone and determine my identity in each service. Read all releva
 
 - Linear MCP: read my active issues and issues resolved since the previous update. Updates are on Wednesday and Friday: Wednesday covers (Friday, Wednesday], and Friday covers (Wednesday, Friday], with the previous update day exclusive and the current day inclusive. On other days, use the most recent preceding Wednesday or Friday as the exclusive boundary. Include ongoing work even if its issue was created before this window.
 - GitHub CLI: check all PRs I created or merged since that boundary, across relevant repositories, as well as my still-open PRs. Read PR descriptions, linked issues, review state, and merge state to understand the work and its current status.
+- T3 Code: this is my primary agent tool, so treat it as the main source of agent-session evidence. Use the `t3-code` MCP thread tools (`t3_thread_list`, `t3_thread_search`, `t3_thread_read`) to find and read threads with activity in the last 24 hours, across all projects and worktrees, including linked PRs. If the MCP is unavailable, read the local store under `~/.t3/userdata` (read-only). Apply the same selection and evidence rules as for OpenCode and Pi below, and ignore the thread running this command.
 - OpenCode and Pi: discover their local session stores and read conversations with activity in the last 24 hours, across projects. Select by conversation activity, not just creation time, and read enough context to understand what I actually worked on and any associated repositories, branches, PRs, or issues. Use session content and outcomes, not just titles or proposed plans, as evidence of work.
 - Slack MCP: read messages I sent in the last 7 days. Read relevant thread context to identify work I did, progress, blockers, and links to PRs or Linear issues. Distinguish my work from other people's work I merely mentioned.
 
@@ -47,7 +48,7 @@ For each deduplicated task:
 4. Verify the resulting issue, links, and status. Report failed or unsupported changes rather than claiming they succeeded.
 
 Examples:
-- An OpenCode/Pi session shows work on a task with no PR or Linear issue: create a Linear issue and set it to In Progress.
+- A T3 Code/OpenCode/Pi session shows work on a task with no PR or Linear issue: create a Linear issue and set it to In Progress.
 - A Linear issue and a PR describe the same task but are not linked: link the PR to that issue and move the issue to the appropriate status.
 - Slack, two agent sessions, and several PRs describe the same task: reuse or create one issue, link all applicable PRs, and write one update entry.
 
