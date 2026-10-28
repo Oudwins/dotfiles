@@ -13,6 +13,4 @@ in
   };
 
   services.executor.authTokenFile = executorToken;
-
-  home.sessionVariables.EXECUTOR_MCP_TOKEN = "$(cat ${executorToken} 2>/dev/null)";
 }
