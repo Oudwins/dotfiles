@@ -1,4 +1,4 @@
 interface:
   display_name: "Review Stop"
-  short_description: "Request a human review and wait until it comes in"
-  default_prompt: "Use $review-stop to send this PR for review and tell me when the review comes in."
+  short_description: "Request a human review, wait for it, and merge if approved without feedback"
+  default_prompt: "Use $review-stop to send this PR for review and merge it if approved without feedback, or tell me what the review says."
