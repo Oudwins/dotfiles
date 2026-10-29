@@ -1,0 +1,16 @@
+{
+  "storageCleanup": {
+    "worktreeAfterDays": 5,
+    "worktreeOnMerge": true,
+    "worktreeOnDelete": true,
+    "worktreeUnchanged": true
+  },
+  "worktreeReuse": {
+    "enabled": true,
+    "standbyHours": 72
+  },
+  "projectSettingsFolded": true,
+  "deviceOnboardingCompleted": true,
+  "sidebarAutoSettleAfterDays": null,
+  "defaultThreadEnvMode": "worktree"
+}
