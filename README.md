@@ -46,6 +46,15 @@ after adding or removing commands and their Claude links. It also migrates links
 from the previous single-package layout; unrelated files in
 the home directory remain subject to Stow's normal conflict checks.
 
+### Imported tstack skills
+
+Imported from [t3dotgg/tstack](https://github.com/t3dotgg/tstack/tree/1085050f3baed1ac724caa4a8166145fb2ac88af/skills), with MIT licenses included:
+
+All seven are ordinary skills in `agent-skills/.agents/skills/`: `babysit-pr`,
+`council`, `file-pr`, `full-send`, `full-stop`, `leaving-pr-comments`, and `sol-loop`.
+
+`modernize` and `takeover` are intentionally excluded.
+
 ## To add at some point
 - https://github.com/junhoyeo/tokscale
 
