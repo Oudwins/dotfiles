@@ -1,0 +1,4 @@
+interface:
+  display_name: "Review Stop"
+  short_description: "Request a human review and wait until it comes in"
+  default_prompt: "Use $review-stop to send this PR for review and tell me when the review comes in."
