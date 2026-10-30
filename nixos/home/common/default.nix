@@ -10,7 +10,6 @@
     ./agents
     ./executor
     ./sops
-    ./cli-proxy-api
     ./mcp-auth-proxy
   ];
 

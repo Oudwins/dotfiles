@@ -1,6 +1,8 @@
 { config, pkgs, ... }:
 
 {
+  imports = [ ./cli-proxy-api.nix ];
+
   networking.firewall.checkReversePath = "loose";
 
   services.teamviewer.enable = true;

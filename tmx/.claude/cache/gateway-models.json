@@ -1,0 +1,1 @@
+{"baseUrl":"http://llmproxy.tristanmayo.com:8317","fetchedAt":1793263714209,"models":[{"id":"claude-fable-5-dd-arret-6.5-tpg","display_name":"gpt-5.6-terra"},{"id":"claude-fable-5-dd-artsa-6-tpg","display_name":"gpt-6-astra"},{"id":"claude-fable-5-dd-anul-6-tpg","display_name":"gpt-6-luna"},{"id":"claude-fable-5-dd-los-1.6-tpg","display_name":"gpt-6.1-sol"}]}

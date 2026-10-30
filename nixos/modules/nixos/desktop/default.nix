@@ -25,6 +25,11 @@
   security.pam.services.sddm.enableGnomeKeyring = true;
   programs.dconf.enable = true;
 
+  programs.appimage = {
+    enable = true;
+    binfmt = true;
+  };
+
   programs.thunar.enable = true;
   programs.thunar.plugins = [ pkgs.xfce.thunar-archive-plugin ];
   programs.xfconf.enable = true;

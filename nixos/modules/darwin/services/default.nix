@@ -1,6 +1,8 @@
 { pkgs, ... }:
 
 {
+  imports = [ ./cli-proxy-api.nix ];
+
   launchd.agents."colima.default" = {
     command = "${pkgs.colima}/bin/colima start --foreground";
     serviceConfig = {

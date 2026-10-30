@@ -105,31 +105,65 @@ nix-build --expr '(import <nixpkgs> { }).callPackage ./package.nix { }'
 
 ## CLIProxyAPI (macOS and Linux)
 
-Nix builds CLIProxyAPI from source and runs it as a user service: launchd on macOS,
-systemd on Linux. The settings in `tmx/.cli-proxy-api/config.yaml` are tracked in Git
-and symlinked to `~/.cli-proxy-api/config.yaml` by Stow, not managed by Nix.
-The installed `cli-proxy-api` launcher merges those settings with an optional
-`~/.cli-proxy-api/secrets.yaml` at launch (including login commands). Secrets override
-settings: nested mappings merge, while lists are replaced, except that upstream
-`api-keys.<provider>` groups merge by `name` (unique and nonempty within each file).
-The merged file lives at
-`~/.local/state/cli-proxy-api/config.yaml`, has mode 600, and never enters the Nix store.
-`--config /another/file.yaml` bypasses this merge and uses that file directly.
+Nix builds CLIProxyAPI from source and runs it as a system daemon under a dedicated
+account: `cli-proxy-api` on NixOS, `_cliproxyapi` on macOS. A root launcher decrypts
+SOPS and prepares private runtime files, then permanently drops UID/GID before
+executing the proxy. Your login user is not a member of the service group.
+
+Ordinary settings in `tmx/.cli-proxy-api/config.yaml` are tracked and Stow-linked to
+`~/.cli-proxy-api/config.yaml`. Secrets live in **SOPS-encrypted**
+`nixos/secrets/cli-proxy-api.yaml`. Only ciphertext and scripts enter the Nix store;
+Nix never decrypts or interpolates secret values during evaluation/build.
+
+The launcher merges them at runtime (including login commands). Nested mappings
+merge and lists replace, except upstream `api-keys.<provider>` groups merge by
+unique, nonempty `name`. The resulting mode-600 config is owned by the service user:
+
+- NixOS: `/run/cli-proxy-api/config.yaml` on tmpfs; startup refuses other filesystems.
+- macOS: `/private/var/run/cli-proxy-api/config.yaml` on a root-mounted 32 MiB HFS RAM
+  disk. Startup verifies an existing mount is a RAM disk and never falls back to `/tmp`.
+
+The runtime directory is root-owned, mode 750, with only the service group allowed
+to enter. Plaintext staging files are root-only and removed after merging. Only API
+keys and the management secret use this RAM-backed config. OAuth files persist in
+`/var/lib/cli-proxy-api/auth`, owned by the service account with directory mode 700;
+logs/panel assets also use `/var/lib/cli-proxy-api`.
+`--config /another/file.yaml` explicitly bypasses the merge and persistent auth-path
+override; securing that file and its OAuth directory is then your responsibility.
 
 ### Initial setup
 
-Before rebuilding, create your local secrets file (do not overwrite an existing one):
+The encrypted file is shared by both machines. To import an existing local secrets
+file without making another plaintext copy (do not overwrite an existing SOPS file):
+
+```bash
+cd ~/dotfiles/nixos
+test ! -e secrets/cli-proxy-api.yaml &&
+  sops --encrypt --filename-override secrets/cli-proxy-api.yaml \
+    ../tmx/.cli-proxy-api/secrets.yaml > secrets/cli-proxy-api.yaml
+```
+
+For a fresh setup, use `../tmx/.cli-proxy-api/secrets.example.yaml` as the input instead,
+then edit with SOPS. Put a real client key in `access.api-keys`; an empty list means
+no client authentication. `sops`' interactive editor uses a temporary plaintext
+file: on NixOS, set `TMPDIR="$XDG_RUNTIME_DIR"` when editing. On macOS, use a private
+RAM disk as `TMPDIR`, or use `sops set --value-stdin` to avoid editor temporary files.
+Do not pass secret values as command-line arguments or put them in shell history.
+
+The daemon converts `~/.ssh/id_ed25519` to an age identity at runtime by default.
+Both machines' SSH-derived recipients are in `nixos/.sops.yaml`; add other machines'
+recipients and run `sops updatekeys secrets/cli-proxy-api.yaml` before rebuilding.
+For manual SOPS commands, if you do not already have an age identity configured,
+use `export SOPS_AGE_KEY="$(ssh-to-age -private-key -i ~/.ssh/id_ed25519)"` first.
+
+On macOS the hidden account defaults to UID/GID 493. Verify these are unused, or set
+`services.cli-proxy-api.darwinUid` to a free ID before the first rebuild.
 
 ```bash
 cd ~/dotfiles
-cp -n tmx/.cli-proxy-api/secrets.example.yaml tmx/.cli-proxy-api/secrets.yaml
-openssl rand -hex 32
-# Edit secrets.yaml and replace access.api-keys[0] with the generated key.
-chmod 600 tmx/.cli-proxy-api/secrets.yaml
 stow --no-folding -d tmx -t ~ .
-
-# Git-backed flakes only see tracked files; stage the new Nix modules first.
-git add nixos/pkgs/cli-proxy-api/package.nix nixos/home/common/cli-proxy-api/default.nix
+# Git-backed flakes only include tracked files. Stage the new module/helpers and
+# encrypted file first, or evaluate a clean source snapshot containing them.
 
 # macOS
 sudo darwin-rebuild switch --flake ./nixos#macos
@@ -137,11 +171,50 @@ sudo darwin-rebuild switch --flake ./nixos#macos
 sudo nixos-rebuild switch --flake ./nixos#nixos
 ```
 
-Commit ordinary settings in `config.yaml`. Keep client keys, upstream API keys
-and management secrets in `secrets.yaml`, which is Git-ignored but still linked by
-Stow. `secrets.example.yaml` is only a starter template. Never put real secrets in
-the tracked settings, the template, or Nix expressions. Without a real client key,
-the placeholder in the tracked settings keeps proxy endpoints disabled.
+Commit ordinary settings and the encrypted SOPS file, never plaintext secrets or
+private identities. Without a real client key, the tracked placeholder disables
+proxy endpoints. `secrets.example.yaml` is only a starter template.
+
+When migrating, stop the old user service before starting the system daemon:
+
+```bash
+# NixOS
+systemctl --user disable --now cli-proxy-api
+# macOS
+launchctl bootout "gui/$(id -u)/org.nix-community.home.cli-proxy-api"
+```
+
+After verifying SOPS decryption and the new service, remove the old plaintext
+`tmx/.cli-proxy-api/secrets.yaml`, its `~/.cli-proxy-api/secrets.yaml` link, and
+`~/.local/state/cli-proxy-api/config.yaml`. Old OAuth files in
+`~/.local/share/cli-proxy-api/auth` are not automatically migrated or deleted.
+To keep those existing logins, stop the proxy before copying them into the new
+persistent directory (after rebuilding has created the dedicated account):
+
+```bash
+service_user=cli-proxy-api # Use _cliproxyapi on macOS.
+sudo install -d -m 700 -o "$service_user" -g "$service_user" /var/lib/cli-proxy-api/auth
+sudo cp -R ~/.local/share/cli-proxy-api/auth/. /var/lib/cli-proxy-api/auth/
+sudo chown -R "$service_user:$service_user" /var/lib/cli-proxy-api/auth
+sudo chmod -R u=rwX,go= /var/lib/cli-proxy-api/auth
+```
+
+The new launcher never reads these legacy files. Deletion cannot undo old backups
+or SSD snapshots; rotate credentials if that matters.
+
+**Security boundary:** another Unix account prevents ordinary processes running as
+your login user from reading the runtime paths or the proxy's process memory.
+It does not protect secrets from root/sudo, someone holding a SOPS decryption key,
+or someone with the management API password. Your mutable settings also remain
+trusted input: a hostile user who controls them can change upstream/proxy endpoints.
+For a root-only identity instead of your SSH key, set the string option
+`services.cli-proxy-api.ageKeyFile = "/var/root/cli-proxy-api-age.txt";` (use a
+root-owned mode-600 file), add its public recipient, re-encrypt, and remove login-user
+recipients if they must not decrypt. Rotate the secrets too: old ciphertext/history
+may remain decryptable with the old key. Stronger isolation also requires moving the
+mutable settings out of your login user's control. Never use a Nix path literal or
+`readFile` for the identity. RAM-backed storage can still reach swap/hibernation; configure those
+separately for a strict no-physical-storage guarantee. Core dumps are disabled.
 
 For example, keep the OpenAI URL and model list in `config.yaml`:
 
@@ -160,7 +233,7 @@ api-keys:
           alias: gpt-6-astra
 ```
 
-Supply only the matching group's credentials in `secrets.yaml`:
+Supply only the matching group's credentials in the SOPS-encrypted file:
 
 ```yaml
 api-keys:
@@ -179,15 +252,18 @@ Authenticate a provider, then point clients at `http://llmproxy.tristanmayo.com:
 client key:
 
 ```bash
-cli-proxy-api --codex-login
-# Or: cli-proxy-api --claude-login
-# Headless: cli-proxy-api --codex-device-login --no-browser
+sudo cli-proxy-api --codex-login
+# Or: sudo cli-proxy-api --claude-login
+# Headless: sudo cli-proxy-api --codex-device-login --no-browser
 curl -H "Authorization: Bearer YOUR_CLIENT_KEY" http://llmproxy.tristanmayo.com:8317/v1/models
 ```
 
-OAuth credentials live in `~/.local/share/cli-proxy-api/auth`, outside the dotfiles
-tree. Runtime logs and panel assets use `~/.local/state/cli-proxy-api` by default.
-Services and login commands create private files using `umask 077`.
+OAuth logins survive service stops, restarts and reboots. They are stored as ordinary
+credential files on persistent disk, protected by the dedicated service account's
+permissions; unlike API keys, they are not managed by SOPS or placed in the RAM disk.
+Services and login commands create private files using `umask 077`. Browser login
+may need `--no-browser` and manually opening the URL because the service account
+does not have a desktop session.
 
 ### Executor MCP across machines
 
@@ -254,16 +330,17 @@ not expose or encrypt the service; do not publish the unauthenticated API online
 
 ```bash
 # macOS
-launchctl kickstart -k "gui/$(id -u)/org.nix-community.home.cli-proxy-api"
+sudo launchctl kickstart -k system/org.nixos.cli-proxy-api
 # Linux
-systemctl --user restart cli-proxy-api
-systemctl --user status cli-proxy-api
+sudo systemctl restart cli-proxy-api
+systemctl status cli-proxy-api
 ```
 
-Application logs are in `~/.local/state/cli-proxy-api/logs/main.log`. Startup errors
-are in `~/Library/Logs/cli-proxy-api.error.log` on macOS or
-`journalctl --user -u cli-proxy-api` on Linux. The user service starts at login;
-Linux needs user lingering if it should run without an active login.
+Application logs are in `/var/lib/cli-proxy-api/logs/main.log` (use sudo). Startup
+errors are in `/var/log/cli-proxy-api.error.log` on macOS or
+`sudo journalctl -u cli-proxy-api` on NixOS. The system service starts at boot and
+does not require a login session or lingering. On macOS the RAM disk is reused
+across restarts and disappears on reboot.
 
 ### Configuration notes and recommendations
 
@@ -277,25 +354,25 @@ Linux needs user lingering if it should run without an active login.
   Streaming keep-alives and bootstrap retries help with idle timeouts and failures
   before streaming starts. Both are included in the tracked config.
 - Management is disabled by default. To use the web panel, set a **different**
-  random `management.secret-key` in `secrets.yaml` and set
+  random `management.secret-key` in SOPS and set
   `management.disable-control-panel: false` in `config.yaml`;
   visit `http://127.0.0.1:8317/management.html`. The application downloads the panel
   at runtime, separately from the Nix-built server. Plaintext management keys are
-  hashed and written back to the private runtime config on startup, not the tracked settings.
+  hashed and written back to the private RAM-backed config on startup.
   Web panel settings changes also affect only the runtime file and are lost at the
   next launch; make persistent settings changes in the tracked `config.yaml` instead.
 - Optional: `observability.usage.usage-statistics-enabled: true` enables in-memory
   usage totals for management. Leave request/debug logging off unless troubleshooting;
   request logs can contain prompts and responses. Application logs are capped at 100 MB.
-- Restart the service after editing `config.yaml` or `secrets.yaml` to regenerate
+- Rebuild after editing the SOPS file, then restart the service to use its new
+  encrypted store copy. Restart after editing `config.yaml` to regenerate
   the merged runtime config. OAuth credential files still support hot reload.
 - Check provider subscription terms before using subscription OAuth credentials
   with third-party clients; API-key upstreams are also supported.
 
 Build just the package with `nix build ./nixos#cli-proxy-api`.
-The standalone package has upstream defaults and does not merge secrets. Use the
-Home Manager-installed launcher, or pass `--config ~/.local/state/cli-proxy-api/config.yaml`
-after the launcher has generated the merged file.
+The standalone package has upstream defaults and does not merge/decrypt secrets.
+Use the system-installed launcher with sudo for the isolated, RAM-backed setup.
 
 ## mcp-auth-proxy (macOS and Linux)
 

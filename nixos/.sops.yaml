@@ -6,6 +6,12 @@ keys:
   - &master_keys
     - &mk_main age1pk47zm85yksrxekd7gnw2nn2qp46cvs00zkfs0e3hkzcf46nj55spqryrv
 creation_rules:
+  - path_regex: secrets/cli-proxy-api.yaml$
+    key_groups:
+      - age:
+          - *tmx
+          - *tmx_mac
+          - *mk_main
   - path_regex: secrets/secrets.yaml$
     key_groups:
       - age:

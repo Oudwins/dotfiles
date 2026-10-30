@@ -1,4 +1,4 @@
-# Tracked settings. Put real keys in the Git-ignored secrets.yaml alongside this file.
+# Tracked settings. Put real keys in nixos/secrets/cli-proxy-api.yaml using SOPS.
 # https://help.router-for.me/configuration/options.html
 config-version: 8
 
@@ -7,7 +7,7 @@ server:
   port: 8317
 
 access:
-  # Overridden by secrets.yaml. This placeholder disables proxy endpoints until configured.
+  # Overridden by SOPS secrets. This placeholder disables proxy endpoints until configured.
   api-keys:
     - "your-api-key-1"
 
@@ -42,16 +42,15 @@ multimedia:
   disable-image-generation: "passthrough"
 
 oauth:
-  # Keep mutable OAuth tokens outside the Stow-managed dotfiles tree.
-  auth-dir: "~/.local/share/cli-proxy-api/auth"
+  # The launcher sets auth-dir to the service account's private persistent state directory.
   providers:
     aistudio:
       ws-auth: true
 
 management:
   allow-remote: true
-  # Keep the real management key in secrets.yaml; empty disables the management API.
-  secret-key: "key"
+  # Keep the real management key in SOPS; empty disables the management API.
+  secret-key: ""
   disable-control-panel: false
 
 routing:

@@ -8,6 +8,8 @@ let
   address = config.llmProxy.address;
 in
 {
+  imports = [ ../cli-proxy-api ];
+
   options.llmProxy.address = lib.mkOption {
     type = lib.types.strMatching "[0-9a-fA-F:.]+";
     default = "127.0.0.1";
@@ -15,7 +17,7 @@ in
     description = "Hosts-file address for llmproxy.tristanmayo.com. Loopback runs the local proxy; another IP selects a remote proxy and disables the local service.";
   };
 
-  config.home-manager.users.tmx.services.cli-proxy-api.enable = lib.mkDefault (
+  config.services.cli-proxy-api.enable = lib.mkDefault (
     builtins.elem address [
       "127.0.0.1"
       "::1"
