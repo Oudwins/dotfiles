@@ -1,0 +1,1 @@
+- Don't assume at same time deploy. This generally means you have to ship migrations in steps. first make the change with backgrounds compat, then nuke the old version

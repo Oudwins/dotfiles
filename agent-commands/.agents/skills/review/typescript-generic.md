@@ -17,3 +17,18 @@ function compileMessage(message, {fallbackId, immediate, parts}: {fallbackId: st
 ## Types
 
 - As much as possible types should be infered and not dupliated across files. Use or create typing utilities to extract and transform related types instead of creating duplicates.
+
+
+## Exhaustive
+A great pattern:
+
+```ts
+swtich (x.discriminator) {
+    case "option1":
+        return "option1";
+    ...
+    default:
+        const _: never = x;
+        console.log("THIS SHOULD NEVER HAPPEN, X HAS A STRANGE VALUE", x)
+}
+```
