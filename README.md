@@ -45,6 +45,10 @@ Stow to merge shared destination directories across packages. It can be rerun
 after adding or removing commands and their Claude links. It also migrates links
 from the previous single-package layout; unrelated files in
 the home directory remain subject to Stow's normal conflict checks.
+Git-ignored untracked files are excluded automatically; tracked files remain
+included. Normal Stow directory folding is retained: ignored files inside a
+linked directory remain accessible through that link. Preview changes with
+`./updateSymlinks.sh --simulate`.
 
 ### Imported tstack skills
 

@@ -20,6 +20,7 @@ tmx/.config/alacritty/
 tmx/.zshrc
 
 # Local/generated files
+tmx/.claude/cache/
 tmx/.cli-proxy-api/*
 !tmx/.cli-proxy-api/config.yaml
 !tmx/.cli-proxy-api/secrets.example.yaml
