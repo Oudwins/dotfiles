@@ -1,11 +1,14 @@
 # Custom packages, that can be defined similarly to ones from nixpkgs
 # You can build them using 'nix build .#example'
-pkgs: {
+pkgs: rec {
   # example = pkgs.callPackage ./example { };
   beads = pkgs.callPackage ./beads/package.nix { };
   btca = pkgs.callPackage ./btca/package.nix { };
   cli-proxy-api = pkgs.callPackage ./cli-proxy-api/package.nix { };
   executor = pkgs.callPackage ./executor/package.nix { };
   jsonc2json = pkgs.callPackage ./jsonc2json/package.nix { };
-  mcp-auth-proxy = pkgs.callPackage ./mcp-auth-proxy/package.nix { };
+  agent-vault = pkgs.callPackage ./agent-vault/package.nix { };
+  agent-vault-service = pkgs.callPackage ./agent-vault-service/package.nix { inherit agent-vault; };
+  agent-vault-clients = pkgs.callPackage ./agent-vault-clients/package.nix { };
+  executor-router = pkgs.callPackage ./executor-router/package.nix { };
 }

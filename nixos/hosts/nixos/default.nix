@@ -36,6 +36,7 @@
   networking.hostName = "nixos"; # Define your hostname.
   networking.hosts.${config.llmProxy.address} = [ "llmproxy.tristanmayo.com" ];
   networking.extraHosts = ''
+    127.0.0.1 executor.localhost
     ${builtins.readFile ./../../hosts-file}
   '';
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.

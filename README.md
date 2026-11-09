@@ -271,21 +271,28 @@ does not have a desktop session.
 
 ### Executor MCP across machines
 
-Claude Code, Codex and pi reach Executor through the local mcp-auth-proxy service
-(see below) at `http://127.0.0.1:28760/` with the header `X-Proxy-Strategy: executor`.
-They hold no token and no Executor address. The `executor` strategy in
-`tmx/.mcp-auth-proxy/config.yaml` reads the token file, adds the `Authorization`
-header and forwards to `${env:EXECUTOR_MCP_URL}`. Set that URL per machine in
+Claude Code, Codex, pi and OpenCode use the fixed local URL
+`http://127.0.0.1:28760/executor`, without authentication headers. These client settings
+remain ordinary Stow-managed files (Claude's user entry lives in `~/.claude.json`).
+The Caddy-based `executor-router` service selects the `executor` entry in the shared
+service map and forwards to its configured target through
+Agent Vault, which injects the SOPS bearer token. Set the upstream URL per machine in
 `nixos/hosts/<host>/default.nix`:
 
 ```nix
-mcp-gateway.address = "http://127.0.0.1:4788/mcp"; # Default: local Executor.
+mcp-gateway.address = "http://executor.localhost:4788/mcp"; # Default: local Executor.
 # mcp-gateway.address = "https://executor.example.com/mcp"; # Remote Executor; disables the local service.
 ```
 
-Nix passes it to the proxy service and exports it as a session variable, because
-`mcp-auth-proxy` stdio and `check` load the same config and fail without it.
-The server still listens on loopback by default. For remote clients, set
+Nix passes `EXECUTOR_MCP_URL` to the router and credential helper, never to client
+MCP settings. Rebuild to switch the destination; client configs stay unchanged.
+Existing MCP connections may need reconnecting when switching servers. Agent Vault
+requires service hostnames, so use `executor.localhost` for the local service.
+NixOS adds that name to the hosts file; macOS resolves `.localhost` names itself.
+The default network allowlist permits loopback. For a remote Executor on a private
+network, add its IP/CIDR to
+`home-manager.users.tmx.services.agent-vault.environment.AGENT_VAULT_NETWORK_ALLOWLIST`
+alongside `127.0.0.1/32,::1/128`. For remote clients, set
 `home-manager.users.tmx.services.executor.host` to a trusted private interface
 on the server and allow TCP port `4788`, or use a secure tunnel. Do not expose
 plain HTTP and its bearer token to an untrusted network.
@@ -293,16 +300,17 @@ plain HTTP and its bearer token to an untrusted network.
 The bearer token is stored with sops in `nixos/secrets/home.yaml` (`executor/token`)
 and decrypted by Home Manager to `~/.config/sops-nix/secrets/executor/token` using
 `~/.ssh/id_ed25519`. The Executor service writes it into `auth.json` before
-starting, and the proxy reads it on first use and again after a 401, so every
-machine shares one token and no process environment holds it. To add a machine,
+starting. Agent Vault reads it on first use and caches it for up to one hour.
+Every machine shares one token and no process environment holds it. To add a machine,
 put its `ssh-to-age` public key in `nixos/.sops.yaml` and run
 `sops updatekeys secrets/home.yaml` from `nixos/` on a machine that can already
-decrypt it. To rotate, run `sops secrets/home.yaml` and rebuild. Claude Code's
+decrypt it. To rotate, run `sops secrets/home.yaml`, rebuild, and restart
+`agent-vault-credentials` to invalidate the cached credential immediately. Claude Code's
 global entry lives outside this repository in `~/.claude.json`. To configure a
 new machine:
 
 ```sh
-claude mcp add-json --scope user executor '{"type":"http","url":"http://127.0.0.1:28760/","headers":{"X-Proxy-Strategy":"executor"}}'
+claude mcp add-json --scope user executor '{"type":"http","url":"http://127.0.0.1:28760/executor"}'
 ```
 
 ### Shared address across machines
@@ -378,50 +386,92 @@ Build just the package with `nix build ./nixos#cli-proxy-api`.
 The standalone package has upstream defaults and does not merge/decrypt secrets.
 Use the system-installed launcher with sudo for the isolated, RAM-backed setup.
 
-## mcp-auth-proxy (macOS and Linux)
+## Agent Vault (macOS and Linux)
 
-Nix installs [mcp-auth-proxy](https://github.com/Oudwins/mcp-auth-proxy) and, as a
-convenience, also runs `mcp-auth-proxy http` as a user service (launchd on macOS,
-systemd on Linux) listening on `127.0.0.1:28760`. The port is below both the macOS and
-Linux ephemeral ranges, so outbound connections cannot take it. Settings live in
-`tmx/.mcp-auth-proxy/config.yaml`, tracked in Git and symlinked to
-`~/.mcp-auth-proxy/config.yaml` by Stow (not managed by Nix); change the port there.
-The HTTP server has no client auth, so keep it on loopback.
+Nix installs the pinned standalone [Agent Vault](https://github.com/Infisical/agent-vault)
+release and runs three user services using launchd on macOS and systemd on Linux:
 
-The default mode is stdio: the MCP client spawns the binary, no port or service is
-needed. Strategies `eleven-payload-staging` and `eleven-payload-production` mint the
-Payload IAP token with `gcloud` (needs the one-time gcloud setup from the marketing-website
-README). Each strategy has its own IAP audience and both need `--include-email`; use the
-strategy that matches the target host (`payload.eleven2.dev` or `payload.elevenlabs.io`):
+- `agent-vault`: management UI/API on `127.0.0.1:14321` and credential-injecting
+  forward proxy on `127.0.0.1:14322`.
+- `agent-vault-credentials`: an authenticated credential-refresh endpoint on
+  `127.0.0.1:14323` and unattended provisioning of the vault and client environment.
+  It does not forward MCP traffic.
+- `executor-router`: Caddy serving named MCP routes on `127.0.0.1:28760`, forwarding
+  each to its configured target through Agent Vault. It streams requests/responses, including
+  SSE, and preserves MCP session headers. It has no credential-generation logic,
+  stdio bridge or automatic retries. Browser-origin requests are rejected. Caddy's
+  admin API and configuration persistence are disabled; its runtime configuration
+  is supplied on stdin so the proxy token is never written into the Nix store.
 
-```json
-{
-  "command": "mcp-auth-proxy",
-  "args": [
-    "-s", "eleven-payload-production",
-    "-t", "https://payload.elevenlabs.io/api/mcp",
-    "-H", "Proxy-Authorization: Bearer {{token}}",
-    "-H", "Authorization: Bearer ${env:PAYLOAD_MCP_API_KEY}"
-  ]
-}
-```
+Settings live in `tmx/.config/agent-vault/config.json`, symlinked by Stow to
+`~/.config/agent-vault/config.json`. Its `services` map is the source for both Caddy
+routing and Agent Vault's credential rules:
 
-To use the always-on HTTP service instead, point an `http` MCP client at it with a
-strategy and target header:
+| Client URL | Configured upstream | Injected credential |
+| --- | --- | --- |
+| `http://127.0.0.1:28760/executor` | `${EXECUTOR_MCP_URL}` from Nix | SOPS bearer token |
+| `http://127.0.0.1:28760/payload-staging` | `https://payload.eleven2.dev/api/mcp` | Staging IAP token |
+| `http://127.0.0.1:28760/payload-production` | `https://payload.elevenlabs.io/api/mcp` | Production IAP token |
+
+Add a service to this map to expose `/<service-name>` through Caddy. Each entry
+has a `target` URL and optional credential `headers`; omit headers for a public
+service. Environment placeholders use `${VARIABLE}` and are resolved by each
+service at startup. Restart the credential helper and Caddy after editing the map.
+Unknown names and arbitrary subpaths return 404; the request cannot choose a URL
+outside the configured map.
+
+Nix installs launchers for `codex`, `claude`, `pi` and `opencode`, ahead of the
+manually updated executables in `~/.npm/bin`. Each launcher reads the private
+`~/.agent-vault/proxy.env` and configures its process and children to use Agent
+Vault's authenticated forward proxy and trust its CA. The launchers do not set or
+override MCP URLs. Executor's fixed loopback URL bypasses that network proxy;
+the router itself sends the upstream request through Agent Vault. No system certificate
+installation or global network-proxy setting is needed. Restart existing agent
+sessions and applications that launch them after changing the launchers.
+
+Agent Vault injects credentials only for the configured service hosts and paths;
+other destinations pass through without injected credentials. Loopback IPs and
+the model endpoint `llmproxy.tristanmayo.com` bypass the proxy. Keep `localhost`
+out of `noProxy`: suffix matching would also bypass `executor.localhost`.
+
+The credential endpoint adapts the configured fixed `gcloud` commands and SOPS
+file to Agent Vault's OAuth refresh protocol. Credentials are generated lazily,
+and Agent Vault refreshes them within five minutes of expiry. Each Payload command
+uses its own audience, service-account impersonation and `--include-email`; the
+one-time gcloud setup from the marketing-website README is still required.
+The Payload application API key remains a separate client header:
 
 ```json
 {
   "type": "http",
-  "url": "http://127.0.0.1:28760/",
+  "url": "http://127.0.0.1:28760/payload-production",
   "headers": {
-    "X-Proxy-Strategy": "eleven-payload-production",
-    "X-Proxy-Target": "https://payload.elevenlabs.io/api/mcp",
-    "Proxy-Authorization": "Bearer {{token}}",
     "Authorization": "Bearer <payload mcp api key>"
   }
 }
 ```
 
-Check a strategy with `mcp-auth-proxy check`; service logs are in `~/Library/Logs/mcp-auth-proxy*.log`.
-Restart after editing the config. Pinned to a commit in `nixos/pkgs/mcp-auth-proxy/package.nix`:
-bump `rev`, `hash` and `vendorHash` together.
+On first start the services create an encrypted local database, a dedicated
+`dotfiles` vault, a proxy-only `coding-agents` agent and an invite-only owner account
+(`tmx@agent-vault.local`). Random master/owner passwords and the credential-endpoint
+capability, client proxy token and environment are kept as private files under
+`~/.agent-vault/`, outside Stow and Git. The client token survives helper restarts.
+The owner's password is in `~/.agent-vault/owner-password`; keep this directory
+when restarting or rebuilding. The service reconciles only the `dotfiles` vault.
+
+Check readiness with `curl http://127.0.0.1:14323/health`. On macOS, logs are in
+`~/Library/Logs/agent-vault*.log` and `~/Library/Logs/executor-router*.log`; on Linux use
+`journalctl --user -u agent-vault -u agent-vault-credentials -u executor-router`. Restart both Agent Vault services
+after editing ports, or just the helper after editing services/credential sources.
+Restart the router after changing its upstream URL, client proxy token or CA.
+Restart agent processes if their network-proxy address, client token or CA changes.
+For example, on macOS:
+
+```sh
+launchctl kickstart -k gui/$(id -u)/org.nix-community.home.agent-vault-credentials
+```
+
+On Linux use `systemctl --user restart agent-vault-credentials`. Authentication
+rejections are returned to clients; MCP POST requests are not replayed. No stdio
+bridge is provided. The package version and platform checksums live in
+`nixos/pkgs/agent-vault/package.nix`.
