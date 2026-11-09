@@ -55,3 +55,6 @@ tmx/.config/tokscale/cursor-credentials.json
 
 # Managed by Company
 tmx/.npmrc
+
+# Skill script dependencies
+agent-commands/.agents/skills/*/node_modules/

@@ -11,9 +11,11 @@
     ./executor
     ./sops
     ./agent-vault
+    ./pr-review-server
   ];
 
   services.agent-vault.enable = true;
+  services.pr-review-server.enable = true;
 
   services.executor = {
     dataDir = "${config.home.homeDirectory}/.executor";
