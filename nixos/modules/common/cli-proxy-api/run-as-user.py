@@ -10,6 +10,10 @@ account = pwd.getpwnam(user)
 if account.pw_uid == 0:
     raise SystemExit("Refusing to run the proxy as root")
 
+path = os.path.dirname(executable)
+if sys.platform == "darwin":
+    path += os.pathsep + "/usr/bin"
+
 resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
 os.setgroups([])
 os.setgid(account.pw_gid)
@@ -22,6 +26,6 @@ os.execve(
         "USER": user,
         "LOGNAME": user,
         "WRITABLE_PATH": home,
-        "PATH": os.path.dirname(executable),
+        "PATH": path,
     },
 )

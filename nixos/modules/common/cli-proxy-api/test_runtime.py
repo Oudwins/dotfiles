@@ -146,6 +146,28 @@ class PrivilegeTests(unittest.TestCase):
         )
         self.assertNotIn("SOPS_AGE_KEY", execute.call_args.args[2])
 
+    def test_macos_path_includes_system_browser_opener(self):
+        account = type("Account", (), {"pw_gid": 493, "pw_uid": 493})()
+        executable = "/nix/store/proxy/bin/cli-proxy-api"
+        for platform, expected in [
+            ("darwin", "/nix/store/proxy/bin:/usr/bin"),
+            ("linux", "/nix/store/proxy/bin"),
+        ]:
+            with (
+                self.subTest(platform=platform),
+                patch("sys.platform", platform),
+                patch("sys.argv", ["run-as-user.py", "service", "/state", executable]),
+                patch("pwd.getpwnam", return_value=account),
+                patch("os.environ", {"PATH": "/untrusted/bin"}),
+                patch("resource.setrlimit"),
+                patch("os.setgroups"),
+                patch("os.setgid"),
+                patch("os.setuid"),
+                patch("os.execve") as execute,
+            ):
+                runpy.run_path(str(HERE / "run-as-user.py"), run_name="__main__")
+                self.assertEqual(execute.call_args.args[2]["PATH"], expected)
+
     def test_refuse_root_target(self):
         account = type("Account", (), {"pw_uid": 0})()
         with (
