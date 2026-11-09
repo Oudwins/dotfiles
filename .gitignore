@@ -1,7 +1,9 @@
 tmx/.config/sops/**
 **/.direnv/
 tmx/.local/*
-!tmx/.local/bin/dscripts
+!tmx/.local/bin/
+tmx/.local/bin/*
+!tmx/.local/bin/dscripts/
 tmx/.config/configstore
 tmx/.config/gcloud
 tmx/.config/firebase
@@ -20,18 +22,36 @@ tmx/.config/alacritty/
 tmx/.zshrc
 
 # Local/generated files
+nixos/trace.txt
+tmx/.agents/.skill-lock.json
 tmx/.claude/cache/
 tmx/.cli-proxy-api/*
 !tmx/.cli-proxy-api/config.yaml
 !tmx/.cli-proxy-api/secrets.example.yaml
 thoughts/shared/plan/
 tmx/.config/btca/
+tmx/.config/buildkit/buildkitd.toml
+tmx/.config/cc-proxy/auth/credentials.json
+tmx/.config/containerd/config.toml
+tmx/.config/Cursor/User/settings.json.bak
+tmx/.config/elevenlabs/gar-npm-token.mjs
 tmx/.config/elevenscribe/
+tmx/.config/gh/hosts.yml
 tmx/.config/ghostty/config.ghostty
+tmx/.config/ghtkn/ghtkn.yaml
 tmx/.config/graphite/aliases
 tmx/.config/graphite/auth
 tmx/.config/graphite/user_config
+tmx/.config/karabiner/automatic_backups/karabiner_20250401.json
+tmx/.config/karabiner/automatic_backups/karabiner_20250402.json
+tmx/.config/nvim/doc/tags
+tmx/.config/op/config
+tmx/.config/opencode/service.json
+tmx/.config/sops-nix/secrets
+tmx/.config/tanstack/cli.json
+tmx/.config/tokscale/.settings.lock
 tmx/.config/tokscale/cache/
+tmx/.config/tokscale/cursor-credentials.json
 
 # Managed by Company
 tmx/.npmrc
