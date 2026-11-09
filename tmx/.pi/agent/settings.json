@@ -1,5 +1,5 @@
 {
-  "lastChangelogVersion": "1.1.0",
+  "lastChangelogVersion": "1.5.0",
   "defaultProvider": "cliproxyapi",
   "defaultModel": "gpt-6.1-sol",
   "defaultThinkingLevel": "xhigh",
@@ -9,5 +9,8 @@
     "npm:@router-for-me/pi-cliproxyapi-provider@1.4.21"
   ],
   "theme": "dark",
-  "tuiMode": "fullscreen"
+  "tuiMode": "fullscreen",
+  "extensionChangelogVersions": {
+    "{\"source\":\"npm:pi-mono-multi-edit\",\"scope\":\"user\"}": "2.0.0"
+  }
 }
