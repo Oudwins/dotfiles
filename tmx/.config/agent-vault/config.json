@@ -1,0 +1,39 @@
+{
+  "serverPort": 14321,
+  "proxyPort": 14322,
+  "credentialPort": 14323,
+  "noProxy": ["127.0.0.1", "::1", "llmproxy.tristanmayo.com"],
+  "credentials": {
+    "EXECUTOR_TOKEN": {
+      "file": "~/.config/sops-nix/secrets/executor/token"
+    },
+    "PAYLOAD_STAGING_IAP": {
+      "command": [
+        "gcloud", "auth", "print-identity-token", "--include-email",
+        "--audiences=344165917057-a9qd6r8vm8n4e53tebm2ccmr80lgnr8r.apps.googleusercontent.com",
+        "--impersonate-service-account=payload-cms-devs@eleven-dev-390412.iam.gserviceaccount.com"
+      ]
+    },
+    "PAYLOAD_PRODUCTION_IAP": {
+      "command": [
+        "gcloud", "auth", "print-identity-token", "--include-email",
+        "--audiences=1032416323924-4foq4mc4dld1avutothpgn6b5uk80rc3.apps.googleusercontent.com",
+        "--impersonate-service-account=payload-cms-devs@eleven-dev-390412.iam.gserviceaccount.com"
+      ]
+    }
+  },
+  "services": {
+    "executor": {
+      "target": "${EXECUTOR_MCP_URL}",
+      "headers": { "Authorization": "Bearer {{ EXECUTOR_TOKEN }}" }
+    },
+    "payload-staging": {
+      "target": "https://payload.eleven2.dev/api/mcp",
+      "headers": { "Proxy-Authorization": "Bearer {{ PAYLOAD_STAGING_IAP }}" }
+    },
+    "payload-production": {
+      "target": "https://payload.elevenlabs.io/api/mcp",
+      "headers": { "Proxy-Authorization": "Bearer {{ PAYLOAD_PRODUCTION_IAP }}" }
+    }
+  }
+}

@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
-set -eu
+set -euo pipefail
 
 # Resolve this checkout instead of assuming it lives at ~/dotfiles.
 directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
@@ -14,4 +14,12 @@ fi
 
 # A common Stow directory lets packages merge their shared destinations.
 # Restowing also migrates links created by the previous single-package layout.
-stow --restow -d "$directory" -t "$HOME" tmx agent-skills agent-commands
+for package in tmx agent-skills agent-commands; do
+	# Let Git resolve ignore rules, including negations and nested .gitignore files.
+	ignore=$(
+		git -C "$package" ls-files --others --ignored --exclude-standard --directory -z |
+			perl -0ne 'chomp; s{/$}{}; push @paths, quotemeta($_);
+				END { print "^(?:", join("|", @paths), ")\$" }'
+	)
+	stow --restow --ignore="$ignore" -d "$directory" -t "$HOME" "$@" "$package"
+done

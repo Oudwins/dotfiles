@@ -15,8 +15,7 @@ supports_websockets = true
 api_key_model_discovery = true
 
 [mcp_servers.executor]
-url = "http://127.0.0.1:28760/"
-http_headers = { "X-Proxy-Strategy" = "executor" }
+url = "http://127.0.0.1:28760/executor"
 startup_timeout_sec = 60
 
 [tui]

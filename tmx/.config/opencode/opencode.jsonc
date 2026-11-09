@@ -11,13 +11,12 @@
     // https://github.com/Opencode-DCP/opencode-dynamic-context-pruning
     // "@tarquinen/opencode-dcp@latest",
     // Adds native web search
-    "opencode-websearch-cited@1.2.0",
   ],
   "mcp": {
     "executor": {
       "enabled": true,
-      "type": "local",
-      "command": ["executor", "mcp"],
+      "type": "remote",
+      "url": "http://127.0.0.1:28760/executor",
       "timeout": 60000,
     },
   },
@@ -35,15 +34,6 @@
         "gpt-6-astra": {},
       },
     },
-    // "vertex_anthropic": {
-    //   "npm": "@ai-sdk/google-vertex/anthropic",
-    //   "name": "Google Vertex Anthropic",
-    //   "options": {
-    //     "project": "eleven-vertex-internal",
-    //     "location": "{env:VERTEX_LOCATION}",
-    //   },
-    //   "models": {},
-    // },
     "ollama": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "Ollama (local)",
@@ -78,17 +68,6 @@
         "claude-fable-5": { "name": "Claude Fable 5" },
       },
     },
-    // "vibeproxy": {
-    //   "npm": "@ai-sdk/openai-compatible",
-    //   "name": "VibeProxy",
-    //   "options": {
-    //     "baseURL": "http://localhost:8317/v1",
-    //   },
-    //   "models": {
-    //     "claude-opus-4-8": { "name": "Claude Opus 4.8" },
-    //     "claude-fable-5": { "name": "Claude Fable 5" },
-    //   },
-    // },
   },
   "agent": {},
   "permission": {

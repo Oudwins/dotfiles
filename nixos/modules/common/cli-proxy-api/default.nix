@@ -56,12 +56,12 @@ let
         if cfg.ageKeyFile != null then
           ''
             SOPS_AGE_KEY_FILE=${lib.escapeShellArg cfg.ageKeyFile} \
-              ${lib.getExe pkgs.sops} --decrypt ${lib.escapeShellArg (toString cfg.secretsFile)} > "$secrets"
+              ${lib.getExe pkgs.sops} --decrypt ${lib.escapeShellArg "${cfg.secretsFile}"} > "$secrets"
           ''
         else
           ''
             SOPS_AGE_KEY="$(${lib.getExe pkgs.ssh-to-age} -private-key -i ${lib.escapeShellArg cfg.sshKeyFile})" \
-              ${lib.getExe pkgs.sops} --decrypt ${lib.escapeShellArg (toString cfg.secretsFile)} > "$secrets"
+              ${lib.getExe pkgs.sops} --decrypt ${lib.escapeShellArg "${cfg.secretsFile}"} > "$secrets"
           ''
       }
       inputs=(${lib.escapeShellArg cfg.configFile} "$secrets")
