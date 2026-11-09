@@ -10,10 +10,10 @@
     ./agents
     ./executor
     ./sops
-    ./mcp-auth-proxy
+    ./agent-vault
   ];
 
-  services.mcp-auth-proxy.enable = true;
+  services.agent-vault.enable = true;
 
   services.executor = {
     dataDir = "${config.home.homeDirectory}/.executor";
