@@ -11,4 +11,5 @@ pkgs: rec {
   agent-vault-service = pkgs.callPackage ./agent-vault-service/package.nix { inherit agent-vault; };
   agent-vault-clients = pkgs.callPackage ./agent-vault-clients/package.nix { };
   executor-router = pkgs.callPackage ./executor-router/package.nix { };
+  pr-review-server = pkgs.callPackage ./pr-review-server/package.nix { };
 }
