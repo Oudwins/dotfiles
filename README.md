@@ -77,6 +77,7 @@ sudo tailscale set --exit-node=
 
 ```bash
 sudo darwin-rebuild switch --flake .#macos
+sudo cli-proxy-api -claude-login --no-browser
 ```
 
 - Aerospace WM

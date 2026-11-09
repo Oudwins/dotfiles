@@ -4,6 +4,7 @@
 - No useEffect or as little as possible
 - **use absense instead of hide flags**
 - **Pass inputs directly to operations.** Prefer `sendMessage(text)` over requiring `setMessage(text)` followed by `sendMessage()`.
+- Basically never use function style components in react inside other components for rendering. Almost always use <Component /> style instead
 
 
 ## use state
