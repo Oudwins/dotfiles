@@ -420,6 +420,35 @@ service at startup. Restart the credential helper and Caddy after editing the ma
 Unknown names and arbitrary subpaths return 404; the request cannot choose a URL
 outside the configured map.
 
+API keys can be added in either of two ways, and both can be used at once:
+
+- **SOPS (tracked, shared by all machines):** add the key to `nixos/secrets/home.yaml`
+  with `sops`, declare it in `nixos/home/common/sops/default.nix`
+  (`secrets."openai/api_key" = { };`), then reference the decrypted file from
+  `credentials` and use it in a service's headers:
+
+  ```json
+  "credentials": { "OPENAI_API_KEY": { "file": "~/.config/sops-nix/secrets/openai/api_key" } },
+  "services": {
+    "openai": {
+      "target": "https://api.openai.com/v1",
+      "headers": { "Authorization": "Bearer {{ OPENAI_API_KEY }}" }
+    }
+  }
+  ```
+
+- **Agent Vault UI (local to one machine):** open `http://127.0.0.1:14321`, sign in
+  as `tmx@agent-vault.local` with the password in `~/.agent-vault/owner-password`,
+  and add the credential and a service to the `dotfiles` vault.
+
+The helper upserts config services by name and deletes only services that it
+previously created from config and that have since been removed
+(tracked in `~/.agent-vault/managed-services.json`). Services added through the
+UI survive restarts, unless they share a name with a config service.
+UI services are applied by the forward proxy only; they get no
+`/<service-name>` route. Don't reuse a `credentials` key name in the UI;
+the helper rewrites those keys on every start.
+
 Nix installs launchers for `codex`, `claude`, `pi` and `opencode`, ahead of the
 manually updated executables in `~/.npm/bin`. Each launcher reads the private
 `~/.agent-vault/proxy.env` and configures its process and children to use Agent
