@@ -3,17 +3,18 @@
 import ELK from "elkjs/lib/elk.bundled.js";
 
 type Graph = {
-  nodes: { id: string; label: string; kind?: string; group?: string; signature?: string }[];
+  nodes: { id: string; label: string; kind?: string; tier?: string; group?: string; signature?: string; types?: { id: string }[] }[];
   edges: { from: string; to: string; label?: string }[];
 };
 
-// Cards show the name and kind, then up to `maxLines` of the signature.
+// Cards show the name, kind and tier, then up to `maxLines` of the signature.
 // Sizes approximate the card CSS in viewer.css.
 const card = { maxLines: 12, maxChars: 72, labelChar: 7.8, kindChar: 6.6, codeChar: 7.1, codeLine: 17, head: 36 };
 
 const nodeSize = (node: Graph["nodes"][number]) => {
   const lines = node.signature?.split("\n").slice(0, card.maxLines) ?? [];
-  const head = node.label.length * card.labelChar + (node.kind ? node.kind.length * card.kindChar + 26 : 0) + 28;
+  const badges = [node.kind, node.tier].reduce((width, text) => width + (text ? text.length * card.kindChar + 26 : 0), 0);
+  const head = node.label.length * card.labelChar + badges + 28 + (node.types?.length ? 48 : 0);
   const code = Math.min(Math.max(0, ...lines.map((line) => line.length)), card.maxChars) * card.codeChar + 40;
   return {
     width: Math.max(head, lines.length ? code : 0),

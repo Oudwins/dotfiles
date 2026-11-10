@@ -11,7 +11,22 @@
     <nav id="tabbar"></nav>
     <div id="banner" hidden></div>
     <main id="tabs"></main>
+    <aside id="inspector" hidden>
+      <div id="inspector-head">
+        <strong id="inspector-title"></strong>
+        <span class="type-hint">Relevant branches first</span>
+        <button id="inspector-expand" type="button">Expand all</button>
+        <button id="inspector-collapse" type="button">Collapse nested</button>
+        <button id="inspector-pin" type="button">Pin</button>
+        <button id="inspector-close" type="button" title="Close (gq)">✕</button>
+      </div>
+      <div id="inspector-body"></div>
+    </aside>
     <div id="help" hidden></div>
+    <div id="palette" hidden>
+      <input id="palette-input" autocomplete="off" spellcheck="false" placeholder="Type a command" />
+      <ul id="palette-list"></ul>
+    </div>
     <input id="prompt" hidden autocomplete="off" spellcheck="false" />
     <footer id="statusline">
       <span id="mode"></span>

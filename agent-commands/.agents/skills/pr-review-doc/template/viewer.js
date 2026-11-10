@@ -58,7 +58,7 @@ const foldable = (cls, head, body, folded) =>
 const badge = (text, cls = text) => h("span", { class: `badge ${cls}` }, text);
 
 // Renders a whole hunk, or the slice a code reference resolved to.
-function renderHunk(id, { from = 0, to = hunks[id].lines.length - 1, review = false } = {}) {
+function renderHunk(id, { from = 0, to = hunks[id].lines.length - 1, review = false, folded = false } = {}) {
   const hunk = hunks[id];
   const lines = hunk.lines.slice(from, to + 1);
   const numbers = lines.map((line) => line.n ?? line.o);
@@ -90,7 +90,7 @@ function renderHunk(id, { from = 0, to = hunks[id].lines.length - 1, review = fa
       anchors.set(key, [...(anchors.get(key) ?? []), row]);
       return row;
     }),
-    review && reviewed.has(hunk.key),
+    folded || (review && reviewed.has(hunk.key)),
   );
   el.hunk = hunk;
   if (reviewed.has(hunk.key)) el.classList.add("reviewed");
@@ -98,6 +98,10 @@ function renderHunk(id, { from = 0, to = hunks[id].lines.length - 1, review = fa
 }
 
 const renderRefs = (refs) => refs.map((ref) => renderHunk(ref.hunk, ref));
+
+// Test files by common conventions: foo.test.ts, foo_test.go, test_foo.py,
+// and anything under __tests__/, test/, tests/ or spec/.
+const isTest = (path) => /(^|\/)(__tests__|tests?|spec)\/|[._-](test|spec)s?\.[^/]+$|(^|\/)test_[^/]+$/.test(path);
 
 const codeToggle = (refs, folded = true) =>
   refs.length > 0 &&
@@ -116,9 +120,181 @@ function fit(label, width) {
   return label.length <= max ? label : `…${label.slice(label.length - max + 1)}`;
 }
 
+const tierLabels = { "stored-or-wire": "stored / wire", "cross-feature": "cross-feature" };
+
+// A signature line; lines of a before → after signature carry their diff sign.
+const signatureLine = (line) =>
+  h(
+    "div",
+    { class: `sig ${{ "+": "add", "-": "del", " ": "ctx" }[line.t] ?? ""}` },
+    line.t && h("span", { class: "sign" }, line.t),
+    h("span", { html: line.html }),
+  );
+
+const typeNamePattern = (names) => new RegExp(`\\b(${names.map(name => name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})\\b`, "g");
+
+// A short alias shows its value next to its name; an object type is never inlined.
+const inlineValue = (definition, before) => {
+  const value = (before && definition.previous ? definition.previous : definition).type;
+  return definition.inline && value && !value.includes("\n") && value.length <= 72 ? value : null;
+};
+
+// A signature line whose referenced types explain themselves: short aliases
+// get their value beside the name, object types link to the inspector.
+function typeSignatureLine(line, definitions, open) {
+  const row = signatureLine(line);
+  if (!definitions.length) return row;
+  const pattern = typeNamePattern(definitions.map(type => type.name));
+  const walker = document.createTreeWalker(row.lastElementChild, NodeFilter.SHOW_TEXT);
+  const texts = [];
+  while (walker.nextNode()) texts.push(walker.currentNode);
+  let before = "";
+  for (const text of texts) {
+    const parts = [];
+    let start = 0;
+    for (const match of text.textContent.matchAll(pattern)) {
+      // A declaration's own name (`type Foo =`) is not a reference to explain.
+      if (/\b(?:type|interface|class)\s+$/.test(before + text.textContent.slice(0, match.index))) continue;
+      const definition = definitions.find(type => type.name === match[0]);
+      const value = inlineValue(definition, line.t === "-");
+      parts.push(
+        text.textContent.slice(start, match.index),
+        value
+          ? [match[0], h("span", { class: "type-inline" }, ` = ${value}`)]
+          : h("button", {
+              class: "type-link",
+              type: "button",
+              title: `Inspect ${definition.name}`,
+              onclick: event => { event.stopPropagation(); open(definition.id); },
+            }, match[0]),
+      );
+      start = match.index + match[0].length;
+    }
+    before += text.textContent;
+    if (parts.length) text.replaceWith(...parts.flat(), text.textContent.slice(start));
+  }
+  return row;
+}
+
+// The definitions a contract references, as field trees. Only the branches the
+// contract marks relevant start open; every other nested shape is one key away.
+function renderTypeTree(references, registry) {
+  const sourceLink = definition => h("a", {
+    class: "type-source",
+    href: `https://github.com/${pr.owner}/${pr.repo}/blob/${definition.source.side === "base" ? pr.mergeBaseOid : pr.headOid}/${definition.source.path.split("/").map(encodeURIComponent).join("/")}#L${definition.source.line}`,
+    target: "_blank",
+    rel: "noreferrer",
+  }, `${definition.source.path}:${definition.source.line}`);
+  const fields = (definition, expanded, path = "", ancestors = []) => {
+    const before = definition.previous?.fields ?? [];
+    const current = definition.fields;
+    return [...current, ...before.filter(field => !current.some(next => next.name === field.name))].map(field => {
+      const previous = before.find(candidate => candidate.name === field.name);
+      const removed = !current.includes(field);
+      const changed = definition.previous && (!previous || previous.type !== field.type || removed);
+      const dependency = registry.get(field.ref);
+      const key = [path, field.name.replace(/\?$/, "")].filter(Boolean).join(".");
+      const relevant = expanded.some(branch => branch === key || branch.startsWith(`${key}.`));
+      const value = dependency && field.type === dependency.name && inlineValue(dependency, false);
+      const head = h("div", { class: `row type-field${changed ? removed ? " sig del" : " sig add" : ""}` },
+        h("span", { class: "type-field-name" }, `${field.name}: `),
+        h("span", { class: "type-value" }, field.type),
+        value && h("span", { class: "type-inline" }, ` = ${value}`),
+        dependency?.fields.length > 0 && h("span", { class: "type-count" }, `${dependency.fields.length} fields`),
+      );
+      const prior = changed && previous && !removed && h("div", { class: "row type-field sig del" }, `${previous.name}: ${previous.type}`);
+      if (!dependency?.fields.length || removed) return [prior, head];
+      if (ancestors.includes(dependency.id)) return [head, h("div", { class: "type-recursive" }, "Recursive reference · ", sourceLink(dependency))];
+      return [prior, foldable(`type-branch${relevant ? " relevant" : ""}`, head, fields(dependency, expanded, key, [...ancestors, dependency.id]), !relevant)];
+    });
+  };
+  return references.map(reference => {
+    const definition = registry.get(reference.id);
+    const aliasChanged = definition.previous?.type && definition.previous.type !== definition.type;
+    const body = definition.type
+      ? h("div", { class: "type-alias" },
+          aliasChanged && h("div", { class: "row sig del" }, definition.previous.type),
+          h("div", { class: `row${aliasChanged ? " sig add" : ""}` }, definition.type))
+      : h("div", { class: "type-fields" }, fields(definition, reference.expanded, "", [definition.id]));
+    const section = foldable("type-definition", h("div", { class: "row block type-definition-head" }, definition.name, sourceLink(definition)), body, false);
+    section.typeId = definition.id;
+    return section;
+  });
+}
+
+// ---------------------------------------------------------------- inspector
+
+// One side panel shows the type definitions of a contract. It opens from a
+// type name or `gd`; pinned, it follows the cursor from contract to contract.
+const inspector = $("inspector");
+let inspected = null;
+let inInspector = false;
+let pinned = saved.pinned ?? false;
+
+// What a row can show in the inspector: its contract's node and type registry.
+const typeContext = (row) => row?.typeContext ?? row?.closest(".detail")?.typeContext;
+
+function inspect(context, typeId, focus = false) {
+  if (inspected !== context) {
+    inspected = context;
+    $("inspector-title").textContent = context.node.label;
+    $("inspector-body").replaceChildren(
+      ...(context.node.types?.length
+        ? renderTypeTree(context.node.types, context.registry)
+        : [h("p", { class: "type-hint" }, "No referenced types")]),
+    );
+  }
+  inspector.hidden = false;
+  document.body.classList.add("inspecting");
+  const target = [...$("inspector-body").children].find(section => section.typeId === typeId) ?? $("inspector-body").firstElementChild;
+  if (target?.matches(".foldable")) fold(target, false);
+  if (focus && target?.matches(".foldable")) {
+    jumps.push(cursor);
+    inInspector = true;
+    setCursor(target.firstElementChild);
+  } else target?.scrollIntoView({ block: "nearest" });
+}
+
+function leaveInspector() {
+  if (!inInspector) return;
+  inInspector = false;
+  jumpBack();
+}
+
+function closeInspector() {
+  leaveInspector();
+  inspector.hidden = true;
+  inspected = null;
+  document.body.classList.remove("inspecting");
+  status();
+}
+
+function togglePin() {
+  pinned = !pinned;
+  $("inspector-pin").textContent = pinned ? "Unpin" : "Pin";
+  save();
+  flash(pinned ? "Inspector pinned: it follows the cursor" : "Inspector unpinned");
+}
+
+$("inspector-pin").textContent = pinned ? "Unpin" : "Pin";
+$("inspector-pin").addEventListener("click", togglePin);
+$("inspector-close").addEventListener("click", closeInspector);
+$("inspector-expand").addEventListener("click", () => $("inspector-body").querySelectorAll(".foldable").forEach(el => fold(el, false)));
+$("inspector-collapse").addEventListener("click", () => $("inspector-body").querySelectorAll(".type-branch").forEach(el => fold(el, true)));
+
+inspector.addEventListener("click", (e) => {
+  const row = e.target.closest(".row");
+  if (!row || e.target.closest("a, button")) return;
+  if (!inInspector) jumps.push(cursor);
+  inInspector = true;
+  setCursor(row, false);
+  if (row.parentElement.matches(".foldable") && row === row.parentElement.firstElementChild) toggleFold();
+});
+
 // Nodes come first in reading order, so j and k walk the graph top-down.
 function renderGraph(data) {
   const { layout } = data;
+  const registry = new Map((data.types ?? []).map(type => [type.id, type]));
   const nodes = [...data.nodes].sort(
     (a, b) => layout.nodes[a.id].y - layout.nodes[b.id].y || layout.nodes[a.id].x - layout.nodes[b.id].x,
   );
@@ -151,13 +327,16 @@ function renderGraph(data) {
       ),
     ),
     nodes.map((node) => {
+      const context = { node, registry };
+      const definitions = (node.types ?? []).map(ref => registry.get(ref.id));
+      const renderSignature = line => typeSignatureLine(line, definitions, id => inspect(context, id));
       const box = layout.nodes[node.id];
       const signature = node.signature ?? [];
       // A signature longer than the card ends with a line saying what is left out.
       const shown = signature.length > box.lines ? signature.slice(0, box.lines - 1) : signature;
       const el = svg(
         "g",
-        { class: `row node ${node.changed}` },
+        { class: `row node ${node.changed} ${node.tier ?? ""}` },
         svg("rect", { x: box.x, y: box.y, width: box.width, height: box.height, rx: 6 }),
         svg(
           "foreignObject",
@@ -165,18 +344,26 @@ function renderGraph(data) {
           h(
             "div",
             { class: "card" },
-            h("div", { class: "card-head" }, h("span", { class: "label" }, node.label), node.kind && badge(node.kind, "kind")),
+            h(
+              "div",
+              { class: "card-head" },
+              h("span", { class: "label" }, node.label),
+              node.kind && badge(node.kind, "kind"),
+              node.tier && badge(tierLabels[node.tier], `tier ${node.tier}`),
+              definitions.length > 0 && h("button", { class: "type-shortcut", type: "button", title: "Inspect types (gd)", onclick: event => { event.stopPropagation(); inspect(context); } }, "Types"),
+            ),
             shown.length > 0 &&
               h(
                 "div",
                 { class: "card-code" },
-                shown.map((line) => h("div", { html: line })),
+                shown.map(renderSignature),
                 shown.length < signature.length && h("div", { class: "more" }, `… ${signature.length - shown.length} more lines`),
               ),
           ),
         ),
       );
       el.node = node;
+      el.typeContext = context;
       return el;
     }),
   );
@@ -186,18 +373,21 @@ function renderGraph(data) {
       "div",
       { class: "row block section-head detail-head" },
       h("h2", {}, node.label, " ", badge(node.changed)),
-      h("div", { class: "meta" }, [node.kind, node.group].filter(Boolean).join(" · ")),
+      h("div", { class: "meta" }, [node.kind, tierLabels[node.tier], node.group].filter(Boolean).join(" · ")),
     );
     el.detail = head;
-    return h(
+    const definitions = (node.types ?? []).map(ref => registry.get(ref.id));
+    const section = h(
       "section",
       { class: "section detail" },
       head,
       markdown(node.description),
-      node.signature && h("pre", { class: "row signature", html: node.signature.join("\n") }),
+      node.signature && h("pre", { class: "row signature" }, node.signature.map(line => typeSignatureLine(line, definitions, id => inspect(el.typeContext, id)))),
       node.pseudocode.length > 0 && h("div", { class: "pseudo" }, node.pseudocode.map((line) => h("div", { class: "row step" }, line))),
       codeToggle(node.refs),
     );
+    section.typeContext = el.typeContext;
+    return section;
   });
   return [data.summary && markdown(data.summary), h("div", { class: "graph-wrap" }, graph), details];
 }
@@ -252,10 +442,11 @@ const renderers = {
         h("a", { href: pr.url, target: "_blank", rel: "noreferrer" }, `${pr.owner}/${pr.repo}#${pr.number}`),
       ),
     ),
-    h("h2", { class: "row" }, "TL;DR"),
-    markdown(data.tldr),
     h("h2", { class: "row" }, "Problem"),
     markdown(data.problem),
+    h("h2", { class: "row" }, "TL;DR"),
+    markdown(data.tldr),
+    pr.bodyHTML && [h("h2", { class: "row" }, "Description"), markdown(pr.bodyHTML)],
   ],
   review: (data) => [
     ...data.sections.map((section, i) =>
@@ -263,7 +454,7 @@ const renderers = {
         "section",
         { class: "section" },
         h("div", { class: "row section-head" }, h("h2", {}, `${i + 1}. ${section.title}`), markdown(section.why, false)),
-        section.hunks.map((id) => renderHunk(id, { review: true })),
+        section.hunks.map((id) => renderHunk(id, { review: true, folded: section.folded || isTest(hunks[id].path) })),
       ),
     ),
     // Threads whose line is not in this diff, e.g. outdated ones.
@@ -361,22 +552,54 @@ const tabEls = tabs.map((tab, i) => {
 });
 document.title = `#${pr.number} ${pr.title}`;
 
+// Your latest review of the PR, shown once the server sends a snapshot.
+const reviewLabels = {
+  APPROVED: "✓ Approved",
+  CHANGES_REQUESTED: "Changes requested",
+  COMMENTED: "Commented",
+  DISMISSED: "Review dismissed",
+  PENDING: "Review pending",
+};
+const reviewEl = h(
+  "div",
+  { id: "review", hidden: "" },
+  h("span", { id: "review-state" }),
+  h(
+    "button",
+    {
+      id: "approve",
+      onclick: (e) => {
+        e.currentTarget.blur();
+        if (confirm(`Approve #${pr.number}? Pending comments are submitted with it.`)) runCommand("approve");
+      },
+    },
+    "Approve",
+  ),
+);
+tabbar.append(reviewEl);
+
+function renderReviewState() {
+  const state = snapshot?.viewerReview;
+  reviewEl.hidden = !snapshot;
+  $("review-state").textContent = reviewLabels[state] ?? "Not reviewed";
+  $("review-state").dataset.state = state ?? "";
+  $("approve").hidden = state === "APPROVED";
+}
+
 // ------------------------------------------------------------------- cursor
 
 let active = 0;
 let cursor;
 let visualAnchor = null;
 
-// While selecting, movement stays inside the hunk GitHub can anchor a
-// multi-line comment to.
+// Inside the inspector, movement stays in the inspector.
 const rows = () =>
-  [...(visualAnchor ? visualAnchor.parentElement : tabEls[active]).querySelectorAll(".row")].filter(
-    (row) => row.offsetParent !== null,
-  );
+  [...(inInspector ? $("inspector-body") : tabEls[active]).querySelectorAll(".row")].filter((row) => row.offsetParent !== null);
 
 // Keeps the cursor in the middle of the screen, like scrolloff=999. A row
 // taller than the screen shows its top instead.
 function center(row = cursor) {
+  if (inspector.contains(row)) return row.scrollIntoView({ block: "nearest" });
   const rect = row.getBoundingClientRect();
   const top = tabbar.offsetHeight + $("banner").offsetHeight;
   const bottom = innerHeight - $("statusline").offsetHeight;
@@ -396,10 +619,13 @@ function setCursor(row, scroll = true) {
   if (scroll) center(row);
   for (const el of document.querySelectorAll(".selected")) el.classList.remove("selected");
   if (visualAnchor) for (const el of selection()) el.classList.add("selected");
-  if (!visualAnchor) {
+  if (!visualAnchor && !inInspector) {
     cursors[tabEls[active].tab.id] = rows().indexOf(row);
     save();
   }
+  // A pinned inspector follows the contract under the cursor.
+  const context = !inInspector && pinned && !inspector.hidden && typeContext(row);
+  if (context && context !== inspected) inspect(context);
   status();
 }
 
@@ -435,6 +661,8 @@ function showTab(i) {
   if (!tabEls[i]) return;
   tabEls[active].hidden = true;
   tabbar.children[active].classList.remove("active");
+  inInspector = false;
+  if (!pinned) closeInspector();
   active = i;
   visualAnchor = null;
   tabEls[i].hidden = false;
@@ -458,7 +686,8 @@ function toggleFold() {
   if (el) fold(el, !el.classList.contains("folded"));
 }
 
-const foldAll = (folded) => tabEls[active].querySelectorAll(".foldable").forEach((el) => fold(el, folded));
+const foldAll = (folded) =>
+  (inInspector ? $("inspector-body") : tabEls[active]).querySelectorAll(".foldable").forEach((el) => fold(el, folded));
 
 // Marks every copy of the hunk, but only folds the one under the cursor.
 function toggleReviewed() {
@@ -490,8 +719,9 @@ function jumpTo(row) {
 function jumpBack() {
   const row = jumps.pop();
   if (!row) return;
+  inInspector = inspector.contains(row);
   const tab = tabEls.findIndex((el) => el.contains(row));
-  if (tab !== active) showTab(tab);
+  if (tab !== -1 && tab !== active) showTab(tab);
   setCursor(row);
   center();
 }
@@ -548,19 +778,26 @@ function leaveGraph(dir) {
   setCursor(all[i]);
 }
 
+// The rows from the visual anchor to the cursor, like Vim's linewise V.
 function selection() {
-  if (!visualAnchor) return [cursor];
-  const lines = [...visualAnchor.parentElement.querySelectorAll(".line")];
-  const [a, b] = [lines.indexOf(visualAnchor), lines.indexOf(cursor)].sort((x, y) => x - y);
-  return lines.slice(a, b + 1);
+  const all = rows();
+  if (!visualAnchor || !all.includes(visualAnchor)) return [cursor];
+  const [a, b] = [all.indexOf(visualAnchor), all.indexOf(cursor)].sort((x, y) => x - y);
+  return all.slice(a, b + 1);
 }
 
+// Diff lines from one file yank as path:lines, anything else as its text.
 function yank() {
   const sel = selection();
+  const code = sel.every((row) => row.line) && new Set(sel.map((row) => row.line.path)).size === 1;
   const { path, num } = sel[0].line ?? {};
   const end = sel.at(-1).line?.num;
-  const text = path ? `${path}:${num}${end !== num ? `-${end}` : ""}` : cursor.textContent.trim();
-  navigator.clipboard.writeText(text).then(() => flash(`Yanked ${text}`));
+  const text = code
+    ? `${path}:${num}${end !== num ? `-${end}` : ""}`
+    : sel.map((row) => (row.querySelector(".code") ?? row).textContent.trim()).join("\n");
+  navigator.clipboard
+    .writeText(text)
+    .then(() => flash(code ? `Yanked ${text}` : `Yanked ${sel.length} line${sel.length === 1 ? "" : "s"}`));
   visualAnchor = null;
   setCursor(cursor);
 }
@@ -646,10 +883,14 @@ function renderThreads() {
 }
 
 // Drafts are kept per row and kind, so reopening an editor restores them.
+// Without a row the editor floats over the page.
 function openEditor(row, kind, title, submit) {
   closeEditor();
-  const key = `${kind}:${anchor(row.line?.side, row.line?.num, row.line?.path)}`;
-  const textarea = h("textarea", { rows: 4, placeholder: "Markdown. ⌘↵ posts to your pending review, Esc closes." });
+  const key = row ? `${kind}:${anchor(row.line?.side, row.line?.num, row.line?.path)}` : kind;
+  const textarea = h("textarea", {
+    rows: row ? 4 : 8,
+    placeholder: `Markdown. ⌘↵ posts ${row ? "to your pending review" : "to the PR"}, Esc closes.`,
+  });
   const error = h("div", { class: "editor-error" });
   editor = h("div", { class: "editor" }, h("div", { class: "editor-title" }, title), textarea, error);
   textarea.value = drafts.get(key) ?? "";
@@ -675,7 +916,11 @@ function openEditor(row, kind, title, submit) {
     }
   });
   textarea.addEventListener("focus", status);
-  insertAfter(row, editor);
+  if (row) insertAfter(row, editor);
+  else {
+    editor.classList.add("floating");
+    document.body.append(editor);
+  }
   textarea.focus();
 }
 
@@ -685,9 +930,11 @@ function closeEditor() {
   status();
 }
 
+// GitHub anchors a comment to diff lines within one hunk.
 function comment() {
-  const sel = selection().filter((row) => row.line);
-  if (!sel.length) return flash("Comments go on diff lines");
+  const sel = selection();
+  if (!sel.every((row) => row.line)) return flash("Comments go on diff lines");
+  if (new Set(sel.map(hunkOf)).size > 1) return flash("A comment's lines must be in one hunk");
   const first = sel[0].line;
   const last = sel.at(-1).line;
   const range = sel.length > 1 ? `${first.num}-${last.num}` : last.num;
@@ -716,6 +963,12 @@ function reply() {
   );
 }
 
+const generalComment = () =>
+  openEditor(null, "general", `Comment on #${pr.number}`, async (body) => {
+    await post("/comments", { body });
+    flash("Comment posted");
+  });
+
 function toggleThreads() {
   for (const thread of cursor.threads ?? []) {
     if (toggledThreads.has(thread.id)) toggledThreads.delete(thread.id);
@@ -728,9 +981,11 @@ const commands = {
   async submit(event = "comment", ...body) {
     const events = { comment: "COMMENT", approve: "APPROVE", changes: "REQUEST_CHANGES" };
     if (!events[event]) throw new Error("Usage: :submit [comment|approve|changes] [body]");
+    flash("Submitting review…");
     await post("/review", { commitOid: pr.headOid, event: events[event], body: body.join(" ") });
     flash("Review submitted");
   },
+  approve: (...body) => commands.submit("approve", ...body),
   async resolve() {
     const thread = threadAtCursor();
     if (!thread) throw new Error("No thread on this line");
@@ -768,6 +1023,7 @@ function connect() {
     $("banner").textContent =
       "The PR has new commits since this page was built, so threads may sit on the wrong lines. Rebuild to update.";
     renderThreads();
+    renderReviewState();
     setConnection("live");
   });
   source.addEventListener("failure", (e) => flash(`GitHub: ${JSON.parse(e.data)}`));
@@ -777,6 +1033,15 @@ function connect() {
 
 let promptSubmit = null;
 let lastSearch = "";
+// 1 after /, -1 after ?; n repeats it and N reverses it.
+let searchDir = 1;
+
+const startSearch = (dir) =>
+  openPrompt(dir > 0 ? "/" : "?", (q) => {
+    lastSearch = q || lastSearch;
+    searchDir = dir;
+    search(dir);
+  });
 
 function openPrompt(prefix, submit) {
   promptSubmit = submit;
@@ -848,29 +1113,41 @@ const keymap = [
   ["Tabs", ["gT"], "Previous tab", () => showTab((active - 1 + tabEls.length) % tabEls.length)],
   ["Review", ["za", "o"], "Fold or unfold (hunk, code under a step)", toggleFold],
   ["Review", ["Enter"], "Open node details, or fold", () => (onNode() ? jumpTo(cursor.detail) : toggleFold())],
+  ["Types", ["gd"], "Inspect the contract's types", () => {
+    const context = typeContext(cursor);
+    if (context?.node.types?.length) inspect(context, undefined, true);
+    else flash("No referenced types here");
+  }],
+  ["Types", ["gp"], "Pin or unpin the inspector", togglePin],
+  ["Types", ["gq"], "Close the inspector", closeInspector],
   ["Review", ["Ctrl-o"], "Jump back", null],
   ["Review", ["zM"], "Fold everything", () => foldAll(true)],
   ["Review", ["zR"], "Unfold everything", () => foldAll(false)],
   ["Review", ["x"], "Toggle hunk reviewed", toggleReviewed],
-  ["Review", ["V"], "Select lines in the hunk", () => {
-    if (!cursor.line) return flash("Select from a diff line");
+  ["Review", ["V"], "Select lines", () => {
     visualAnchor = visualAnchor ? null : cursor;
     setCursor(cursor);
   }],
-  ["Review", ["y"], "Yank path:line", yank],
-  ["Review", ["/"], "Search", () => openPrompt("/", (q) => { lastSearch = q || lastSearch; search(1); })],
-  ["Review", ["n", "N"], "Next / previous match", null],
+  ["Review", ["y"], "Yank path:lines, or the text", yank],
+  ["Review", ["/"], "Search forward", () => startSearch(1)],
+  ["Review", ["?"], "Search backward", () => startSearch(-1)],
+  ["Review", ["n", "N"], "Next match in the search's direction / reverse", null],
   ["Comments", ["c"], "Comment on line or selection", comment],
   ["Comments", ["r"], "Reply to thread", reply],
+  ["Comments", ["C"], "General comment on the PR", generalComment],
   ["Comments", ["t"], "Expand or collapse threads", toggleThreads],
   ["Comments", [":resolve"], "Resolve or unresolve thread", null],
   ["Comments", [":delete"], "Delete your pending comment", null],
   ["Comments", [":submit [comment|approve|changes] [body]"], "Submit pending review", null],
+  ["Comments", [":approve [body]"], "Approve the PR (with pending comments)", null],
   ["Other", [":"], "Command line", () => openPrompt(":", runCommand)],
-  ["Other", ["?"], "Toggle this help", () => (help.hidden = !help.hidden)],
-  ["Other", ["Esc"], "Cancel", () => {
+  ["Other", ["⌘K"], "Command palette", null],
+  ["Other", ["g?"], "Toggle this help", () => (help.hidden = !help.hidden)],
+  ["Other", ["Esc", "Ctrl-c"], "Cancel; leaves, then closes, the inspector", () => {
     visualAnchor = null;
     help.hidden = true;
+    if (inInspector) return pinned ? leaveInspector() : closeInspector();
+    if (!inspector.hidden && !pinned) return closeInspector();
     setCursor(cursor);
   }],
 ];
@@ -878,8 +1155,8 @@ const keymap = [
 const bindings = new Map([
   ["h", (n) => onNode() && spatial(-1, 0, n)],
   ["l", (n) => onNode() && spatial(1, 0, n)],
-  ["n", () => search(1)],
-  ["N", () => search(-1)],
+  ["n", () => search(searchDir)],
+  ["N", () => search(-searchDir)],
   ["Escape", keymap.at(-1)[3]],
   ...keymap.flatMap(([, keys, , run]) => (run ? keys.map((key) => [key, run]) : [])),
 ]);
@@ -898,6 +1175,101 @@ help.append(
   ),
 );
 
+// ----------------------------------------------------------------- palette
+
+const palette = $("palette");
+const paletteInput = $("palette-input");
+const paletteList = $("palette-list");
+
+// Tabs, keymap actions and : commands. Commands that take arguments open the
+// command line with their name filled in.
+const actions = [
+  ...tabEls.map((el, i) => ({ label: `Go to tab: ${el.tab.title}`, keys: [`⌘${i + 1}`], run: () => showTab(i) })),
+  ...keymap.flatMap(([group, keys, description, run]) => {
+    const label = `${group}: ${description}`;
+    const command = keys[0].match(/^:(\w+)( \[)?/);
+    if (command) {
+      const [, name, args] = command;
+      return [{ label, keys, run: () => (args ? openPrompt(`:${name} `, runCommand) : runCommand(name)) }];
+    }
+    return run ? [{ label, keys, run: () => run() }] : [];
+  }),
+];
+let matches = [];
+let selected = 0;
+
+function renderPalette() {
+  const words = paletteInput.value.toLowerCase().split(/\s+/).filter(Boolean);
+  matches = actions.filter((action) => {
+    const text = `${action.label} ${action.keys.join(" ")}`.toLowerCase();
+    return words.every((word) => text.includes(word));
+  });
+  selected = Math.min(selected, Math.max(0, matches.length - 1));
+  paletteList.replaceChildren(
+    ...matches.map((action, i) =>
+      h(
+        "li",
+        {
+          class: i === selected ? "active" : "",
+          // mousedown keeps focus in the input, so its blur does not close the palette first.
+          onmousedown: (e) => {
+            e.preventDefault();
+            runAction(action);
+          },
+        },
+        h("span", {}, action.label),
+        h("span", { class: "keys" }, action.keys.map((key) => h("kbd", {}, key))),
+      ),
+    ),
+  );
+  paletteList.children[selected]?.scrollIntoView({ block: "nearest" });
+}
+
+function openPalette() {
+  palette.hidden = false;
+  paletteInput.value = "";
+  selected = 0;
+  renderPalette();
+  paletteInput.focus();
+  status();
+}
+
+function closePalette() {
+  palette.hidden = true;
+  paletteInput.blur();
+  status();
+}
+
+function runAction(action) {
+  closePalette();
+  action.run();
+  status();
+}
+
+paletteInput.addEventListener("input", () => {
+  selected = 0;
+  renderPalette();
+});
+paletteInput.addEventListener("blur", closePalette);
+paletteInput.addEventListener("keydown", (e) => {
+  e.stopPropagation();
+  const step =
+    e.key === "ArrowDown" || (e.ctrlKey && e.key === "n") ? 1
+    : e.key === "ArrowUp" || (e.ctrlKey && e.key === "p") ? -1
+    : 0;
+  if (step) {
+    e.preventDefault();
+    if (matches.length) selected = (selected + step + matches.length) % matches.length;
+    renderPalette();
+  } else if (e.key === "Enter") {
+    e.preventDefault();
+    if (matches[selected]) runAction(matches[selected]);
+  } else if (e.key === "Escape" || ((e.metaKey || e.ctrlKey) && e.key === "k")) {
+    e.preventDefault();
+    closePalette();
+  }
+});
+
 let pending = "";
 let count = "";
 
@@ -908,9 +1280,18 @@ addEventListener("keydown", (e) => {
     e.preventDefault();
     return setPanning(true);
   }
+  if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+    e.preventDefault();
+    return openPalette();
+  }
   if ((e.metaKey || e.ctrlKey) && /^[1-9]$/.test(e.key)) {
     e.preventDefault();
     return showTab(Number(e.key) - 1);
+  }
+  if (e.ctrlKey && e.key === "c") {
+    e.preventDefault();
+    pending = count = "";
+    return bindings.get("Escape")();
   }
   if (e.ctrlKey && e.key === "o") {
     e.preventDefault();
@@ -1004,13 +1385,13 @@ function flash(text) {
 function save() {
   localStorage.setItem(
     storageKey,
-    JSON.stringify({ reviewed: [...reviewed], tab: tabEls[active].tab.id, cursors, zooms }),
+    JSON.stringify({ reviewed: [...reviewed], tab: tabEls[active].tab.id, cursors, zooms, pinned }),
   );
 }
 
 function status() {
   const mode =
-    document.activeElement === prompt ? "COMMAND"
+    document.activeElement === prompt || document.activeElement === paletteInput ? "COMMAND"
     : document.activeElement?.matches("textarea") ? "INSERT"
     : visualAnchor ? "VISUAL"
     : "NORMAL";
@@ -1027,6 +1408,21 @@ function status() {
   $("comments").dataset.state = connection;
   const keys = Object.values(hunks).map((hunk) => hunk.key);
   $("progress").textContent = `${keys.filter((key) => reviewed.has(key)).length}/${keys.length} reviewed`;
+  renumber();
+}
+
+// Like Vim's relativenumber, every row shows its distance from the cursor, so
+// counts like 5j can be read off the gutter. Batched to once per frame.
+let renumberQueued = false;
+function renumber() {
+  if (renumberQueued) return;
+  renumberQueued = true;
+  requestAnimationFrame(() => {
+    renumberQueued = false;
+    const all = rows();
+    const at = all.indexOf(cursor);
+    all.forEach((row, i) => (row.dataset.rel = Math.abs(i - at)));
+  });
 }
 
 showTab(Math.max(0, tabEls.findIndex((el) => el.tab.id === saved.tab)));

@@ -15,7 +15,8 @@ The Review tab's sections with pseudocode first, so the reviewer can follow the 
 }
 ```
 
-- The tab shows each section with pseudocode, followed by its hunks grouped by file and folded. Sections without pseudocode, such as lockfiles or formatting, are left out of the tab.
+- Write pseudocode only for sections with logic: branches, loops, async work, state changes, error handling or side effects. Leave it empty for declarative code, where steps would only restate the diff: config, schemas, registration, types, markup and styling, generated files, lockfiles, formatting.
+- The tab shows each section with pseudocode, followed by its hunks grouped by file and folded. Sections without pseudocode are left out, and when no section has any, so is the tab.
 - Each entry is one line of pseudocode. Indent nested steps with two spaces per level, and keep the code's own names for functions, types and fields.
 - Describe what the code does, including branches, loops, early returns, error paths and side effects (writes, network calls, events). Leave out syntax, imports and plumbing.
 - Cover every hunk in the section, in the same order, so the code below reads as the expansion of the steps above it.

@@ -102,6 +102,37 @@ kbd {
   color: var(--fg);
 }
 
+#review {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-left: auto;
+  padding-left: 12px;
+  white-space: nowrap;
+}
+
+#review[hidden],
+#approve[hidden] {
+  display: none;
+}
+
+#review-state {
+  color: var(--muted);
+}
+
+#review-state[data-state="APPROVED"] {
+  color: var(--live);
+}
+
+#review-state[data-state="CHANGES_REQUESTED"] {
+  color: var(--danger);
+}
+
+#tabbar #approve {
+  border: 1px solid var(--live);
+  color: var(--live);
+}
+
 #banner {
   position: fixed;
   top: 37px;
@@ -115,7 +146,41 @@ kbd {
 
 /* The bottom padding lets the last rows scroll up to the middle. */
 main {
-  padding: 52px 0 50vh;
+  --gutter: 36px;
+  position: relative;
+  padding: 52px 0 50vh var(--gutter);
+}
+
+/* How far a block is indented from the gutter, as a length computed where it is set. */
+@property --indent {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+
+/* Relative line numbers. Positioned against main, so nested rows still line
+   up in one gutter; the top stays where the row starts. Fold heads keep
+   ::before for their arrow and, being one line, take ::after. */
+.row[data-rel]:not(.foldable > :first-child)::before,
+.foldable > .row[data-rel]:first-child::after {
+  content: attr(data-rel);
+  position: absolute;
+  left: 0;
+  width: 28px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: normal;
+  font-style: normal;
+  text-align: right;
+  color: var(--muted);
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.row.cursor[data-rel]:not(.foldable > :first-child)::before,
+.foldable > .row.cursor[data-rel]:first-child::after {
+  color: var(--accent);
+  opacity: 1;
 }
 
 #statusline,
@@ -198,6 +263,57 @@ main {
   box-shadow: 0 12px 40px rgb(0 0 0 / 0.4);
 }
 
+#palette {
+  position: fixed;
+  top: 72px;
+  inset-inline: 16px;
+  z-index: 4;
+  max-width: 560px;
+  margin: 0 auto;
+  overflow: hidden;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 12px 40px rgb(0 0 0 / 0.4);
+}
+
+#palette-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  outline: 0;
+  background: none;
+  color: var(--fg);
+  font: inherit;
+}
+
+#palette-list {
+  max-height: min(60vh, 420px);
+  overflow: auto;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+}
+
+#palette-list li {
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+#palette-list li.active {
+  background: var(--cursor);
+}
+
+#palette-list .keys {
+  display: flex;
+  gap: 4px;
+}
+
 #help h2 {
   margin: 0 0 8px;
   font-size: 15px;
@@ -265,6 +381,10 @@ main {
   padding: 0;
 }
 
+.md img {
+  max-width: 100%;
+}
+
 .md ul,
 .md ol {
   margin: 4px 0;
@@ -326,7 +446,11 @@ main {
   border-block: 1px solid var(--border);
 }
 
+/* The head stays under the tab bar while its lines scroll, like GitHub's file headers. */
 .hunk-head {
+  position: sticky;
+  top: 37px;
+  z-index: 1;
   display: flex;
   gap: 10px;
   align-items: baseline;
@@ -334,6 +458,23 @@ main {
   background: var(--bg-raised);
   font: 12px var(--mono);
   cursor: default;
+}
+
+/* Being sticky, the head positions its own line number, so pull it back out to the gutter. It spans the
+   gutter on an opaque background so the numbers of lines scrolling underneath don't show through. */
+.foldable > .hunk-head[data-rel]:first-child::after {
+  top: 0;
+  bottom: 0;
+  left: calc(-1 * (var(--gutter) + var(--indent)));
+  padding: 3px calc(var(--gutter) + var(--indent) - 28px) 0 0;
+  background: var(--bg);
+  /* Opacity would fade the background too, so fade only the text. */
+  opacity: 1;
+  color: color-mix(in srgb, var(--muted) 60%, var(--bg));
+}
+
+.foldable > .hunk-head.cursor[data-rel]:first-child::after {
+  color: var(--accent);
 }
 
 .foldable > .row:first-child::before {
@@ -485,6 +626,16 @@ main {
   padding: 8px 10px;
 }
 
+.editor.floating {
+  position: fixed;
+  top: 72px;
+  inset-inline: 16px;
+  z-index: 4;
+  max-width: 640px;
+  margin: 0 auto;
+  box-shadow: 0 12px 40px rgb(0 0 0 / 0.4);
+}
+
 .editor-title {
   margin-bottom: 4px;
   color: var(--muted);
@@ -538,7 +689,8 @@ main {
 }
 
 .file > .body {
-  margin: 2px 0 8px 2ch;
+  --indent: 2ch;
+  margin: 2px 0 8px var(--indent);
 }
 
 .code-toggle {
@@ -622,6 +774,16 @@ main {
   stroke-dasharray: 5 3;
 }
 
+/* Stored data and wire formats are the hardest contracts to change, so they stand out. */
+.graph .node.stored-or-wire rect {
+  stroke-width: 3.5;
+}
+
+/* Unchanged nodes are context, not the change. */
+.graph .node.unchanged .card {
+  opacity: 0.65;
+}
+
 /* Card sizes are estimated from these fonts in scripts/graph.ts. */
 .card {
   height: 100%;
@@ -672,6 +834,36 @@ main {
   color: var(--muted);
 }
 
+.card-head .badge.tier {
+  flex: none;
+  margin: 0;
+  padding: 1px 6px;
+  background: var(--border);
+  color: var(--fg);
+  font: 11px/1.4 var(--mono);
+}
+
+.card-head .badge.tier.stored-or-wire {
+  background: var(--accent);
+  color: #1b1b1b;
+}
+
+.sig.add {
+  background: var(--add);
+}
+
+.sig.del {
+  background: var(--del);
+}
+
+.sig .sign {
+  color: var(--muted);
+}
+
+.sig .sign::after {
+  content: " ";
+}
+
 .graph .node.cursor rect {
   fill: var(--cursor);
   stroke: var(--accent);
@@ -690,6 +882,149 @@ main {
   background: var(--bg-raised);
   font: 12.5px/1.5 var(--mono);
   white-space: pre-wrap;
+}
+
+.type-link,
+.type-shortcut,
+#inspector button {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.type-link {
+  border-bottom: 1px dotted currentColor;
+}
+
+.type-link:focus-visible,
+.type-shortcut:focus-visible,
+#inspector button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.type-shortcut {
+  flex: none;
+  margin-left: auto;
+  color: var(--accent);
+  font-size: 11px;
+}
+
+/* An alias's value, shown beside its name. */
+.type-inline {
+  color: var(--muted);
+}
+
+/* The type inspector sits beside the page, between the tab bar and status line. */
+#inspector {
+  --gutter: 36px;
+  position: fixed;
+  top: 37px;
+  right: 0;
+  bottom: 26px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  width: min(460px, 45vw);
+  background: var(--bg-raised);
+  border-left: 1px solid var(--border);
+  box-shadow: -8px 0 24px rgb(0 0 0 / 0.25);
+}
+
+#inspector[hidden] {
+  display: none;
+}
+
+.inspecting main {
+  margin-right: min(460px, 45vw);
+}
+
+#inspector-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 14px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+
+#inspector-title {
+  flex-basis: 100%;
+  font: 600 13px var(--mono);
+  overflow-wrap: anywhere;
+}
+
+#inspector button,
+.type-source {
+  color: var(--accent);
+}
+
+#inspector-close {
+  margin-left: auto;
+}
+
+#inspector-body {
+  flex: 1;
+  overflow: auto;
+  padding: 10px 12px 40vh var(--gutter);
+}
+
+.type-hint,
+.type-count {
+  color: var(--muted);
+  font: 11px var(--mono);
+}
+
+.type-definition + .type-definition {
+  margin-top: 16px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.type-definition-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin-bottom: 6px;
+  font: 600 12.5px var(--mono);
+}
+
+.type-source {
+  overflow-wrap: anywhere;
+  font: 10px/1.6 var(--mono);
+}
+
+.type-fields,
+.type-alias {
+  font: 12px/1.8 var(--mono);
+  overflow-wrap: anywhere;
+}
+
+.type-field {
+  padding-left: 14px;
+}
+
+.type-count {
+  margin-left: 12px;
+}
+
+.type-branch > .body {
+  margin-left: 4px;
+  padding-left: 14px;
+  border-left: 1px solid var(--border);
+}
+
+.type-branch.relevant > .body {
+  border-left: 2px solid var(--accent);
+}
+
+.type-recursive {
+  padding-left: 28px;
+  color: var(--muted);
 }
 
 /* ----------------------------------------------------------- data model */

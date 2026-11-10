@@ -30,10 +30,10 @@ Reply with the URL, the tabs you left out and why, and anything you could not wo
 |---|---|---|
 | [At a glance](tabs/at-a-glance.md) | `at-a-glance.json` | Always |
 | [Review](tabs/review.md) | `review.json` | Always |
-| [Pseudocode](tabs/pseudocode.md) | `pseudocode` in `review.json` | Always |
-| [Architecture](tabs/architecture.md) | `architecture.json` | The PR adds or changes how modules, services or components connect |
+| [Pseudocode](tabs/pseudocode.md) | `pseudocode` in `review.json` | Sections with logic; the tab is hidden when no section has pseudocode |
+| [Architecture](tabs/architecture.md) | `architecture.json` | The PR changes how modules, services or components connect in a way the diff doesn't make obvious |
 | [Data model](tabs/data-model.md) | `data-model.json` | Schemas, migrations, persisted shapes, core types or store state change |
-| [Interfaces](tabs/interfaces.md) | `interfaces.json` | Exported types or functions, API contracts, events, props or hooks change |
+| [Interfaces](tabs/interfaces.md) | `interfaces.json` | Contracts change: stored or wire shapes (schemas, routes, events, config), or interfaces unrelated code uses |
 | [Code smells](tabs/code-smells.md) | `code-smells.json` | Always; the tab is hidden when it has no items |
 | [Performance](tabs/performance.md) | `performance.json` | Queries, hot paths, loops doing I/O, rendering of large lists, bundle size or caching change |
 | [Risks](tabs/risks.md) | `risks.json` | Always; the tab is hidden when it has no items |

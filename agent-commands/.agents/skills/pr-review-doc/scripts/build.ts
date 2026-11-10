@@ -73,6 +73,19 @@ function show(oid: string, path: string) {
   return proc.exitCode === 0 ? proc.stdout.toString() : "";
 }
 
+// The signature as the page shows it, with each short alias's value beside its
+// name, so the layout can size cards for it. Mirrors `inlineValue` in viewer.js.
+function withAliasValues(signature: string, definitions: z.output<(typeof tabs)[6]["schema"]>["types"], before = false) {
+  return definitions.reduce((code, definition) => {
+    const value = (before && definition.previous ? definition.previous : definition).type;
+    if (!definition.inline || !value || value.includes("\n") || value.length > 72) return code;
+    const name = definition.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return code.replace(new RegExp(`\\b${name}\\b`, "g"), (match, offset) =>
+      /\b(?:type|interface|class)\s+$/.test(code.slice(0, offset)) ? match : `${match} = ${value}`,
+    );
+  }, signature);
+}
+
 // Highlights whole files, so constructs spanning hunk boundaries colour
 // correctly, and returns the HTML of each line by line number.
 async function highlight(code: string, lang: string | undefined) {
@@ -86,18 +99,77 @@ async function highlight(code: string, lang: string | undefined) {
     );
 }
 
+// Longest-common-subsequence line diff, removals before additions. Signatures
+// are short, so the quadratic table is fine.
+function lineDiff(a: string[], b: string[]) {
+  const same = (i: number, j: number) => a[i].trimEnd() === b[j].trimEnd();
+  const len = Array.from({ length: a.length + 1 }, () => new Array<number>(b.length + 1).fill(0));
+  for (let i = a.length - 1; i >= 0; i--) {
+    for (let j = b.length - 1; j >= 0; j--) {
+      len[i][j] = same(i, j) ? len[i + 1][j + 1] + 1 : Math.max(len[i + 1][j], len[i][j + 1]);
+    }
+  }
+  const out: { t: "+" | "-" | " "; o?: number; n?: number }[] = [];
+  let [i, j] = [0, 0];
+  while (i < a.length || j < b.length) {
+    if (i < a.length && j < b.length && same(i, j)) out.push({ t: " ", o: i++, n: j++ });
+    else if (i < a.length && (j === b.length || len[i + 1][j] >= len[i][j + 1])) out.push({ t: "-", o: i++ });
+    else out.push({ t: "+", n: j++ });
+  }
+  return out;
+}
+
+// A node's signature as highlighted lines; with a previous signature, as a
+// diff whose lines are marked "+", "-" or " ".
+async function signatureLines(signature: string, previous: string | undefined, lang: string | undefined) {
+  const after = signature.split("\n");
+  const afterHtml = await highlight(signature, lang);
+  if (!previous) return after.map((text, n) => ({ text, html: afterHtml[n] }));
+  const before = previous.split("\n");
+  const beforeHtml = await highlight(previous, lang);
+  return lineDiff(before, after).map(({ t, o, n }) =>
+    t === "-" ? { t, text: before[o!], html: beforeHtml[o!] } : { t, text: after[n!], html: afterHtml[n!] },
+  );
+}
+
 // Graph tabs get their layout and highlighted signatures.
 const pages = await Promise.all(
   built.map(async (tab) => {
     if (tab.id !== "architecture" && tab.id !== "interfaces") return tab;
-    const graph = tab.data as z.output<(typeof tabs)[2]["schema"]>;
+    const graph = tab.data as z.output<(typeof tabs)[4]["schema"]>;
+    const typeData = tab.id === "interfaces" ? tab.data as z.output<(typeof tabs)[6]["schema"]> : null;
+    for (const definition of typeData?.types ?? []) {
+      const oid = definition.source.side === "base" ? pr.mergeBaseOid : pr.headOid;
+      if (!show(oid, definition.source.path).split("\n")[definition.source.line - 1]) {
+        throw new Error(`${definition.id}: type source does not exist at ${oid}:${definition.source.path}:${definition.source.line}`);
+      }
+    }
     const nodes = await Promise.all(
       graph.nodes.map(async (node) => {
-        const path = node.group ?? diff.get(node.refs[0]?.hunk ?? "")?.path ?? "";
-        return { ...node, signature: node.signature && (await highlight(node.signature, langFor(path))) };
+        const path = diff.get(node.refs[0]?.hunk ?? "")?.path ?? node.group ?? "";
+        const references = typeData?.nodes.find(candidate => candidate.id === node.id)?.types ?? [];
+        const definitions = typeData?.types.filter(type => references.some(ref => ref.id === type.id)) ?? [];
+        const lines = node.signature && (await signatureLines(node.signature, node.previousSignature, langFor(path)));
+        const sizedLines = lines?.map((line) => ({ ...line, text: withAliasValues(line.text, definitions, "t" in line && line.t === "-") }));
+        return { ...node, lines, sizedLines };
       }),
     );
-    return { ...tab, data: { ...graph, nodes, layout: await layout(graph) } };
+    // Layout sizes cards by the lines they show, signs included.
+    const sized = nodes.map((node) => ({
+      ...node,
+      signature: node.sizedLines?.map((line) => ("t" in line ? `${line.t} ` : "") + line.text).join("\n"),
+    }));
+    return {
+      ...tab,
+      data: {
+        ...graph,
+        nodes: nodes.map(({ lines, sizedLines, previousSignature, ...node }) => ({
+          ...node,
+          signature: lines?.map(({ text, ...line }) => line),
+        })),
+        layout: await layout({ ...graph, nodes: sized }),
+      },
+    };
   }),
 );
 

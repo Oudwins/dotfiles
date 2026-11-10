@@ -29,6 +29,13 @@ const view = JSON.parse(
     "title,url,body,author,baseRefName,headRefName,baseRefOid,headRefOid,additions,deletions",
   ]),
 );
+// GitHub's own rendering of the description, as gh pr view only has the markdown.
+const { bodyHTML } = JSON.parse(
+  run([
+    "gh", "api", "graphql", "-f", `owner=${owner}`, "-f", `repo=${repo}`, "-F", `number=${number}`,
+    "-f", "query=query($owner: String!, $repo: String!, $number: Int!) { repository(owner: $owner, name: $repo) { pullRequest(number: $number) { bodyHTML } } }",
+  ]),
+).data.repository.pullRequest;
 for (const oid of [view.baseRefOid, view.headRefOid]) {
   if (Bun.spawnSync(["git", "cat-file", "-e", `${oid}^{commit}`], { cwd: repoDir }).exitCode !== 0) {
     throw new Error(`Commit ${oid} is missing in ${repoDir}; fetch the PR's base and head first.`);
@@ -39,7 +46,7 @@ const mergeBaseOid = run(["git", "merge-base", view.baseRefOid, view.headRefOid]
 
 const pr: Pr = {
   owner, repo, number: Number(number),
-  url: view.url, title: view.title, body: view.body, author: view.author.login,
+  url: view.url, title: view.title, body: view.body, bodyHTML, author: view.author.login,
   baseRefName: view.baseRefName, headRefName: view.headRefName,
   headOid: view.headRefOid, mergeBaseOid,
   additions: view.additions, deletions: view.deletions, repoDir,

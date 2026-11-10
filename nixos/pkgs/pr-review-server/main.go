@@ -75,6 +75,7 @@ func main() {
 	mux.HandleFunc("POST /api/pr/{owner}/{repo}/{number}/threads/{thread}/resolve", s.resolveThread)
 	mux.HandleFunc("DELETE /api/pr/{owner}/{repo}/{number}/comments/{comment}", s.deleteComment)
 	mux.HandleFunc("POST /api/pr/{owner}/{repo}/{number}/review", s.submitReview)
+	mux.HandleFunc("POST /api/pr/{owner}/{repo}/{number}/comments", s.addComment)
 
 	log.Printf("listening on http://%s", *addr)
 	log.Fatal(http.ListenAndServe(*addr, s.guard(mux)))
@@ -216,6 +217,7 @@ const snapshotQuery = `query($owner: String!, $repo: String!, $number: Int!, $af
     pullRequest(number: $number) {
       id
       headRefOid
+      viewerLatestReview { state }
       reviews(states: PENDING, first: 1) { nodes { id } }
       reviewThreads(first: 100, after: $after) {
         pageInfo { hasNextPage endCursor }
@@ -236,9 +238,12 @@ type snapshotPage struct {
 	} `json:"viewer"`
 	Repository struct {
 		PullRequest struct {
-			ID         string `json:"id"`
-			HeadRefOid string `json:"headRefOid"`
-			Reviews    struct {
+			ID                 string `json:"id"`
+			HeadRefOid         string `json:"headRefOid"`
+			ViewerLatestReview *struct {
+				State string `json:"state"`
+			} `json:"viewerLatestReview"`
+			Reviews struct {
 				Nodes []struct {
 					ID string `json:"id"`
 				} `json:"nodes"`
@@ -257,6 +262,7 @@ type snapshotPage struct {
 type snapshot struct {
 	Viewer          string            `json:"viewer"`
 	HeadOid         string            `json:"headOid"`
+	ViewerReview    string            `json:"viewerReview"`
 	PendingReviewID string            `json:"pendingReviewId"`
 	Threads         []json.RawMessage `json:"threads"`
 }
@@ -280,6 +286,9 @@ func (s *server) refresh(p *pullRequest) {
 		pr := page.Repository.PullRequest
 		snap.Viewer = page.Viewer.Login
 		snap.HeadOid = pr.HeadRefOid
+		if pr.ViewerLatestReview != nil {
+			snap.ViewerReview = pr.ViewerLatestReview.State
+		}
 		if len(pr.Reviews.Nodes) > 0 {
 			snap.PendingReviewID = pr.Reviews.Nodes[0].ID
 		}
@@ -453,6 +462,30 @@ func (s *server) deleteComment(w http.ResponseWriter, r *http.Request) {
 	mutate(s, w, r, func(ctx context.Context, p *pullRequest, _ struct{}) error {
 		return graphql(ctx, `mutation($id: ID!) { deletePullRequestReviewComment(input: {id: $id}) { pullRequestReview { id } } }`,
 			map[string]any{"id": commentID}, &struct{}{})
+	})
+}
+
+// addComment posts a comment on the PR's conversation, outside any review.
+func (s *server) addComment(w http.ResponseWriter, r *http.Request) {
+	mutate(s, w, r, func(ctx context.Context, p *pullRequest, in struct {
+		Body string `json:"body"`
+	}) error {
+		var res struct {
+			Repository struct {
+				PullRequest struct {
+					ID string `json:"id"`
+				} `json:"pullRequest"`
+			} `json:"repository"`
+		}
+		err := graphql(ctx, `query($owner: String!, $repo: String!, $number: Int!) {
+  repository(owner: $owner, name: $repo) { pullRequest(number: $number) { id } }
+}`, map[string]any{"owner": p.owner, "repo": p.repo, "number": p.number}, &res)
+		if err != nil {
+			return err
+		}
+		return graphql(ctx, `mutation($subjectId: ID!, $body: String!) {
+  addComment(input: {subjectId: $subjectId, body: $body}) { commentEdge { node { id } } }
+}`, map[string]any{"subjectId": res.Repository.PullRequest.ID, "body": in.Body}, &struct{}{})
 	})
 }
 

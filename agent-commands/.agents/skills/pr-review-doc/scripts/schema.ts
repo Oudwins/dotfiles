@@ -8,6 +8,7 @@ export type Pr = {
   url: string;
   title: string;
   body: string;
+  bodyHTML: string;
   author: string;
   baseRefName: string;
   headRefName: string;
@@ -75,35 +76,87 @@ const ref = z
   });
 const refs = z.array(ref).default([]);
 
-const graph = z
-  .strictObject({
-    summary: markdown.optional(),
-    nodes: z
-      .array(
-        z.strictObject({
-          id: text,
-          label: text,
-          kind: text.optional(),
-          group: text.optional(),
-          changed,
-          description: markdown,
-          signature: text.optional(),
-          pseudocode: z.array(z.string()).default([]),
-          refs,
-        }),
-      )
-      .min(1),
-    edges: z.array(z.strictObject({ from: text, to: text, label: text.optional() })).default([]),
-  })
-  .superRefine(({ nodes, edges }, ctx) => {
-    const ids = new Set(nodes.map((node) => node.id));
-    if (ids.size !== nodes.length) ctx.addIssue({ code: "custom", message: "node ids must be unique" });
-    for (const edge of edges) {
-      for (const end of [edge.from, edge.to]) {
-        if (!ids.has(end)) ctx.addIssue({ code: "custom", message: `edge refers to unknown node ${end}` });
+const typeField = z.strictObject({ name: text, type: text, ref: text.optional() });
+const typeShape = {
+  type: text.optional(),
+  fields: z.array(typeField).default([]),
+};
+const typeSource = z.strictObject({
+  path: text,
+  line: z.number().int().positive(),
+  side: z.enum(["head", "base"]).default("head"),
+});
+const typeDefinition = z.strictObject({
+  id: text,
+  name: text,
+  source: typeSource,
+  inline: z.boolean().default(true),
+  ...typeShape,
+  previous: z.strictObject(typeShape).optional(),
+});
+
+// A graph tab; `extra` adds fields to its nodes.
+const graph = <Extra extends z.ZodRawShape, Root extends z.ZodRawShape>(extra: Extra, root: Root) =>
+  z
+    .strictObject({
+      summary: markdown.optional(),
+      nodes: z
+        .array(
+          z.strictObject({
+            id: text,
+            label: text,
+            kind: text.optional(),
+            group: text.optional(),
+            changed,
+            description: markdown,
+            signature: text.optional(),
+            pseudocode: z.array(z.string()).default([]),
+            refs,
+            ...extra,
+          }),
+        )
+        .min(1),
+      edges: z.array(z.strictObject({ from: text, to: text, label: text.optional() })).default([]),
+      ...root,
+    })
+    .superRefine(({ nodes, edges }, ctx) => {
+      const ids = new Set(nodes.map((node) => node.id));
+      if (ids.size !== nodes.length) ctx.addIssue({ code: "custom", message: "node ids must be unique" });
+      for (const edge of edges) {
+        for (const end of [edge.from, edge.to]) {
+          if (!ids.has(end)) ctx.addIssue({ code: "custom", message: `edge refers to unknown node ${end}` });
+        }
+      }
+    });
+
+const interfaces = graph(
+  {
+    tier: z.enum(["stored-or-wire", "cross-feature"]),
+    previousSignature: text.optional(),
+    types: z.array(z.strictObject({ id: text, expanded: z.array(text).default([]) })).default([]),
+  },
+  { types: z.array(typeDefinition).default([]) },
+).superRefine(({ nodes, types }, ctx) => {
+  const ids = new Set(types.map(type => type.id));
+  if (ids.size !== types.length) ctx.addIssue({ code: "custom", message: "type ids must be unique" });
+  for (const type of types) {
+    for (const shape of [type, type.previous].filter(shape => shape != null)) {
+      if (Boolean(shape.type) === Boolean(shape.fields.length)) {
+        ctx.addIssue({ code: "custom", message: `${type.id}: provide either a resolved type or object fields` });
+      }
+      for (const field of shape.fields) {
+        if (field.ref && !ids.has(field.ref)) {
+          ctx.addIssue({ code: "custom", message: `${type.id}.${field.name}: unknown type ${field.ref}` });
+        }
       }
     }
-  });
+  }
+  for (const node of nodes) {
+    for (const ref of node.types) {
+      if (!ids.has(ref.id)) ctx.addIssue({ code: "custom", message: `${node.id}: unknown type ${ref.id}` });
+    }
+  }
+});
 
 const findings = <Kind extends z.ZodType>(kind: Kind) =>
   z.strictObject({
@@ -137,12 +190,14 @@ export const tabs = [
             hunks: z.array(z.string().regex(/^h\d+$/)).min(1),
             // Shown in the Pseudocode tab, above the section's hunks.
             pseudocode: z.array(z.string()).default([]),
+            // Generated or mechanical code starts folded in the Review tab.
+            folded: z.boolean().default(false),
           }),
         )
         .min(1),
     }),
   },
-  { id: "architecture", title: "Architecture", required: false, schema: graph },
+  { id: "architecture", title: "Architecture", required: false, schema: graph({}, {}) },
   {
     id: "data-model",
     title: "Data model",
@@ -174,7 +229,12 @@ export const tabs = [
         .min(1),
     }),
   },
-  { id: "interfaces", title: "Interfaces", required: false, schema: graph },
+  {
+    id: "interfaces",
+    title: "Interfaces",
+    required: false,
+    schema: interfaces,
+  },
   {
     id: "code-smells",
     title: "Code smells",
