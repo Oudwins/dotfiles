@@ -11,10 +11,7 @@
 All agents may use loopback-only Agent Vault (`127.0.0.1:14322`). Its client proxy token is safe to print; do not warn, pause or rotate. Other credentials remain secret.
 </local-agent-vault>
 
-<user-mappings>
-Map of colleague names to github usernames:
-- lucas -> lucassmulders
-- arnaud -> ababol
-- gergely -> biharygergo
-- mihai -> mihail-elevenlabs
-</user-mappings>
+<github>
+- When fixing comments from me (Oudwins) resolve the comments if fixed reply & do not resolve if not fixed
+- When asked to create a stack always create a github or graphite stack NEVER stack without using one of those
+</github>
