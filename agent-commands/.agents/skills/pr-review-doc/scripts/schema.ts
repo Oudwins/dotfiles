@@ -14,6 +14,8 @@ export type Pr = {
   headRefName: string;
   headOid: string;
   mergeBaseOid: string;
+  // sha256 of GitHub's diff without its index lines, as pr-review-server computes it.
+  diffHash?: string;
   additions: number;
   deletions: number;
   repoDir: string;
@@ -75,6 +77,14 @@ const ref = z
     return { hunk: value.hunk, from, to: picked.at(-1)! };
   });
 const refs = z.array(ref).default([]);
+
+// Code the PR doesn't change, by line range at the head commit, or at the
+// merge base for code the PR removes or replaces.
+const excerpt = z.strictObject({
+  path: text,
+  lines: z.tuple([z.number().int().positive(), z.number().int().positive()]),
+  side: z.enum(["head", "base"]).default("head"),
+});
 
 const typeField = z.strictObject({ name: text, type: text, ref: text.optional() });
 const typeShape = {
@@ -175,6 +185,23 @@ export const tabs = [
     schema: z.strictObject({
       tldr: markdown,
       problem: markdown,
+    }),
+  },
+  {
+    id: "quick-view",
+    title: "Quick view",
+    required: true,
+    schema: z.strictObject({
+      summary: markdown.optional(),
+      items: z.array(
+        z.strictObject({
+          concern: z.enum(["outside", "endpoints", "data", "security", "performance"]),
+          title: text,
+          note: markdown,
+          flag: markdown.optional(),
+          code: z.array(z.union([ref, excerpt])).min(1),
+        }),
+      ),
     }),
   },
   {

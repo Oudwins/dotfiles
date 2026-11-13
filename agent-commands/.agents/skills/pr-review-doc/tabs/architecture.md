@@ -2,7 +2,7 @@
 
 A graph of the parts this PR touches and how they connect, so the reviewer sees where the change sits before reading code.
 
-Write it only when the PR changes how parts connect in a way the diff doesn't make obvious: a new flow, a responsibility that moves, a new boundary, dependency or external call. Leave it out when the PR adds another instance of an existing pattern (one more route, handler, component, block or job, wired the usual way) or when the connections are plain from the imports. A graph that restates the diff costs the reviewer time.
+Write it when the PR changes how parts connect in a way the diff doesn't make obvious (a new flow, a responsibility that moves, a new boundary, dependency or external call), or when it adds several parts that work together (a feature with pages, routes and storage), even if each part follows an existing pattern. Leave it out when the PR adds a single instance of an existing pattern (one more route, handler, component, block or job, wired the usual way) or when the connections are plain from the imports. A graph that restates a small diff costs the reviewer time.
 
 ```json
 {

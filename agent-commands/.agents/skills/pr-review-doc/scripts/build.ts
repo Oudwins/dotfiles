@@ -34,7 +34,7 @@ for (const tab of tabs) {
     continue;
   }
   if (tab.id === "review") {
-    const { sections } = result.data as z.output<(typeof tabs)[1]["schema"]>;
+    const { sections } = result.data as z.output<(typeof tabs)[2]["schema"]>;
     const placed = sections.flatMap((s) => s.hunks);
     for (const id of placed) if (!hunkIds.has(id)) problems.push(`${path}: unknown hunk ${id}`);
     for (const id of new Set(placed.filter((id, i) => placed.indexOf(id) !== i))) {
@@ -75,7 +75,7 @@ function show(oid: string, path: string) {
 
 // The signature as the page shows it, with each short alias's value beside its
 // name, so the layout can size cards for it. Mirrors `inlineValue` in viewer.js.
-function withAliasValues(signature: string, definitions: z.output<(typeof tabs)[6]["schema"]>["types"], before = false) {
+function withAliasValues(signature: string, definitions: z.output<(typeof tabs)[7]["schema"]>["types"], before = false) {
   return definitions.reduce((code, definition) => {
     const value = (before && definition.previous ? definition.previous : definition).type;
     if (!definition.inline || !value || value.includes("\n") || value.length > 72) return code;
@@ -132,12 +132,33 @@ async function signatureLines(signature: string, previous: string | undefined, l
   );
 }
 
-// Graph tabs get their layout and highlighted signatures.
+// Unchanged code shown beside the diff, highlighted like it.
+async function excerptLines({ path, lines: [start, end], side }: { path: string; lines: [number, number]; side: "head" | "base" }) {
+  const oid = side === "base" ? pr.mergeBaseOid : pr.headOid;
+  const source = show(oid, path);
+  if (!source || start > end || end > source.split("\n").length) {
+    throw new Error(`excerpt ${path}:${start}-${end} does not exist at ${oid}`);
+  }
+  return { path, side, start, lines: (await highlight(source, langFor(path))).slice(start - 1, end) };
+}
+
+// Graph tabs get their layout and highlighted signatures; Quick view gets its
+// excerpts.
 const pages = await Promise.all(
   built.map(async (tab) => {
+    if (tab.id === "quick-view") {
+      const data = tab.data as z.output<(typeof tabs)[1]["schema"]>;
+      const items = await Promise.all(
+        data.items.map(async (item) => ({
+          ...item,
+          code: await Promise.all(item.code.map((code) => ("path" in code ? excerptLines(code) : code))),
+        })),
+      );
+      return { ...tab, data: { ...data, items } };
+    }
     if (tab.id !== "architecture" && tab.id !== "interfaces") return tab;
-    const graph = tab.data as z.output<(typeof tabs)[4]["schema"]>;
-    const typeData = tab.id === "interfaces" ? tab.data as z.output<(typeof tabs)[6]["schema"]> : null;
+    const graph = tab.data as z.output<(typeof tabs)[5]["schema"]>;
+    const typeData = tab.id === "interfaces" ? tab.data as z.output<(typeof tabs)[7]["schema"]> : null;
     for (const definition of typeData?.types ?? []) {
       const oid = definition.source.side === "base" ? pr.mergeBaseOid : pr.headOid;
       if (!show(oid, definition.source.path).split("\n")[definition.source.line - 1]) {

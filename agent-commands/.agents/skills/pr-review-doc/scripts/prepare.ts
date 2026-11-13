@@ -43,12 +43,26 @@ for (const oid of [view.baseRefOid, view.headRefOid]) {
 }
 // GitHub diffs a PR against the merge base, so line numbers match its threads.
 const mergeBaseOid = run(["git", "merge-base", view.baseRefOid, view.headRefOid]).trim();
+// pr-review-server hashes GitHub's diff the same way, so a rebase that leaves
+// the diff alone doesn't mark the page out of date. GitHub refuses very large
+// diffs; those pages fall back to comparing head commits.
+const githubDiff = Bun.spawnSync(
+  ["gh", "api", `repos/${owner}/${repo}/pulls/${number}`, "-H", "Accept: application/vnd.github.diff"],
+  { cwd: repoDir },
+);
+const diffHash = githubDiff.exitCode === 0
+  ? new Bun.CryptoHasher("sha256")
+    .update(githubDiff.stdout.toString().split("\n").filter((l) => !l.startsWith("index ")).join("\n"))
+    .digest("hex")
+  : undefined;
+const workdir = join(homedir(), ".cache", "pr-review", owner, repo, number);
+const previous = await Bun.file(join(workdir, "pr.json")).json().catch(() => undefined);
 
 const pr: Pr = {
   owner, repo, number: Number(number),
   url: view.url, title: view.title, body: view.body, bodyHTML, author: view.author.login,
   baseRefName: view.baseRefName, headRefName: view.headRefName,
-  headOid: view.headRefOid, mergeBaseOid,
+  headOid: view.headRefOid, mergeBaseOid, diffHash,
   additions: view.additions, deletions: view.deletions, repoDir,
 };
 
@@ -94,11 +108,20 @@ for (const text of diff.split("\n")) {
   }
 }
 
-const workdir = join(homedir(), ".cache", "pr-review", owner, repo, number);
 mkdirSync(join(workdir, "tabs"), { recursive: true });
 await Bun.write(join(workdir, "pr.json"), JSON.stringify({ pr, files, hunks }, null, 2));
 
 console.log(`workdir: ${workdir}\n`);
+if (previous) {
+  const unchanged = diffHash && previous.pr.diffHash
+    ? previous.pr.diffHash === diffHash
+    : JSON.stringify(previous.hunks) === JSON.stringify(hunks);
+  console.log(
+    unchanged
+      ? "Diff unchanged since the last build: keep the tabs and just rebuild.\n"
+      : "Diff changed since the last build: hunk ids may have moved, so rewrite the tabs.\n",
+  );
+}
 for (const f of files) {
   const lines = f.hunks.flatMap((id) => hunks.find((h) => h.id === id)!.lines);
   const added = lines.filter((l) => l.t === "+").length;

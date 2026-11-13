@@ -99,6 +99,34 @@ function renderHunk(id, { from = 0, to = hunks[id].lines.length - 1, review = fa
 
 const renderRefs = (refs) => refs.map((ref) => renderHunk(ref.hunk, ref));
 
+// Code the PR doesn't change, folded. Its lines can be yanked but not commented on.
+function renderExcerpt({ path, side, start, lines }) {
+  const head = h(
+    "div",
+    { class: "row block excerpt-head" },
+    h("span", { class: "path" }, `${path}:${start}-${start + lines.length - 1}`),
+    h("span", { class: "context" }, side === "base" ? "unchanged, before this PR" : "unchanged"),
+  );
+  return foldable(
+    "excerpt",
+    head,
+    lines.map((html, i) => {
+      const num = start + i;
+      const row = h(
+        "div",
+        { class: "row line ctx" },
+        h("span", { class: "ln" }, side === "base" ? num : ""),
+        h("span", { class: "ln" }, side === "base" ? "" : num),
+        h("span", { class: "sign" }, " "),
+        h("span", { class: "code", html }),
+      );
+      row.line = { path, side: side === "base" ? "LEFT" : "RIGHT", num, unchanged: true };
+      return row;
+    }),
+    true,
+  );
+}
+
 // Test files by common conventions: foo.test.ts, foo_test.go, test_foo.py,
 // and anything under __tests__/, test/, tests/ or spec/.
 const isTest = (path) => /(^|\/)(__tests__|tests?|spec)\/|[._-](test|spec)s?\.[^/]+$|(^|\/)test_[^/]+$/.test(path);
@@ -216,7 +244,9 @@ function renderTypeTree(references, registry) {
           aliasChanged && h("div", { class: "row sig del" }, definition.previous.type),
           h("div", { class: `row${aliasChanged ? " sig add" : ""}` }, definition.type))
       : h("div", { class: "type-fields" }, fields(definition, reference.expanded, "", [definition.id]));
-    const section = foldable("type-definition", h("div", { class: "row block type-definition-head" }, definition.name, sourceLink(definition)), body, false);
+    // A huge union (every icon name, say) starts folded so it doesn't bury the rest.
+    const huge = (definition.type?.length ?? 0) > 400;
+    const section = foldable("type-definition", h("div", { class: "row block type-definition-head" }, definition.name, sourceLink(definition)), body, huge);
     section.typeId = definition.id;
     return section;
   });
@@ -427,6 +457,39 @@ function renderFindings(data) {
   ];
 }
 
+const concernLabels = {
+  outside: "Outside the feature",
+  endpoints: "Endpoints",
+  data: "Data and DB",
+  security: "Security",
+  performance: "Performance",
+};
+
+function renderQuickView(data) {
+  return [
+    data.summary && markdown(data.summary),
+    Object.entries(concernLabels).map(([concern, label]) => {
+      const items = data.items.filter((item) => item.concern === concern);
+      return h(
+        "section",
+        { class: "section" },
+        h("div", { class: "row section-head" }, h("h2", {}, label)),
+        items.length ? "" : h("div", { class: "row none" }, "Nothing found"),
+        items.map((item) =>
+          h(
+            "div",
+            { class: "finding" },
+            h("div", { class: "row block finding-head" }, item.title),
+            markdown(item.note),
+            item.flag && h("div", { class: "flag" }, markdown(item.flag)),
+            item.code.map((code) => ("path" in code ? renderExcerpt(code) : renderHunk(code.hunk, code))),
+          ),
+        ),
+      );
+    }),
+  ];
+}
+
 const fieldSigns = { added: "+", removed: "−", modified: "~", unchanged: " " };
 
 const renderers = {
@@ -448,6 +511,7 @@ const renderers = {
     markdown(data.tldr),
     pr.bodyHTML && [h("h2", { class: "row" }, "Description"), markdown(pr.bodyHTML)],
   ],
+  "quick-view": renderQuickView,
   review: (data) => [
     ...data.sections.map((section, i) =>
       h(
@@ -805,6 +869,10 @@ function yank() {
 // ---------------------------------------------------------------- comments
 
 let snapshot = null;
+// A rebase that leaves the diff alone moves the head but not the page's lines.
+const sameDiff = () => Boolean(pr.diffHash) && snapshot?.diffHash === pr.diffHash;
+// Comments go on the commit the page shows, or on the new head when its diff is the same.
+const commitOid = () => (sameDiff() ? snapshot.headOid : pr.headOid);
 let editor = null;
 const drafts = new Map();
 // Thread ids whose default collapsed state (resolved = collapsed) is flipped.
@@ -933,7 +1001,7 @@ function closeEditor() {
 // GitHub anchors a comment to diff lines within one hunk.
 function comment() {
   const sel = selection();
-  if (!sel.every((row) => row.line)) return flash("Comments go on diff lines");
+  if (!sel.every((row) => row.line && !row.line.unchanged)) return flash("Comments go on diff lines");
   if (new Set(sel.map(hunkOf)).size > 1) return flash("A comment's lines must be in one hunk");
   const first = sel[0].line;
   const last = sel.at(-1).line;
@@ -942,7 +1010,7 @@ function comment() {
   setCursor(sel.at(-1));
   openEditor(sel.at(-1), "comment", `Comment on ${last.path}:${range}`, (body) =>
     post("/threads", {
-      commitOid: pr.headOid,
+      commitOid: commitOid(),
       path: last.path,
       line: last.num,
       side: last.side,
@@ -959,7 +1027,7 @@ function reply() {
   const thread = threadAtCursor();
   if (!thread) return flash("No thread on this line");
   openEditor(cursor, "reply", `Reply to ${thread.comments.nodes[0]?.author?.login ?? "thread"}`, (body) =>
-    post(`/threads/${thread.id}/replies`, { commitOid: pr.headOid, body }),
+    post(`/threads/${thread.id}/replies`, { commitOid: commitOid(), body }),
   );
 }
 
@@ -981,9 +1049,8 @@ const commands = {
   async submit(event = "comment", ...body) {
     const events = { comment: "COMMENT", approve: "APPROVE", changes: "REQUEST_CHANGES" };
     if (!events[event]) throw new Error("Usage: :submit [comment|approve|changes] [body]");
-    flash("Submitting review…");
-    await post("/review", { commitOid: pr.headOid, event: events[event], body: body.join(" ") });
-    flash("Review submitted");
+    await post("/review", { commitOid: commitOid(), event: events[event], body: body.join(" ") });
+    flash("Review submitting in the background, safe to close");
   },
   approve: (...body) => commands.submit("approve", ...body),
   async resolve() {
@@ -1014,19 +1081,34 @@ async function runCommand(line) {
 function connect() {
   // Opened as a file there is no server, so the page stays without comments.
   if (location.protocol === "file:") return;
-  const source = new EventSource(`${api}/events`);
-  source.addEventListener("open", () => setConnection("live"));
-  source.addEventListener("error", () => setConnection("offline"));
-  source.addEventListener("snapshot", (e) => {
-    snapshot = JSON.parse(e.data);
-    $("banner").hidden = snapshot.headOid === pr.headOid;
-    $("banner").textContent =
-      "The PR has new commits since this page was built, so threads may sit on the wrong lines. Rebuild to update.";
-    renderThreads();
-    renderReviewState();
-    setConnection("live");
+  // Browsers allow 6 connections per host over HTTP/1.1 and each page's event
+  // stream holds one open, so pages let theirs go while hidden. Otherwise a
+  // seventh page would never load. Reconnecting sends the latest snapshot.
+  let source = null;
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      source?.close();
+      source = null;
+      setConnection("offline");
+    } else if (!source) open();
   });
-  source.addEventListener("failure", (e) => flash(`GitHub: ${JSON.parse(e.data)}`));
+  if (!document.hidden) open();
+
+  function open() {
+    source = new EventSource(`${api}/events`);
+    source.addEventListener("open", () => setConnection("live"));
+    source.addEventListener("error", () => setConnection("offline"));
+    source.addEventListener("snapshot", (e) => {
+      snapshot = JSON.parse(e.data);
+      $("banner").hidden = snapshot.headOid === pr.headOid || sameDiff();
+      $("banner").textContent =
+        "The PR has new commits since this page was built, so threads may sit on the wrong lines. Rebuild to update.";
+      renderThreads();
+      renderReviewState();
+      setConnection("live");
+    });
+    source.addEventListener("failure", (e) => flash(`GitHub: ${JSON.parse(e.data)}`));
+  }
 }
 
 // ------------------------------------------------------------ prompt, search

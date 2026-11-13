@@ -5,6 +5,8 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -17,6 +19,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -42,6 +45,9 @@ type pullRequest struct {
 	fetchMu  sync.Mutex
 	snapshot []byte
 	subs     map[chan []byte]struct{}
+	// diffHash is the hash of the diff at diffOid, kept so it is only
+	// fetched again when the head moves. Guarded by fetchMu.
+	diffOid, diffHash string
 }
 
 func main() {
@@ -262,6 +268,7 @@ type snapshotPage struct {
 type snapshot struct {
 	Viewer          string            `json:"viewer"`
 	HeadOid         string            `json:"headOid"`
+	DiffHash        string            `json:"diffHash"`
 	ViewerReview    string            `json:"viewerReview"`
 	PendingReviewID string            `json:"pendingReviewId"`
 	Threads         []json.RawMessage `json:"threads"`
@@ -298,6 +305,14 @@ func (s *server) refresh(p *pullRequest) {
 		}
 		vars["after"] = pr.ReviewThreads.PageInfo.EndCursor
 	}
+	if snap.HeadOid != p.diffOid {
+		hash, err := diffHash(ctx, p)
+		if err != nil {
+			log.Printf("diff %s/%s#%d: %v", p.owner, p.repo, p.number, err)
+		}
+		p.diffOid, p.diffHash = snap.HeadOid, hash
+	}
+	snap.DiffHash = p.diffHash
 
 	data := must(json.Marshal(snap))
 	s.mu.Lock()
@@ -312,6 +327,29 @@ func (s *server) refresh(p *pullRequest) {
 		os.WriteFile(path, data, 0o600)
 	}
 	s.broadcast(p, frame("snapshot", data))
+}
+
+// diffHash hashes GitHub's diff of the PR without its index lines, the way
+// pr-review-doc's prepare.ts does, so pages can tell a rebase that leaves the
+// diff alone from new changes. GitHub refuses very large diffs; those return
+// an empty hash and pages fall back to comparing head commits.
+func diffHash(ctx context.Context, p *pullRequest) (string, error) {
+	var stderr bytes.Buffer
+	cmd := exec.CommandContext(ctx, "gh", "api", fmt.Sprintf("repos/%s/%s/pulls/%d", p.owner, p.repo, p.number),
+		"-H", "Accept: application/vnd.github.diff")
+	cmd.Stderr = &stderr
+	out, err := cmd.Output()
+	if err != nil {
+		return "", fmt.Errorf("%w: %s", err, bytes.TrimSpace(stderr.Bytes()))
+	}
+	var kept []string
+	for _, line := range strings.Split(string(out), "\n") {
+		if !strings.HasPrefix(line, "index ") {
+			kept = append(kept, line)
+		}
+	}
+	sum := sha256.Sum256([]byte(strings.Join(kept, "\n")))
+	return hex.EncodeToString(sum[:]), nil
 }
 
 func graphql(ctx context.Context, query string, vars map[string]any, out any) error {
@@ -489,18 +527,38 @@ func (s *server) addComment(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// submitReview answers at once and submits in the background, so the review
+// goes through even if the page is closed straight away. Failures are logged
+// and pushed to any open page.
 func (s *server) submitReview(w http.ResponseWriter, r *http.Request) {
-	mutate(s, w, r, func(ctx context.Context, p *pullRequest, in struct {
+	p, ok := s.pr(w, r)
+	if !ok {
+		return
+	}
+	var in struct {
 		CommitOid string `json:"commitOid"`
 		Event     string `json:"event"`
 		Body      string `json:"body"`
-	}) error {
+	}
+	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	w.WriteHeader(http.StatusAccepted)
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+		defer cancel()
 		reviewID, err := pendingReview(ctx, p, in.CommitOid)
-		if err != nil {
-			return err
-		}
-		return graphql(ctx, `mutation($pullRequestReviewId: ID!, $event: PullRequestReviewEvent!, $body: String) {
+		if err == nil {
+			err = graphql(ctx, `mutation($pullRequestReviewId: ID!, $event: PullRequestReviewEvent!, $body: String) {
   submitPullRequestReview(input: {pullRequestReviewId: $pullRequestReviewId, event: $event, body: $body}) { pullRequestReview { id } }
 }`, map[string]any{"pullRequestReviewId": reviewID, "event": in.Event, "body": in.Body}, &struct{}{})
-	})
+		}
+		if err != nil {
+			log.Printf("submit review %s/%s#%d: %v", p.owner, p.repo, p.number, err)
+			s.broadcast(p, frame("failure", must(json.Marshal(err.Error()))))
+			return
+		}
+		s.refresh(p)
+	}()
 }

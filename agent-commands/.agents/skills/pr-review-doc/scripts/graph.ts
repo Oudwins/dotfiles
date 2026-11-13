@@ -8,8 +8,12 @@ type Graph = {
 };
 
 // Cards show the name, kind and tier, then up to `maxLines` of the signature.
+// Lines longer than `maxChars` wrap, continuing `indent` characters in.
 // Sizes approximate the card CSS in viewer.css.
-const card = { maxLines: 12, maxChars: 72, labelChar: 7.8, kindChar: 6.6, codeChar: 7.1, codeLine: 17, head: 36 };
+const card = { maxLines: 12, maxChars: 72, indent: 4, labelChar: 7.8, kindChar: 6.6, codeChar: 7.1, codeLine: 17, head: 36 };
+
+const rows = (line: string) =>
+  line.length <= card.maxChars ? 1 : 1 + Math.ceil((line.length - card.maxChars) / (card.maxChars - card.indent));
 
 const nodeSize = (node: Graph["nodes"][number]) => {
   const lines = node.signature?.split("\n").slice(0, card.maxLines) ?? [];
@@ -18,7 +22,7 @@ const nodeSize = (node: Graph["nodes"][number]) => {
   const code = Math.min(Math.max(0, ...lines.map((line) => line.length)), card.maxChars) * card.codeChar + 40;
   return {
     width: Math.max(head, lines.length ? code : 0),
-    height: card.head + (lines.length ? lines.length * card.codeLine + 10 : 0),
+    height: card.head + (lines.length ? lines.reduce((sum, line) => sum + rows(line), 0) * card.codeLine + 10 : 0),
     lines: lines.length,
   };
 };

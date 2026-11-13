@@ -12,5 +12,6 @@
   "projectSettingsFolded": true,
   "deviceOnboardingCompleted": true,
   "sidebarAutoSettleAfterDays": null,
+  "idleCompaction": "onReturn",
   "defaultThreadEnvMode": "worktree"
 }

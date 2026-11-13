@@ -441,13 +441,15 @@ main {
   margin: 0;
 }
 
-.hunk {
+.hunk,
+.excerpt {
   margin: 8px 0;
   border-block: 1px solid var(--border);
 }
 
 /* The head stays under the tab bar while its lines scroll, like GitHub's file headers. */
-.hunk-head {
+.hunk-head,
+.excerpt-head {
   position: sticky;
   top: 37px;
   z-index: 1;
@@ -462,7 +464,8 @@ main {
 
 /* Being sticky, the head positions its own line number, so pull it back out to the gutter. It spans the
    gutter on an opaque background so the numbers of lines scrolling underneath don't show through. */
-.foldable > .hunk-head[data-rel]:first-child::after {
+.foldable > .hunk-head[data-rel]:first-child::after,
+.foldable > .excerpt-head[data-rel]:first-child::after {
   top: 0;
   bottom: 0;
   left: calc(-1 * (var(--gutter) + var(--indent)));
@@ -473,7 +476,8 @@ main {
   color: color-mix(in srgb, var(--muted) 60%, var(--bg));
 }
 
-.foldable > .hunk-head.cursor[data-rel]:first-child::after {
+.foldable > .hunk-head.cursor[data-rel]:first-child::after,
+.foldable > .excerpt-head.cursor[data-rel]:first-child::after {
   color: var(--accent);
 }
 
@@ -490,7 +494,8 @@ main {
   display: none;
 }
 
-.hunk-head .context {
+.hunk-head .context,
+.excerpt-head .context {
   color: var(--muted);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -823,11 +828,12 @@ main {
   font: 11.5px/17px var(--mono);
 }
 
+/* Long lines wrap with a hanging indent; scripts/graph.ts sizes cards for it. */
 .card-code > div {
-  height: 17px;
-  overflow: hidden;
-  white-space: pre;
-  text-overflow: ellipsis;
+  padding-left: 4ch;
+  text-indent: -4ch;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .card-code .more {
@@ -1067,4 +1073,21 @@ main {
 .finding-head {
   padding: 4px 16px;
   font-weight: 600;
+}
+
+/* Something the agent saw in the code, for the reviewer to look at. */
+.flag {
+  max-width: 88ch;
+  margin: 2px 16px;
+  border-left: 3px solid var(--pending);
+  background: color-mix(in srgb, var(--pending) 12%, transparent);
+}
+
+.flag .md > .row {
+  padding-left: 10px;
+}
+
+.none {
+  padding: 2px 16px;
+  color: var(--muted);
 }
