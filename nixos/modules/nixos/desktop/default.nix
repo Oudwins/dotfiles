@@ -20,6 +20,10 @@
     };
   };
 
+  services.libinput.touchpad.additionalOptions = ''
+    Option "ScrollPixelDistance" "8"
+  '';
+
   services.autorandr.enable = true;
   services.gnome.gnome-keyring.enable = true;
   security.pam.services.sddm.enableGnomeKeyring = true;

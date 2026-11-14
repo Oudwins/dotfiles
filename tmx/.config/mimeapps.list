@@ -1,0 +1,35 @@
+[Default Applications]
+application/vnd.appimage=it.mijorus.gearlever.desktop
+application/x-iso9660-appimage=it.mijorus.gearlever.desktop
+application/x-appimage=it.mijorus.gearlever.desktop
+x-scheme-handler/tg=userapp-Telegram Desktop-0YTDM3.desktop
+text/plain=userapp-nvim -RVLDJ2.desktop
+text/csv=brave-browser.desktop
+x-scheme-handler/tonsite=userapp-Telegram Desktop-WU3DM3.desktop
+video/mp4=userapp-mpv-KGJ602.desktop
+video/x-matroska=mpv.desktop
+x-scheme-handler/logseq=Logseq.desktop
+text/html=brave-browser.desktop
+x-scheme-handler/http=brave-browser.desktop
+x-scheme-handler/https=brave-browser.desktop
+x-scheme-handler/about=brave-browser.desktop
+x-scheme-handler/unknown=brave-browser.desktop
+x-scheme-handler/bruno=bruno.desktop
+x-scheme-handler/t3code=com.t3tools.T3Code.desktop
+
+[Added Associations]
+application/vnd.appimage=it.mijorus.gearlever.desktop;
+application/x-iso9660-appimage=it.mijorus.gearlever.desktop;
+application/x-appimage=it.mijorus.gearlever.desktop;
+x-scheme-handler/tg=org.telegram.desktop.desktop;userapp-Telegram Desktop-HXZE72.desktop;userapp-Telegram Desktop-GLOS72.desktop;userapp-Telegram Desktop-8Z19I3.desktop;userapp-Telegram Desktop-0YTDM3.desktop;
+text/plain=okularApplication_txt.desktop;nvim.desktop;userapp-nvim -RVLDJ2.desktop;
+image/png=org.geeqie.Geeqie.desktop;geeqie.desktop;
+image/jpeg=gimp.desktop;org.geeqie.Geeqie.desktop;geeqie.desktop;
+application/vnd.openxmlformats-officedocument.wordprocessingml.document=onlyoffice-desktopeditors.desktop;writer.desktop;
+text/x-java=userapp-nvim -RVLDJ2.desktop;
+text/csv=onlyoffice-desktopeditors.desktop;calc.desktop;brave-browser.desktop;
+application/pdf=okularApplication_pdf.desktop;brave-browser.desktop;calibre-gui.desktop;
+text/markdown=userapp-nvim -RVLDJ2.desktop;
+x-scheme-handler/tonsite=org.telegram.desktop.desktop;userapp-Telegram Desktop-SC2F72.desktop;userapp-Telegram Desktop-YQSR72.desktop;userapp-Telegram Desktop-DO0AJ3.desktop;userapp-Telegram Desktop-WU3DM3.desktop;
+video/mp4=userapp-mpv-KGJ602.desktop;
+video/x-matroska=userapp-mpv-F5A822.desktop;userapp-mpv-0S1U32.desktop;userapp-mpv %f-IO5S32.desktop;

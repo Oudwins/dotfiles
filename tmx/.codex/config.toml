@@ -1,6 +1,6 @@
 model_provider = "cliproxyapi"
-model = "gpt-6-astra"
-model_reasoning_effort = "high"
+model = "gpt-6.1-sol"
+model_reasoning_effort = "medium"
 
 [model_providers.cliproxyapi]
 name = "CLIProxyAPI"
@@ -22,4 +22,7 @@ startup_timeout_sec = 60
 screen_reader_detection_done = true
 
 [projects."/Users/tmx/dotfiles"]
+trust_level = "trusted"
+
+[projects."/home/tmx/dotfiles"]
 trust_level = "trusted"

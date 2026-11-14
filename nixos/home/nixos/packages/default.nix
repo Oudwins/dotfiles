@@ -14,6 +14,7 @@
     flameshot
     gparted
     geeqie
+    gearlever
     onlyoffice-desktopeditors
     kdePackages.ark
     unstable.qbittorrent

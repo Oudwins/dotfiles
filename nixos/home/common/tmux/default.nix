@@ -32,7 +32,12 @@ in {
         '';
       }
       pkgs.tmuxPlugins.tokyo-night-tmux
-      pkgs.tmuxPlugins.yank
+      {
+        plugin = pkgs.tmuxPlugins.yank;
+        extraConfig = ''
+          set -g @yank_selection_mouse clipboard
+        '';
+      }
       pkgs.tmuxPlugins.resurrect
       pkgs.tmuxPlugins.continuum
     ];
@@ -85,7 +90,6 @@ in {
       # YANK Plugin key bindings
       bind-key -T copy-mode-vi v send-keys -X begin-selection
       bind-key -T copy-mode-vi C-v send-keys -X rectangle-toggle
-      bind-key -T copy-mode-vi y send-keys -X copy-selection-and-cancel
 
       # needed for pi.dev
       set -g extended-keys on

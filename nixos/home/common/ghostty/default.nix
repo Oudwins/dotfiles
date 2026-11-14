@@ -15,6 +15,9 @@
     # Terminal settings
     term = xterm-256color
 
+    # Copy selections to both the system clipboard and primary selection.
+    copy-on-select = clipboard
+
 
     # Color scheme from omarchy theme
     background = 1a1b26
