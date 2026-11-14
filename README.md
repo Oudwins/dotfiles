@@ -358,7 +358,7 @@ across restarts and disappears on reboot.
 ### Configuration notes and recommendations
 
 - Use the [v8 options](https://help.router-for.me/configuration/options.html) and
-  the [release's example](https://github.com/router-for-me/CLIProxyAPI/blob/v8.0.20/config.example.yaml).
+  the [release's example](https://github.com/router-for-me/CLIProxyAPI/blob/v8.0.69/config.example.yaml).
   The basic configuration page still shows the older layout. Client keys belong
   under `access.api-keys`; upstream keys belong under `api-keys.<provider>`.
 - Keep `server.host: 127.0.0.1` for local use. Don't expose this port publicly

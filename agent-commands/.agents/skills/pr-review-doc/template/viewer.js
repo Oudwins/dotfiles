@@ -507,8 +507,6 @@ const renderers = {
     ),
     h("h2", { class: "row" }, "Problem"),
     markdown(data.problem),
-    h("h2", { class: "row" }, "TL;DR"),
-    markdown(data.tldr),
     pr.bodyHTML && [h("h2", { class: "row" }, "Description"), markdown(pr.bodyHTML)],
   ],
   "quick-view": renderQuickView,

@@ -183,7 +183,6 @@ export const tabs = [
     title: "At a glance",
     required: true,
     schema: z.strictObject({
-      tldr: markdown,
       problem: markdown,
     }),
   },

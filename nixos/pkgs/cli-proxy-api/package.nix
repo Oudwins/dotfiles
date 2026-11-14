@@ -1,21 +1,21 @@
 {
   lib,
-  buildGoModule,
+  buildGo127Module,
   fetchFromGitHub,
 }:
 
-buildGoModule rec {
+buildGo127Module rec {
   pname = "cli-proxy-api";
-  version = "8.0.20";
+  version = "8.0.69";
 
   src = fetchFromGitHub {
     owner = "router-for-me";
     repo = "CLIProxyAPI";
     tag = "v${version}";
-    hash = "sha256-RXCEHPDGUO8sPs/WuGriMhGobnzYKAZsZSx2Olk2JF8=";
+    hash = "sha256-SF3aSlhWMPEBu9q5vuKeSbdB4ew8CwyjyhcOQ5U/GUI=";
   };
 
-  vendorHash = "sha256-r3yWkdMcM40G9jV7MxW/qNv3E9WrHavFilW24quEf+8=";
+  vendorHash = "sha256-02Qqrs9lQ0kE+Tnk/SWvlkLXGSh8RQPxRawFZogRYNc=";
   subPackages = [ "cmd/server" ];
   ldflags = [
     "-s"
