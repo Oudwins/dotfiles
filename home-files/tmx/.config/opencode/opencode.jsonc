@@ -24,6 +24,8 @@
   "provider": {
     "openai": {
       "options": {
+        "baseURL": "http://127.0.0.1:28760/llmproxy/v1",
+        "apiKey": "local",
         // required for web search plugin
         "websearch_cited": {
           "model": "gpt-5.6-sol",
@@ -59,7 +61,7 @@
       "npm": "@ai-sdk/anthropic",
       "name": "cc-proxy",
       "options": {
-        "baseURL": "http://localhost:8317/v1",
+        "baseURL": "http://127.0.0.1:28760/llmproxy/v1",
         "apiKey": "local",
       },
       "models": {
