@@ -114,6 +114,37 @@ class UpdateSymlinksTest(unittest.TestCase):
         self.assertTrue((skills / "elsewhere").is_symlink())
         self.assert_link("settings.json", "home-files/tmx/settings.json")
 
+    def test_stale_links_do_not_require_gnu_realpath(self):
+        self.write("bin/realpath", "#!/bin/sh\necho 'realpath: illegal option -- m' >&2\nexit 1\n")
+        (self.root / "bin/realpath").chmod(0o755)
+        self.env["PATH"] = f"{self.root / 'bin'}{os.pathsep}{self.env['PATH']}"
+        self.write("home-files/tmx/.config/demo/settings.json", tracked=True)
+        self.write("home-files/tmx/.agents/commands", tracked=True)
+        (self.home / ".config").symlink_to("../dotfiles/tmx/.config")
+        (self.home / ".agents").mkdir()
+        (self.home / ".agents/commands").symlink_to(self.root / "tmx/.agents/commands")
+
+        result = self.update()
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertNotIn("illegal option", result.stderr)
+        self.assert_link(".config", "home-files/tmx/.config")
+        self.assert_link(".agents/commands", "home-files/tmx/.agents/commands")
+
+    def test_stale_links_are_removed_from_a_symlinked_checkout_path(self):
+        self.write("home-files/tmx/settings.json", tracked=True)
+        (self.home / "settings.json").symlink_to(self.root / "tmx/settings.json")
+        alias = self.home / "checkout"
+        alias.symlink_to(self.root, target_is_directory=True)
+
+        result = subprocess.run(
+            [str(alias / "updateSymlinks.sh")], cwd=self.home,
+            env=self.env, capture_output=True, text=True,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assert_link("settings.json", "home-files/tmx/settings.json")
+
     def test_agent_links_refuse_to_replace_real_files(self):
         self.write("agents/skills/review/SKILL.md", tracked=True)
         local = self.home / ".claude/skills/review"

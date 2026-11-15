@@ -3,7 +3,7 @@
 set -euo pipefail
 
 # Resolve this checkout instead of assuming it lives at ~/dotfiles.
-directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+directory=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd -P)
 cd "$directory"
 
 # Worktrees are temporary; links into them break once they are removed.
@@ -28,9 +28,11 @@ fi
 # Remove a link that points into this checkout but no longer resolves
 # (left behind when files move, e.g. the old tmx/ and agent-*/ packages).
 remove_if_stale() {
-	local link=$1
+	local link=$1 resolved
 	[ -L "$link" ] && [ ! -e "$link" ] || return 0
-	case "$(realpath -m -- "$link")" in
+	# Unlike macOS realpath, Python can resolve paths with missing components.
+	resolved=$(python3 -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "$link")
+	case "$resolved" in
 	"$directory"/*)
 		if $simulate; then echo "would remove stale link $link"; else rm -- "$link"; fi
 		;;
@@ -67,16 +69,14 @@ for destination in "${agent_destinations[@]}"; do
 	done
 done
 
-declare -A seen=()
 for source in "$directory"/agents/skills/*/ "$directory"/agents/commands/*/; do
 	[ -d "$source" ] || continue
 	source=${source%/}
 	name=$(basename -- "$source")
-	if [ -n "${seen[$name]:-}" ]; then
+	if [ -d "$directory/agents/skills/$name" ] && [ -d "$directory/agents/commands/$name" ]; then
 		echo "Agent entry '$name' exists in both agents/skills and agents/commands." >&2
 		exit 1
 	fi
-	seen[$name]=1
 	for destination in "${agent_destinations[@]}"; do
 		target="$destination/$name"
 		if [ -e "$target" ] && [ ! -L "$target" ]; then
