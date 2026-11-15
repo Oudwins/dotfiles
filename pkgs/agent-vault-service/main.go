@@ -7,8 +7,10 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
+	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -34,10 +36,7 @@ import (
 	"unicode"
 )
 
-const (
-	vault = "dotfiles"
-	owner = "tmx@agent-vault.local"
-)
+const vault = "dotfiles"
 
 var state = func() string {
 	home, _ := os.UserHomeDir()
@@ -114,7 +113,54 @@ func privateFile(path, content string) (string, error) {
 	return content, file.Close()
 }
 
+func ownerCredentials() (string, string, error) {
+	owner, passwordFile := os.Getenv("AGENT_VAULT_OWNER_EMAIL"), os.Getenv("AGENT_VAULT_OWNER_PASSWORD_FILE")
+	if owner == "" || passwordFile == "" {
+		return "", "", errors.New("AGENT_VAULT_OWNER_EMAIL and AGENT_VAULT_OWNER_PASSWORD_FILE must be set")
+	}
+	password, err := os.ReadFile(passwordFile)
+	return owner, strings.TrimSpace(string(password)), err
+}
+
+// resetOnOwnerChange wipes the database when the configured owner differs from
+// the one it was created for: Agent Vault cannot change an account's email, and
+// the helper only knows the configured password. The helper then registers the
+// owner again and recreates config-managed credentials and services. The CA and
+// master password are kept.
+func resetOnOwnerChange() error {
+	owner, password, err := ownerCredentials()
+	if err != nil {
+		return err
+	}
+	sum := sha256.Sum256([]byte(owner + "\x00" + password))
+	fingerprint := hex.EncodeToString(sum[:])
+	path := filepath.Join(state, "owner")
+	recorded, err := os.ReadFile(path)
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return err
+	}
+	if string(recorded) == fingerprint {
+		return nil
+	}
+	database := filepath.Join(state, "agent-vault.db")
+	if _, err := os.Stat(database); err == nil {
+		log.Printf("INFO Owner account changed; resetting the Agent Vault database")
+		for _, name := range []string{"agent-vault.db", "agent-vault.db-shm", "agent-vault.db-wal", "managed-services.json", "proxy-token", "owner-password"} {
+			if err := os.Remove(filepath.Join(state, name)); err != nil && !errors.Is(err, fs.ErrNotExist) {
+				return err
+			}
+		}
+	}
+	if err := os.MkdirAll(state, 0o700); err != nil {
+		return err
+	}
+	return os.WriteFile(path, []byte(fingerprint), 0o600)
+}
+
 func startServer(cfg *config) error {
+	if err := resetOnOwnerChange(); err != nil {
+		return err
+	}
 	path := filepath.Join(state, "master-password")
 	if _, err := privateFile(path, rand.Text()); err != nil {
 		return err
@@ -299,6 +345,7 @@ func serviceRules(services map[string]route) []serviceRule {
 type helper struct {
 	config       *config
 	address      string
+	owner        string
 	password     string
 	refreshToken string
 	client       *http.Client
@@ -306,7 +353,7 @@ type helper struct {
 }
 
 func newHelper(cfg *config) (*helper, error) {
-	password, err := privateFile(filepath.Join(state, "owner-password"), rand.Text())
+	owner, password, err := ownerCredentials()
 	if err != nil {
 		return nil, err
 	}
@@ -317,6 +364,7 @@ func newHelper(cfg *config) (*helper, error) {
 	return &helper{
 		config:       cfg,
 		address:      fmt.Sprintf("http://127.0.0.1:%d", cfg.ServerPort),
+		owner:        owner,
 		password:     password,
 		refreshToken: refreshToken,
 		client: &http.Client{
@@ -429,7 +477,7 @@ func (h *helper) bootstrap(ctx context.Context) error {
 	var login struct {
 		Token string `json:"token"`
 	}
-	credentials := map[string]string{"email": owner, "password": h.password, "device_label": "dotfiles-service"}
+	credentials := map[string]string{"email": h.owner, "password": h.password, "device_label": "dotfiles-service"}
 	if err := h.api(ctx, "POST", authPath, "", credentials, &login); err != nil {
 		return err
 	}

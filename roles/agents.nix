@@ -30,7 +30,10 @@
   ];
 
   config = {
-    home-manager.users.${config.my.username}.imports = [ ../modules/home/common/agents ];
+    home-manager.users.${config.my.username} = {
+      imports = [ ../modules/home/common/agents ];
+      services.agent-vault.ownerEmail = "${config.my.username}@${config.my.domain}";
+    };
   }
   // lib.optionalAttrs (!isDarwin) {
     # OpenCode's prebuilt binaries need a dynamic loader.

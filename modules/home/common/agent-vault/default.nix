@@ -29,6 +29,8 @@ let
       ];
   environment = {
     AGENT_VAULT_TELEMETRY = "false";
+    AGENT_VAULT_OWNER_EMAIL = cfg.ownerEmail;
+    AGENT_VAULT_OWNER_PASSWORD_FILE = cfg.ownerPasswordFile;
     AGENT_VAULT_NETWORK_ALLOWLIST = lib.concatStringsSep "," (
       [
         "127.0.0.1/32"
@@ -51,6 +53,14 @@ in
       type = lib.types.str;
       default = "${config.home.homeDirectory}/.config/agent-vault/config.json";
       description = "Stow-managed configuration for proxy ports, credential sources and upstream services.";
+    };
+    ownerEmail = lib.mkOption {
+      type = lib.types.str;
+      description = "Email of the owner account the helper registers and signs in with.";
+    };
+    ownerPasswordFile = lib.mkOption {
+      type = lib.types.str;
+      description = "File holding the owner account's password.";
     };
     environment = lib.mkOption {
       type = lib.types.attrsOf lib.types.str;

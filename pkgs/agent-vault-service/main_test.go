@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -25,6 +27,10 @@ func jwt(exp int64) string {
 
 func newTestHelper(t *testing.T) *helper {
 	state = t.TempDir()
+	passwordFile := filepath.Join(state, "owner-password")
+	os.WriteFile(passwordFile, []byte("owner-test-password\n"), 0o600)
+	t.Setenv("AGENT_VAULT_OWNER_EMAIL", "tmx@example.com")
+	t.Setenv("AGENT_VAULT_OWNER_PASSWORD_FILE", passwordFile)
 	h, err := newHelper(&config{
 		ServerPort: 14321, ProxyPort: 14322, CredentialPort: 14323,
 		NoProxy:     []string{"127.0.0.1", "::1"},
@@ -292,4 +298,45 @@ func must[T any](value T, err error) T {
 		panic(err)
 	}
 	return value
+}
+
+func TestResetOnOwnerChange(t *testing.T) {
+	state = t.TempDir()
+	passwordFile := filepath.Join(t.TempDir(), "owner-password")
+	os.WriteFile(passwordFile, []byte("first"), 0o600)
+	t.Setenv("AGENT_VAULT_OWNER_EMAIL", "tmx@example.com")
+	t.Setenv("AGENT_VAULT_OWNER_PASSWORD_FILE", passwordFile)
+	database := filepath.Join(state, "agent-vault.db")
+	keep := filepath.Join(state, "master-password")
+	os.WriteFile(keep, []byte("master"), 0o600)
+
+	// An existing database without a recorded owner predates this check.
+	os.WriteFile(database, []byte("old"), 0o600)
+	if err := resetOnOwnerChange(); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(database); !errors.Is(err, fs.ErrNotExist) {
+		t.Fatal("expected the unrecorded database to be reset")
+	}
+
+	// The same owner keeps the database.
+	os.WriteFile(database, []byte("current"), 0o600)
+	if err := resetOnOwnerChange(); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(database); err != nil {
+		t.Fatal("expected the database to survive an unchanged owner")
+	}
+
+	// A new password resets it again.
+	os.WriteFile(passwordFile, []byte("second"), 0o600)
+	if err := resetOnOwnerChange(); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(database); !errors.Is(err, fs.ErrNotExist) {
+		t.Fatal("expected a changed owner to reset the database")
+	}
+	if _, err := os.Stat(keep); err != nil {
+		t.Fatal("expected the master password to be kept")
+	}
 }

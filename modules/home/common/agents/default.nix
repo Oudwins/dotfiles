@@ -25,9 +25,13 @@
     glab
   ];
 
-  services.agent-vault.enable = true;
+  services.agent-vault = {
+    enable = true;
+    ownerPasswordFile = config.sops.secrets."agent-vault/owner-password".path;
+  };
   services.pr-review-server.enable = true;
 
+  sops.secrets."agent-vault/owner-password" = { };
   sops.secrets."executor/token" = { };
   # The same key CLIProxyAPI accepts (see modules/shared/cli-proxy-api); Agent
   # Vault injects it into llmproxy requests.
