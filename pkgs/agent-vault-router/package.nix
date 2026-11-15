@@ -69,7 +69,7 @@ writeShellApplication {
   text = ''
     # shellcheck source=/dev/null
     . "$HOME/.agent-vault/proxy.env"
-    exec caddy run --config - < <(
+    router_config=$(
       python -c '
     import os, sys
     from pathlib import Path
@@ -116,5 +116,6 @@ writeShellApplication {
           ]
       '
     )
+    exec caddy run --config - <<< "$router_config"
   '';
 }

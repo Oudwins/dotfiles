@@ -106,12 +106,12 @@ in
           ]
           ++ lib.optional (mode == "router") "agent-vault-credentials.service";
         }
-        // lib.optionalAttrs (mode == "credentials") { PartOf = [ "agent-vault.service" ]; };
+        // lib.optionalAttrs (mode != "server") { PartOf = [ "agent-vault.service" ]; };
         Service = {
           ExecStart = lib.escapeShellArgs (arguments mode);
           Environment = lib.mapAttrsToList (key: value: "${key}=${value}") environment;
           Restart = "always";
-          RestartSec = 5;
+          RestartSec = if mode == "credentials" then 60 else 5;
           UMask = "0077";
         };
         Install.WantedBy = [ "default.target" ];
@@ -126,7 +126,7 @@ in
           EnvironmentVariables = environment;
           KeepAlive = true;
           RunAtLoad = true;
-          ThrottleInterval = 5;
+          ThrottleInterval = if mode == "credentials" then 60 else 5;
           ProcessType = "Background";
           StandardOutPath = "${config.home.homeDirectory}/Library/Logs/${name}.log";
           StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/${name}.error.log";

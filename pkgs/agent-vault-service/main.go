@@ -118,15 +118,20 @@ func ownerCredentials() (string, string, error) {
 	if owner == "" || passwordFile == "" {
 		return "", "", errors.New("AGENT_VAULT_OWNER_EMAIL and AGENT_VAULT_OWNER_PASSWORD_FILE must be set")
 	}
-	password, err := os.ReadFile(passwordFile)
-	return owner, strings.TrimSpace(string(password)), err
+	data, err := os.ReadFile(passwordFile)
+	if err != nil {
+		return "", "", err
+	}
+	password := strings.TrimSpace(string(data))
+	if password == "" {
+		return "", "", errors.New("owner password file is empty")
+	}
+	return owner, password, nil
 }
 
-// resetOnOwnerChange wipes the database when the configured owner differs from
-// the one it was created for: Agent Vault cannot change an account's email, and
-// the helper only knows the configured password. The helper then registers the
-// owner again and recreates config-managed credentials and services. The CA and
-// master password are kept.
+// resetOnOwnerChange wipes the database and its dependent proxy state when the
+// configured owner changes. A new database generates a new encryption key, even
+// with the same master password, so its predecessor's CA cannot be reused.
 func resetOnOwnerChange() error {
 	owner, password, err := ownerCredentials()
 	if err != nil {
@@ -142,13 +147,14 @@ func resetOnOwnerChange() error {
 	if string(recorded) == fingerprint {
 		return nil
 	}
-	database := filepath.Join(state, "agent-vault.db")
-	if _, err := os.Stat(database); err == nil {
-		log.Printf("INFO Owner account changed; resetting the Agent Vault database")
-		for _, name := range []string{"agent-vault.db", "agent-vault.db-shm", "agent-vault.db-wal", "managed-services.json", "proxy-token", "owner-password"} {
-			if err := os.Remove(filepath.Join(state, name)); err != nil && !errors.Is(err, fs.ErrNotExist) {
-				return err
-			}
+	log.Printf("INFO Owner account changed; resetting Agent Vault database and proxy state")
+	for _, name := range []string{
+		"agent-vault.db", "agent-vault.db-shm", "agent-vault.db-wal",
+		"ca", "ca.pem", "proxy.env", "proxy.env.tmp",
+		"managed-services.json", "proxy-token", "owner-password",
+	} {
+		if err := os.RemoveAll(filepath.Join(state, name)); err != nil {
+			return err
 		}
 	}
 	if err := os.MkdirAll(state, 0o700); err != nil {
@@ -274,8 +280,9 @@ func clientEnvironment(cfg *config, token, certificate string) map[string]string
 	proxy := (&url.URL{Scheme: "http", User: url.UserPassword(token, vault), Host: fmt.Sprintf("127.0.0.1:%d", cfg.ProxyPort)}).String()
 	environment := map[string]string{
 		"HTTP_PROXY": proxy, "HTTPS_PROXY": proxy,
-		"NO_PROXY":           strings.Join(cfg.NoProxy, ","),
-		"NODE_USE_ENV_PROXY": "1",
+		"NO_PROXY":               strings.Join(cfg.NoProxy, ","),
+		"NODE_USE_ENV_PROXY":     "1",
+		"AGENT_VAULT_HEALTH_URL": fmt.Sprintf("http://127.0.0.1:%d/health", cfg.CredentialPort),
 	}
 	for _, name := range []string{"HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY"} {
 		environment[strings.ToLower(name)] = environment[name]
@@ -470,6 +477,24 @@ func (h *helper) bootstrap(ctx context.Context) error {
 		case <-time.After(time.Second):
 		}
 	}
+	// The management API can be healthy even when the proxy failed to start.
+	// Check it before logging in, so a broken CA cannot cause a login retry storm.
+	request, err := http.NewRequestWithContext(ctx, "GET", h.address+"/v1/mitm/ca.pem", nil)
+	if err != nil {
+		return err
+	}
+	response, err := h.client.Do(request)
+	if err != nil {
+		return err
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		return fmt.Errorf("Agent Vault proxy CA is unavailable (HTTP %d); check agent-vault service logs", response.StatusCode)
+	}
+	certificate, err := io.ReadAll(response.Body)
+	if err != nil {
+		return err
+	}
 	authPath := "/v1/auth/register"
 	if status.Initialized {
 		authPath = "/v1/auth/login"
@@ -479,7 +504,7 @@ func (h *helper) bootstrap(ctx context.Context) error {
 	}
 	credentials := map[string]string{"email": h.owner, "password": h.password, "device_label": "dotfiles-service"}
 	if err := h.api(ctx, "POST", authPath, "", credentials, &login); err != nil {
-		return err
+		return fmt.Errorf("owner authentication failed; check the configured owner and AGENT_VAULT_OWNER_PASSWORD_FILE: %w", err)
 	}
 	ownerToken := login.Token
 	if err := h.api(ctx, "PUT", "/v1/admin/settings", ownerToken, map[string]bool{"invite_only": true}, nil); err != nil {
@@ -562,22 +587,6 @@ func (h *helper) bootstrap(ctx context.Context) error {
 		if err := os.WriteFile(tokenPath, []byte(token), 0o600); err != nil {
 			return err
 		}
-	}
-	request, err := http.NewRequestWithContext(ctx, "GET", h.address+"/v1/mitm/ca.pem", nil)
-	if err != nil {
-		return err
-	}
-	response, err := h.client.Do(request)
-	if err != nil {
-		return err
-	}
-	defer response.Body.Close()
-	if response.StatusCode != http.StatusOK {
-		return fmt.Errorf("Agent Vault CA certificate returned HTTP %d", response.StatusCode)
-	}
-	certificate, err := io.ReadAll(response.Body)
-	if err != nil {
-		return err
 	}
 	certificatePath := filepath.Join(state, "ca.pem")
 	if err := os.WriteFile(certificatePath, certificate, 0o600); err != nil {

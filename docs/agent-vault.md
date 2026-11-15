@@ -67,7 +67,13 @@ the helper rewrites those keys on every start.
 Nix installs launchers for `codex`, `claude`, `pi` and `opencode`, ahead of the
 manually updated executables in `~/.npm/bin`. Each launcher reads the private
 `~/.agent-vault/proxy.env` and configures its process and children to use Agent
-Vault's authenticated forward proxy and trust its CA. The launchers do not set or
+Vault's authenticated forward proxy and trust its CA. They check the credential
+helper's health before launching and fail with an actionable error if it is unavailable.
+For debugging, `codex-unwrapped`, `claude-unwrapped`, `pi-unwrapped` and
+`opencode-unwrapped` run the npm executables without loading the vault environment.
+They also remove inherited proxy and CA variables, so they work from inside a
+wrapped agent session. These commands bypass credential injection; vault-backed
+routes still require the services to be healthy. The launchers do not set or
 override MCP URLs. Executor's fixed loopback URL bypasses that network proxy;
 the router itself sends the upstream request through Agent Vault. No system certificate
 installation or global network-proxy setting is needed. Restart existing agent
@@ -106,11 +112,29 @@ or rebuilding.
 
 Agent Vault cannot change an account's email, so the server launcher records a hash of
 the configured owner email and password in `~/.agent-vault/owner`. When they change
-(or on a database that predates the record), it deletes the database before starting
-and the helper registers the owner again. Config-managed credentials and services are
-recreated; ones added through the UI are lost. The CA and master password are kept. The service reconciles only the `dotfiles` vault.
+(or when the record is missing), it deletes the database, CA and published proxy
+configuration before starting, and the helper registers the owner again using the
+configured email and SOPS password. This cleanup also runs if the database was
+already removed, so an interrupted reset cannot leave its old CA behind. A new
+database generates a new encryption key even with the same master password; reusing
+the old CA would leave the forward proxy unable to start. The master password and
+credential-endpoint capability are kept. Config-managed credentials and services
+are recreated; ones added through the UI are lost. A missing or empty password file
+fails without deleting state. Unchanged owner credentials preserve the vault.
+The service reconciles only the `dotfiles` vault.
 
-Check readiness with `curl http://127.0.0.1:14323/health`. On macOS, logs are in
+After rotating the SOPS owner password, apply the configuration and restart the
+vault stack so the server compares the new credentials. On Linux,
+`systemctl --user restart agent-vault` also restarts the helper and router. On
+macOS, restart all three launchd agents. Reconnect existing agent sessions after
+a reset: their inherited proxy token and CA have changed.
+
+Check readiness with `curl http://127.0.0.1:14323/health`. A running management API
+on port 14321 does not imply the forward proxy is working: if the logs report
+`CA init failed`, port 14322 may not be listening. Keep the database, `ca/` and
+master password together when backing up or restoring `~/.agent-vault/`.
+
+On macOS, logs are in
 `~/Library/Logs/agent-vault*.log` and `~/Library/Logs/agent-vault-router*.log`; on Linux use
 `journalctl --user -u agent-vault -u agent-vault-credentials -u agent-vault-router`. Restart both Agent Vault services
 after editing ports, or just the helper after editing services/credential sources.
