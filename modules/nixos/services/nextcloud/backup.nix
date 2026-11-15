@@ -21,14 +21,16 @@ in
     enable = true;
     user = userName;
     healthchecks.enable = true;
+    # nextcloud-occ needs the same credentials as nextcloud's own units
+    loadCredentials = config.systemd.services.nextcloud-cron.serviceConfig.LoadCredential;
+    cleanupCommand = ''
+      ${lib.getExe' config.services.nextcloud.occ "nextcloud-occ"} maintenance:mode --off
+    '';
 
     extraConfig = {
       backupPrepareCommand = ''
         ${lib.getExe' config.services.nextcloud.occ "nextcloud-occ"} maintenance:mode --on
         ${lib.getExe' config.services.postgresql.package "pg_dump"} nextcloud --format=custom --file=${dataDir}/backup/db.dump
-      '';
-      backupCleanupCommand = ''
-        ${lib.getExe' config.services.nextcloud.occ "nextcloud-occ"} maintenance:mode --off
       '';
       paths = [
         "${dataDir}/data"
