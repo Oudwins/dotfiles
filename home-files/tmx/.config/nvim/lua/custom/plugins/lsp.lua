@@ -51,8 +51,8 @@ return {
     dependencies = {
       -- Automatically install LSPs and related tools to stdpath for Neovim
       -- Mason must be loaded before its dependents so we need to set it up here.
-      -- NOTE: `opts = {}` is the same as calling `require('mason').setup({})`
-      { 'mason-org/mason.nvim', opts = {} },
+      -- Prefer Nix-installed tools over Mason binaries with potentially stale runtimes.
+      { 'mason-org/mason.nvim', opts = { PATH = 'append' } },
       'mason-org/mason-lspconfig.nvim',
       'WhoIsSethDaniel/mason-tool-installer.nvim',
 
@@ -295,7 +295,7 @@ return {
 
         -- nix lsps
         -- nixd = {}, -- not in mason
-        nil_ls = {}, -- experimental
+        nil_ls = {}, -- installed by Nix
 
         -- NOTE: WEB
         --
@@ -477,7 +477,9 @@ return {
 
       -- Use mason-tool-installer for non-LSP tools (formatters, linters)
       -- mason-lspconfig handles LSP server installation with proper name translation
-      local ensure_installed = vim.tbl_keys(servers or {})
+      local ensure_installed = vim.tbl_filter(function(name)
+        return name ~= 'nil_ls' -- installed by Nix, not Mason
+      end, vim.tbl_keys(servers))
       vim.list_extend(ensure_installed, {
 
         -- FORMATTERS
