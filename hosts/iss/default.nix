@@ -244,20 +244,20 @@ in {
           }.path;
       };
 
-      # extra1
-      "contact@${d.extra1}" = {
+      # path
+      "contact@${d.path}" = {
         passwordFile =
-          config.sops.secrets.${mkPasswordSecretName "contact@${d.extra1}"}.path;
-        catchAll = [ d.extra1 ];
+          config.sops.secrets.${mkPasswordSecretName "contact@${d.path}"}.path;
+        catchAll = [ d.path ];
       };
-      "matilda@${d.extra1}" = {
+      "matilda@${d.path}" = {
         passwordFile =
-          config.sops.secrets.${mkPasswordSecretName "matilda@${d.extra1}"}.path;
+          config.sops.secrets.${mkPasswordSecretName "matilda@${d.path}"}.path;
       };
-      # extra2
-      "contact@${d.extra2}" = {
+      # un
+      "contact@${d.un}" = {
         passwordFile =
-          config.sops.secrets.${mkPasswordSecretName "contact@${d.extra2}"}.path;
+          config.sops.secrets.${mkPasswordSecretName "contact@${d.un}"}.path;
       };
 
     } // wordpressMailAccounts;
