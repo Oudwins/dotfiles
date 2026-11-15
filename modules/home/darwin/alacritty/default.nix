@@ -76,12 +76,12 @@
           chars = "\\u001bp";
         }
         {
-          key = "LeftBracket";
+          key = "[";
           mods = "Command";
           chars = "\\u001b[";
         }
         {
-          key = "RightBracket";
+          key = "]";
           mods = "Command";
           chars = "\\u001b]";
         }
