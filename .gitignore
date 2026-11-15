@@ -1,60 +1,72 @@
-tmx/.config/sops/**
+home-files/tmx/.config/sops/**
 **/.direnv/
-tmx/.local/*
-!tmx/.local/bin/
-tmx/.local/bin/*
-!tmx/.local/bin/dscripts/
-tmx/.config/configstore
-tmx/.config/gcloud
-tmx/.config/firebase
-tmx/.config/direnv
-tmx/.config/simple-update-notifier
-tmx/.config/opencode/bun.lock
-tmx/.config/inngest
+home-files/tmx/.local/*
+!home-files/tmx/.local/bin/
+home-files/tmx/.local/bin/*
+!home-files/tmx/.local/bin/dscripts/
+home-files/tmx/.config/configstore
+home-files/tmx/.config/gcloud
+home-files/tmx/.config/firebase
+home-files/tmx/.config/direnv
+home-files/tmx/.config/simple-update-notifier
+home-files/tmx/.config/opencode/bun.lock
+home-files/tmx/.config/inngest
+home-files/tmx/.config/executor/executor.jsonc
 
 # Managed by Nix/home-manager
-tmx/.config/aerospace/
-tmx/.config/aerospace.bak/
-tmx/.config/git/config
-tmx/.config/tmux/tmux.conf
-tmx/.gitconfig
-tmx/.config/alacritty/
-tmx/.zshrc
+home-files/tmx/.config/aerospace/
+home-files/tmx/.config/aerospace.bak/
+home-files/tmx/.config/git/config
+home-files/tmx/.config/tmux/tmux.conf
+home-files/tmx/.gitconfig
+home-files/tmx/.config/alacritty/
+home-files/tmx/.zshrc
+home-files/tmx/.config/gtk-3.0/settings.ini
 
 # Local/generated files
 nixos/trace.txt
-tmx/.agents/.skill-lock.json
-tmx/.claude/cache/
-tmx/.cli-proxy-api/*
-!tmx/.cli-proxy-api/config.yaml
-!tmx/.cli-proxy-api/secrets.example.yaml
+home-files/tmx/.agents/.skill-lock.json
+# Claude Code runtime data (sessions, backups, plugins, cache); only these two
+# files are config
+home-files/tmx/.claude/*
+!home-files/tmx/.claude/CLAUDE.md
+!home-files/tmx/.claude/settings.json
+home-files/tmx/.cli-proxy-api/*
+!home-files/tmx/.cli-proxy-api/config.yaml
+!home-files/tmx/.cli-proxy-api/secrets.example.yaml
 thoughts/shared/plan/
-tmx/.config/btca/
-tmx/.config/buildkit/buildkitd.toml
-tmx/.config/cc-proxy/auth/credentials.json
-tmx/.config/containerd/config.toml
-tmx/.config/Cursor/User/settings.json.bak
-tmx/.config/elevenlabs/gar-npm-token.mjs
-tmx/.config/elevenscribe/
-tmx/.config/gh/hosts.yml
-tmx/.config/ghostty/config.ghostty
-tmx/.config/ghtkn/ghtkn.yaml
-tmx/.config/graphite/aliases
-tmx/.config/graphite/auth
-tmx/.config/graphite/user_config
-tmx/.config/karabiner/automatic_backups/karabiner_20250401.json
-tmx/.config/karabiner/automatic_backups/karabiner_20250402.json
-tmx/.config/nvim/doc/tags
-tmx/.config/op/config
-tmx/.config/opencode/service.json
-tmx/.config/sops-nix/secrets
-tmx/.config/tanstack/cli.json
-tmx/.config/tokscale/.settings.lock
-tmx/.config/tokscale/cache/
-tmx/.config/tokscale/cursor-credentials.json
+home-files/tmx/.config/btca/
+home-files/tmx/.config/buildkit/buildkitd.toml
+home-files/tmx/.config/cc-proxy/auth/credentials.json
+home-files/tmx/.config/containerd/config.toml
+home-files/tmx/.config/Cursor/User/settings.json.bak
+home-files/tmx/.config/elevenlabs/gar-npm-token.mjs
+home-files/tmx/.config/elevenscribe/
+home-files/tmx/.config/gh/hosts.yml
+home-files/tmx/.config/ghostty/config.ghostty
+home-files/tmx/.config/ghtkn/ghtkn.yaml
+home-files/tmx/.config/graphite/aliases
+home-files/tmx/.config/graphite/auth
+home-files/tmx/.config/graphite/user_config
+home-files/tmx/.config/karabiner/automatic_backups/karabiner_20250401.json
+home-files/tmx/.config/karabiner/automatic_backups/karabiner_20250402.json
+home-files/tmx/.config/nvim/doc/tags
+home-files/tmx/.config/op/config
+home-files/tmx/.config/opencode/service.json
+home-files/tmx/.config/sops-nix/secrets
+home-files/tmx/.config/tanstack/cli.json
+home-files/tmx/.config/tokscale/.settings.lock
+home-files/tmx/.config/tokscale/cache/
+home-files/tmx/.config/tokscale/cursor-credentials.json
 
 # Managed by Company
-tmx/.npmrc
+home-files/tmx/.npmrc
 
 # Skill script dependencies
-agent-commands/.agents/skills/*/node_modules/
+agents/commands/*/node_modules/
+
+# Servers infra
+.env
+
+# Python bytecode
+__pycache__/

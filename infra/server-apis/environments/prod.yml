@@ -1,0 +1,4 @@
+name: prod
+variables:
+  - secret: true
+    name: mealie_token

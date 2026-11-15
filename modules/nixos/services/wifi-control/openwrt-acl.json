@@ -1,0 +1,17 @@
+{
+  "wifi-control": {
+    "description": "Wi-Fi radio control and API session cleanup",
+    "read": {
+      "ubus": {
+        "network.wireless": ["status"],
+        "session": ["access"]
+      }
+    },
+    "write": {
+      "ubus": {
+        "network.wireless": ["up", "down"],
+        "session": ["destroy"]
+      }
+    }
+  }
+}

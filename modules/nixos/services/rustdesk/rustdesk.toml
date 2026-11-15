@@ -1,0 +1,9 @@
+# This file should be in ~/.config/rustdesk to be picked up automatically by rustdesk
+
+[security]
+password = "your-strong-password" # this sets unattended login with password
+direct-server = "Y" # This allows other people to connect to it directly through IP (not relay server)
+direct-access-port = "21118" # This is the port that the direct access server will listen on. This is also the default value.
+
+[general]
+id = "your-id" # this sets the id of the machine

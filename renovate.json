@@ -1,0 +1,58 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "automerge": false,
+  "prHourlyLimit": 0,
+  "prConcurrentLimit": 5,
+  "nix": {
+    "enabled": true
+  },
+  "lockFileMaintenance": {
+    "enabled": false
+  },
+  "ignorePaths": [
+    "modules/nixos/services/nextcloud/docs/**"
+  ],
+  "packageRules": [
+    {
+      "description": "Choose NixOS release channels manually",
+      "matchManagers": [
+        "nix"
+      ],
+      "matchPackageNames": [
+        "https://github.com/NixOS/nixpkgs"
+      ],
+      "matchUpdateTypes": [
+        "major",
+        "minor"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "nix-secrets is private and bumped by hand (`just update secrets`)",
+      "matchManagers": [
+        "nix"
+      ],
+      "matchPackageNames": [
+        "https://github.com/Oudwins/nix-secrets.git",
+        "git@github.com:Oudwins/nix-secrets.git"
+      ],
+      "enabled": false
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^(?:hosts|modules|roles|users)\\/.*\\.nix$/"
+      ],
+      "matchStrings": [
+        "(?:image|[A-Za-z][A-Za-z0-9]*Image)\\s*=\\s*\"(?<depName>[a-z0-9][a-z0-9._/-]*):(?<currentValue>[A-Za-z0-9_.-]+)(?:@(?<currentDigest>sha256:[a-f0-9]{64}))?\";"
+      ],
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "docker"
+    }
+  ]
+}
