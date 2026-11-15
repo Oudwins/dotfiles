@@ -21,11 +21,16 @@ home-files/tmx/.config/tmux/tmux.conf
 home-files/tmx/.gitconfig
 home-files/tmx/.config/alacritty/
 home-files/tmx/.zshrc
+home-files/tmx/.config/gtk-3.0/settings.ini
 
 # Local/generated files
 nixos/trace.txt
 home-files/tmx/.agents/.skill-lock.json
-home-files/tmx/.claude/cache/
+# Claude Code runtime data (sessions, backups, plugins, cache); only these two
+# files are config
+home-files/tmx/.claude/*
+!home-files/tmx/.claude/CLAUDE.md
+!home-files/tmx/.claude/settings.json
 home-files/tmx/.cli-proxy-api/*
 !home-files/tmx/.cli-proxy-api/config.yaml
 !home-files/tmx/.cli-proxy-api/secrets.example.yaml
