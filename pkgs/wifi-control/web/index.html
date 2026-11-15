@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f3f1e9">
+  <title>Nifilheim · Wi-Fi</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <main>
+    <header>
+      <a class="wordmark" href="/" aria-label="Nifilheim Wi-Fi home">nifilheim<span> / network</span></a>
+      <span class="edition">WIRELESS CONTROL</span>
+    </header>
+    <div class="page-heading">
+      <h1>Wi-Fi, on your terms<span class="period">.</span></h1>
+      <p class="intro">Independent routers. One daily rhythm. Ethernet keeps running.</p>
+    </div>
+    <p id="page-error" class="feedback error" role="alert" hidden></p>
+    <div id="routers" class="router-grid" aria-label="Router controls"></div>
+
+    <template id="router-template">
+      <section class="control router-card" data-state="unknown">
+        <div class="section-heading">
+          <h2 class="eyebrow"><span class="status-dot" aria-hidden="true"></span><span data-role="name"></span></h2>
+          <button class="refresh" data-role="refresh" type="button">Refresh <span aria-hidden="true">↻</span></button>
+        </div>
+        <p class="router-meta"><span data-role="id"></span><span aria-hidden="true"> · </span><span data-role="type"></span></p>
+        <h3 class="status-title" data-role="status" aria-live="polite">Checking Wi-Fi.</h3>
+        <dl class="radios" data-role="radios" aria-label="Individual radio states"></dl>
+        <div class="actions">
+          <button data-role="on" class="action primary" type="button" disabled><span aria-hidden="true">↗</span> Turn Wi-Fi on</button>
+          <button data-role="off" class="action secondary" type="button" disabled><span aria-hidden="true">↘</span> Turn Wi-Fi off</button>
+        </div>
+        <button class="schedule-lock" data-role="lock" type="button" aria-pressed="false">
+          <span class="lock-mark" aria-hidden="true">Ⅱ</span>
+          <span data-role="lock-label">Scheduled changes active</span>
+          <span class="lock-action" data-role="lock-action">Pause</span>
+        </button>
+        <p class="lock-note" data-role="lock-note">Daily timers apply. Manual buttons always work.</p>
+        <p class="feedback" data-role="feedback" role="status" aria-live="polite">Reading radio status…</p>
+        <p class="checked" data-role="checked">Awaiting first check</p>
+      </section>
+    </template>
+
+    <section class="schedule" aria-labelledby="schedule-title">
+      <div class="section-heading"><h2 id="schedule-title" class="eyebrow">Daily rhythm</h2><span id="timezone" class="timezone">—</span></div>
+      <div class="times">
+        <div><span class="time-label">ON EVERY DAY</span><strong id="on-time">—</strong></div>
+        <span class="time-divider" aria-hidden="true">→</span>
+        <div><span class="time-label">OFF EVERY DAY</span><strong id="off-time">—</strong></div>
+      </div>
+      <p class="next" id="next-event">Loading next scheduled action…</p>
+      <p class="schedule-note">Paused routers skip scheduled changes until you resume them. Manual controls never move the daily timers.</p>
+    </section>
+    <footer><span>One controller. Your network.</span><span>Wired stays connected.</span></footer>
+  </main>
+</body>
+</html>

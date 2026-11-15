@@ -1,9 +1,69 @@
+## Layout
+
+One flake (at the repo root) describes every machine: the `nixos` laptop, the
+`macos` laptop and the servers `tubby`, `faker`, `rizos`, `vela`, `vela-dev`,
+`iss` and `iss-dev`. Secrets live in the private `Oudwins/nix-secrets` flake,
+checked out at `~/nix-secrets`.
+
+```
+flake.nix  justfile  lib/        hosts are listed in flake.nix via mkHost / mkDarwinHost
+hosts/<name>/                    one folder per machine (+ home.nix for home-manager users)
+users/<name>/                    accounts, SSH keys, home-manager entry
+roles/                           import bundles: workstation, agents, server, hetzner, local-vm
+modules/{shared,nixos/{core,desktop,services,hardware},darwin,home/{common,linux,darwin}}
+pkgs/  overlays/  templates/     custom packages, overlays, `nix flake init -t .#python`
+home-files/tmx/                  plain config files, Stow-linked into ~
+agents/{skills,commands}/        agent skills and commands, linked by updateSymlinks.sh
+infra/  scripts/  docs/          server APIs, bootstrap scripts, server docs
+```
+
+Modules are imported explicitly; importing a module enables it. Per-host values
+are typed `my.*` options (`modules/shared/my.nix`): defaults live there, private
+values come from nix-secrets soft secrets, and a host file overrides either with a
+plain assignment.
+
+### Everyday commands
+
+```sh
+just switch                 # build + activate this machine (nixos or macos)
+just deploy tubby           # deploy a server using its my.deploy settings
+just build vela             # build a host without activating it
+just bootstrap vps iss root@<ip> -k ~/.ssh/id_ed25519   # install a new machine (vm|vps|encrypted)
+just secrets tubby          # edit sops/hosts/tubby.yaml in ~/nix-secrets
+just soft                   # edit soft secrets (plain values merged into my.*)
+just update [inputs…]       # update flake inputs
+just check                  # evaluate every host and package (what CI runs)
+```
+
+Recipes use `~/nix-secrets` directly, including uncommitted edits, so secrets
+changes apply without pushing. `SECRETS=pinned just …` uses the revision locked in
+`flake.lock` instead; bump it with `just update secrets` after pushing nix-secrets.
+Plain `nixos-rebuild switch --sudo --flake .#<host>` also works against the pin.
+New secrets files must be known to git (`just secrets` runs `git add -N` for you).
+For a different master key, e.g. iss: `MASTER_KEY=/etc/ssh/iss_ssh_master_key just bootstrap …`.
+
+### Secrets
+
+`~/nix-secrets` (private) holds:
+
+- `sops/{hosts,users,shared}/*.yaml`: sops-encrypted secrets. Each host names
+  the files it uses, e.g. `sops.defaultSopsFile = configLib.secretFile "sops/hosts/tubby.yaml";`.
+  `secretFile` copies only that file into the store, so no machine receives
+  other machines' ciphertext or the soft secrets.
+- `soft/default.nix`: private plain values (domain, email, deploy addresses).
+  They are applied to every host's `my.*` options (global, then per host). Values
+  are masked in public CI logs unless wrapped in `public`.
+- `.sops.yaml`: recipients for each file.
+
+CI (`.github/workflows/check.yml`) needs the read-only deploy key secret
+`NIX_SECRETS_DEPLOY_KEY`; it masks every soft secret before printing anything.
+
 ## Agent commands and skills
 
-Commands and automatically selected skills live in separate Stow packages:
+Commands and automatically selected skills live in two folders:
 
-- `agent-commands/.agents/skills/<name>/`: manually invoked commands.
-- `agent-skills/.agents/skills/<name>/`: ordinary skills.
+- `agents/commands/<name>/`: manually invoked commands.
+- `agents/skills/<name>/`: ordinary skills.
 
 Each directory contains `SKILL.md` with `name` and `description` frontmatter,
 plus any supporting files. Commands additionally set
@@ -15,22 +75,16 @@ policy:
   allow_implicit_invocation: false
 ```
 
-Run `./updateSymlinks.sh` to merge both packages into `~/.agents/skills/`.
-Each package also has `.claude/skills/<name>` symlinks pointing to its canonical
-`.agents/skills/<name>` directories, exposing the same collection to Claude Code.
-Invoke commands
+Run `./updateSymlinks.sh` to link every entry of both folders into
+`~/.agents/skills/<name>` and `~/.claude/skills/<name>`, exposing the same
+collection to Codex and Claude Code. Invoke commands
 with `/name` in Claude Code or `$name` in Codex. Pi's prompts link points only to
-the commands package through `tmx/.agents/commands`; its directory-prompts
+the commands folder through `home-files/tmx/.agents/commands`; its directory-prompts
 extension provides `/name` commands with companion-file support.
 
-Edit the source package directly; nothing is generated or copied. Use matching
-kebab-case directory and skill names, unique across both packages. When adding a
-command, also add its Claude link (use `agent-skills` for an ordinary skill):
-
-```sh
-ln -s ../../.agents/skills/my-command agent-commands/.claude/skills/my-command
-./updateSymlinks.sh
-```
+Edit the source folder directly; nothing is generated or copied. Use matching
+kebab-case directory and skill names, unique across both folders. After adding or
+removing an entry, run `./updateSymlinks.sh`.
 
 The former
 `research_basic` and `research_basic_inline` prompts are now `research-basic`
@@ -40,11 +94,11 @@ as part of the workflow rather than relying on client-specific substitutions.
 OpenCode's commands link is retained, but directory-format commands are not
 adapted for OpenCode.
 
-The Stow script uses its own checkout as the common Stow directory, allowing
-Stow to merge shared destination directories across packages. It can be rerun
-after adding or removing commands and their Claude links. It also migrates links
-from the previous single-package layout; unrelated files in
-the home directory remain subject to Stow's normal conflict checks.
+The script Stow-links `home-files/tmx` into `~`, then links the agent entries.
+It creates `~/.agents/skills` and `~/.claude/skills` as real directories first so
+Stow never folds them into the checkout, and it removes dangling links that point
+into this checkout (left behind when files move); unrelated files in the home
+directory remain subject to Stow's normal conflict checks.
 Git-ignored untracked files are excluded automatically; tracked files remain
 included. Normal Stow directory folding is retained: ignored files inside a
 linked directory remain accessible through that link. Preview changes with
@@ -54,7 +108,7 @@ linked directory remain accessible through that link. Preview changes with
 
 Imported from [t3dotgg/tstack](https://github.com/t3dotgg/tstack/tree/1085050f3baed1ac724caa4a8166145fb2ac88af/skills), with MIT licenses included:
 
-All seven are ordinary skills in `agent-skills/.agents/skills/`: `babysit-pr`,
+All seven are ordinary skills in `agents/skills/`: `babysit-pr`,
 `council`, `file-pr`, `full-send`, `full-stop`, `leaving-pr-comments`, and `sol-loop`.
 
 `modernize` and `takeover` are intentionally excluded.
@@ -76,7 +130,7 @@ sudo tailscale set --exit-node=
 ## Macos
 
 ```bash
-sudo darwin-rebuild switch --flake .#macos
+just switch
 sudo cli-proxy-api -claude-login --no-browser
 ```
 
@@ -115,9 +169,9 @@ account: `cli-proxy-api` on NixOS, `_cliproxyapi` on macOS. A root launcher decr
 SOPS and prepares private runtime files, then permanently drops UID/GID before
 executing the proxy. Your login user is not a member of the service group.
 
-Ordinary settings in `tmx/.cli-proxy-api/config.yaml` are tracked and Stow-linked to
+Ordinary settings in `home-files/tmx/.cli-proxy-api/config.yaml` are tracked and Stow-linked to
 `~/.cli-proxy-api/config.yaml`. Secrets live in **SOPS-encrypted**
-`nixos/secrets/cli-proxy-api.yaml`. Only ciphertext and scripts enter the Nix store;
+`sops/shared/cli-proxy-api.yaml` in nix-secrets. Only ciphertext and scripts enter the Nix store;
 Nix never decrypts or interpolates secret values during evaluation/build.
 
 The launcher merges them at runtime (including login commands). Nested mappings
@@ -142,13 +196,13 @@ The encrypted file is shared by both machines. To import an existing local secre
 file without making another plaintext copy (do not overwrite an existing SOPS file):
 
 ```bash
-cd ~/dotfiles/nixos
-test ! -e secrets/cli-proxy-api.yaml &&
-  sops --encrypt --filename-override secrets/cli-proxy-api.yaml \
-    ../tmx/.cli-proxy-api/secrets.yaml > secrets/cli-proxy-api.yaml
+cd ~/nix-secrets
+test ! -e sops/shared/cli-proxy-api.yaml &&
+  sops --encrypt --filename-override sops/shared/cli-proxy-api.yaml \
+    ~/dotfiles/home-files/tmx/.cli-proxy-api/secrets.yaml > sops/shared/cli-proxy-api.yaml
 ```
 
-For a fresh setup, use `../tmx/.cli-proxy-api/secrets.example.yaml` as the input instead,
+For a fresh setup, use `~/dotfiles/home-files/tmx/.cli-proxy-api/secrets.example.yaml` as the input instead,
 then edit with SOPS. Put a real client key in `access.api-keys`; an empty list means
 no client authentication. `sops`' interactive editor uses a temporary plaintext
 file: on NixOS, set `TMPDIR="$XDG_RUNTIME_DIR"` when editing. On macOS, use a private
@@ -156,8 +210,8 @@ RAM disk as `TMPDIR`, or use `sops set --value-stdin` to avoid editor temporary 
 Do not pass secret values as command-line arguments or put them in shell history.
 
 The daemon converts `~/.ssh/id_ed25519` to an age identity at runtime by default.
-Both machines' SSH-derived recipients are in `nixos/.sops.yaml`; add other machines'
-recipients and run `sops updatekeys secrets/cli-proxy-api.yaml` before rebuilding.
+Both machines' SSH-derived recipients are in nix-secrets' `.sops.yaml`; add other machines'
+recipients and run `sops updatekeys sops/shared/cli-proxy-api.yaml` there before rebuilding.
 For manual SOPS commands, if you do not already have an age identity configured,
 use `export SOPS_AGE_KEY="$(ssh-to-age -private-key -i ~/.ssh/id_ed25519)"` first.
 
@@ -166,14 +220,10 @@ On macOS the hidden account defaults to UID/GID 493. Verify these are unused, or
 
 ```bash
 cd ~/dotfiles
-stow --no-folding -d tmx -t ~ .
+./updateSymlinks.sh
 # Git-backed flakes only include tracked files. Stage the new module/helpers and
-# encrypted file first, or evaluate a clean source snapshot containing them.
-
-# macOS
-sudo darwin-rebuild switch --flake ./nixos#macos
-# Linux / NixOS
-sudo nixos-rebuild switch --flake ./nixos#nixos
+# encrypted file first (`git add -N`), or evaluate a clean source snapshot containing them.
+just switch
 ```
 
 Commit ordinary settings and the encrypted SOPS file, never plaintext secrets or
@@ -190,7 +240,7 @@ launchctl bootout "gui/$(id -u)/org.nix-community.home.cli-proxy-api"
 ```
 
 After verifying SOPS decryption and the new service, remove the old plaintext
-`tmx/.cli-proxy-api/secrets.yaml`, its `~/.cli-proxy-api/secrets.yaml` link, and
+`home-files/tmx/.cli-proxy-api/secrets.yaml`, its `~/.cli-proxy-api/secrets.yaml` link, and
 `~/.local/state/cli-proxy-api/config.yaml`. Old OAuth files in
 `~/.local/share/cli-proxy-api/auth` are not automatically migrated or deleted.
 To keep those existing logins, stop the proxy before copying them into the new
@@ -278,7 +328,7 @@ remain ordinary Stow-managed files (Claude's user entry lives in `~/.claude.json
 The Caddy-based `executor-router` service selects the `executor` entry in the shared
 service map and forwards to its configured target through
 Agent Vault, which injects the SOPS bearer token. Set the upstream URL per machine in
-`nixos/hosts/<host>/default.nix`:
+`hosts/<host>/default.nix`:
 
 ```nix
 mcp-gateway.address = "http://executor.localhost:4788/mcp"; # Default: local Executor.
@@ -298,14 +348,14 @@ alongside `127.0.0.1/32,::1/128`. For remote clients, set
 on the server and allow TCP port `4788`, or use a secure tunnel. Do not expose
 plain HTTP and its bearer token to an untrusted network.
 
-The bearer token is stored with sops in `nixos/secrets/home.yaml` (`executor/token`)
+The bearer token is stored with sops in nix-secrets `sops/users/tmx.yaml` (`executor/token`)
 and decrypted by Home Manager to `~/.config/sops-nix/secrets/executor/token` using
 `~/.ssh/id_ed25519`. The Executor service writes it into `auth.json` before
 starting. Agent Vault reads it on first use and caches it for up to one hour.
 Every machine shares one token and no process environment holds it. To add a machine,
-put its `ssh-to-age` public key in `nixos/.sops.yaml` and run
-`sops updatekeys secrets/home.yaml` from `nixos/` on a machine that can already
-decrypt it. To rotate, run `sops secrets/home.yaml`, rebuild, and restart
+put its `ssh-to-age` public key in nix-secrets' `.sops.yaml` and run
+`sops updatekeys sops/users/tmx.yaml` in `~/nix-secrets` on a machine that can already
+decrypt it. To rotate, run `just secrets tmx`, rebuild, and restart
 `agent-vault-credentials` to invalidate the cached credential immediately. Claude Code's
 global entry lives outside this repository in `~/.claude.json`. To configure a
 new machine:
@@ -317,7 +367,7 @@ claude mcp add-json --scope user executor '{"type":"http","url":"http://127.0.0.
 ### Shared address across machines
 
 All coding-agent clients use `llmproxy.tristanmayo.com` on port `8317`. Set one
-Nix option in the machine's `nixos/hosts/<host>/default.nix`:
+Nix option in the machine's `hosts/<host>/default.nix`:
 
 ```nix
 llmProxy.address = "127.0.0.1"; # Default: map the hostname locally and run CLIProxyAPI.
@@ -331,8 +381,9 @@ requires a matching server listener in the YAML settings.
 NixOS uses `networking.hosts`. On macOS, activation maintains a marked block in
 `/etc/hosts`, preserves all unrelated entries, and saves the original file as
 `/etc/hosts.before-llmproxy` before its first change. Rebuild Nix to apply the mapping
-before starting clients with the new hostname. New Nix files must be staged first,
-or use `--flake path:./nixos#macos` / `--flake path:./nixos#nixos` while testing.
+before starting clients with the new hostname. New Nix files must be tracked first
+(`git add -N <file>`); never use a `path:` flake ref, which would copy gitignored
+credentials under `home-files/` into the Nix store.
 
 This does not change `server.host: 127.0.0.1`, open firewall ports, or configure TLS.
 Before using a remote client, make the proxy reachable on a trusted private
@@ -404,7 +455,7 @@ release and runs three user services using launchd on macOS and systemd on Linux
   admin API and configuration persistence are disabled; its runtime configuration
   is supplied on stdin so the proxy token is never written into the Nix store.
 
-Settings live in `tmx/.config/agent-vault/config.json`, symlinked by Stow to
+Settings live in `home-files/tmx/.config/agent-vault/config.json`, symlinked by Stow to
 `~/.config/agent-vault/config.json`. Its `services` map is the source for both Caddy
 routing and Agent Vault's credential rules:
 
@@ -423,8 +474,8 @@ outside the configured map.
 
 API keys can be added in either of two ways, and both can be used at once:
 
-- **SOPS (tracked, shared by all machines):** add the key to `nixos/secrets/home.yaml`
-  with `sops`, declare it in `nixos/home/common/sops/default.nix`
+- **SOPS (tracked, shared by all machines):** add the key to nix-secrets
+  `sops/users/tmx.yaml` with `just secrets tmx`, declare it in `modules/home/common/sops/default.nix`
   (`secrets."openai/api_key" = { };`), then reference the decrypted file from
   `credentials` and use it in a service's headers:
 
@@ -504,4 +555,4 @@ launchctl kickstart -k gui/$(id -u)/org.nix-community.home.agent-vault-credentia
 On Linux use `systemctl --user restart agent-vault-credentials`. Authentication
 rejections are returned to clients; MCP POST requests are not replayed. No stdio
 bridge is provided. The package version and platform checksums live in
-`nixos/pkgs/agent-vault/package.nix`.
+`pkgs/agent-vault/package.nix`.
