@@ -1,42 +1,23 @@
-{
-  config,
-  lib,
-  pkgs,
-  isDarwin,
-  ...
-}:
+{ config, lib, ... }:
 
 let
-  address = config.llmProxy.address;
-  hostname = "llmproxy.${config.my.domain}";
+  address = config.agentServices.llmproxy.address;
 in
 {
-  options.llmProxy.address = lib.mkOption {
-    type = lib.types.strMatching "[0-9a-fA-F:.]+";
-    default = "127.0.0.1";
-    example = "192.168.1.50";
-    description = "Hosts-file address for llmproxy.<my.domain>. Loopback runs the local proxy; another IP selects a remote proxy and disables the local service.";
+  # Clients use http://127.0.0.1:28760/llmproxy; Agent Vault adds the client key.
+  # The port matches home-files/tmx/.cli-proxy-api/config.yaml.
+  agentServices.llmproxy = {
+    local = "http://llmproxy.localhost:8317";
+    variable = "LLM_PROXY_URL";
   };
 
-  config = {
-    services.cli-proxy-api.enable = lib.mkDefault (
-      builtins.elem address [
-        "127.0.0.1"
-        "::1"
-      ]
-    );
-  }
-  // (
-    if isDarwin then
-      {
-        # nix-darwin has no networking.hosts option; preserve other hosts-file entries.
-        system.activationScripts.postActivation.text = ''
-          ${pkgs.python3}/bin/python3 ${./update-hosts.py} ${hostname} ${lib.escapeShellArg address}
-          /usr/bin/dscacheutil -flushcache
-          /usr/bin/killall -HUP mDNSResponder || true
-        '';
-      }
-    else
-      { networking.hosts.${address} = [ hostname ]; }
-  );
+  services.cli-proxy-api.enable = lib.mkDefault (address == null);
+
+  assertions = [
+    {
+      # The router forwards subpaths only to targets without a path.
+      assertion = address == null || builtins.match "https?://[^/]+/?" address != null;
+      message = "agentServices.llmproxy.address must not include a path.";
+    }
+  ];
 }

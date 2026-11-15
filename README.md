@@ -204,8 +204,11 @@ test ! -e sops/shared/cli-proxy-api.yaml &&
 ```
 
 For a fresh setup, use `~/dotfiles/home-files/tmx/.cli-proxy-api/secrets.example.yaml` as the input instead,
-then edit with SOPS. Put a real client key in `access.api-keys`; an empty list means
-no client authentication. `sops`' interactive editor uses a temporary plaintext
+then edit with SOPS. Put a real client key in the top-level `client-key`: the
+launcher adds it to `access.api-keys`, and Home Manager decrypts the same value for
+Agent Vault to inject into agent requests. Further `access.api-keys` entries are for
+clients outside Agent Vault; an empty list with no `client-key` means no client
+authentication. `sops`' interactive editor uses a temporary plaintext
 file: on NixOS, set `TMPDIR="$XDG_RUNTIME_DIR"` when editing. On macOS, use a private
 RAM disk as `TMPDIR`, or use `sops set --value-stdin` to avoid editor temporary files.
 Do not pass secret values as command-line arguments or put them in shell history.
@@ -304,14 +307,15 @@ groups are retained, including groups added only in the secrets file. A secrets
 entry can override ordinary group fields too; nested lists such as `keys` and
 `models` still replace their tracked counterparts when explicitly supplied.
 
-Authenticate a provider, then point clients at `http://llmproxy.tristanmayo.com:8317/v1` with your
-client key:
+Authenticate a provider. Agents reach the proxy through Agent Vault (see
+[Shared address across machines](#shared-address-across-machines)); to query it
+directly, use the client key:
 
 ```bash
 sudo cli-proxy-api --codex-login
 # Or: sudo cli-proxy-api --claude-login
 # Headless: sudo cli-proxy-api --codex-device-login --no-browser
-curl -H "Authorization: Bearer YOUR_CLIENT_KEY" http://llmproxy.tristanmayo.com:8317/v1/models
+curl -H "Authorization: Bearer YOUR_CLIENT_KEY" http://127.0.0.1:8317/v1/models
 ```
 
 OAuth logins survive service stops, restarts and reboots. They are stored as ordinary
@@ -326,28 +330,21 @@ does not have a desktop session.
 Claude Code, Codex, pi and OpenCode use the fixed local URL
 `http://127.0.0.1:28760/executor`, without authentication headers. These client settings
 remain ordinary Stow-managed files (Claude's user entry lives in `~/.claude.json`).
-The Caddy-based `executor-router` service selects the `executor` entry in the shared
+The `agent-vault-router` service selects the `executor` entry in the shared
 service map and forwards to its configured target through
-Agent Vault, which injects the SOPS bearer token. Set the upstream URL per machine in
-`hosts/<host>/default.nix`:
+Agent Vault, which injects the SOPS bearer token. To use another machine's
+Executor, set its URL in `hosts/<host>/default.nix`; this disables the local service:
 
 ```nix
-mcp-gateway.address = "http://executor.localhost:4788/mcp"; # Default: local Executor.
-# mcp-gateway.address = "https://executor.example.com/mcp"; # Remote Executor; disables the local service.
+agentServices.executor.address = "https://executor.<tailnet>.ts.net/mcp";
 ```
 
-Nix passes `EXECUTOR_MCP_URL` to the router and credential helper, never to client
-MCP settings. Rebuild to switch the destination; client configs stay unchanged.
-Existing MCP connections may need reconnecting when switching servers. Agent Vault
-requires service hostnames, so use `executor.localhost` for the local service.
-NixOS adds that name to the hosts file; macOS resolves `.localhost` names itself.
-The default network allowlist permits loopback. For a remote Executor on a private
-network, add its IP/CIDR to
-`home-manager.users.tmx.services.agent-vault.environment.AGENT_VAULT_NETWORK_ALLOWLIST`
-alongside `127.0.0.1/32,::1/128`. For remote clients, set
-`home-manager.users.tmx.services.executor.host` to a trusted private interface
-on the server and allow TCP port `4788`, or use a secure tunnel. Do not expose
-plain HTTP and its bearer token to an untrusted network.
+Without an address, the router uses the local `http://executor.localhost:4788/mcp`.
+Existing MCP connections may need reconnecting when switching servers. Addresses
+follow the shared rules in [Shared address across machines](#shared-address-across-machines).
+For remote clients, set `home-manager.users.tmx.services.executor.host` to a trusted
+private interface on the server and allow TCP port `4788`, or use a secure tunnel.
+Do not expose plain HTTP and its bearer token to an untrusted network.
 
 The bearer token is stored with sops in nix-secrets `sops/users/tmx.yaml` (`executor/token`)
 and decrypted by Home Manager to `~/.config/sops-nix/secrets/executor/token` using
@@ -367,29 +364,38 @@ claude mcp add-json --scope user executor '{"type":"http","url":"http://127.0.0.
 
 ### Shared address across machines
 
-All coding-agent clients use `llmproxy.tristanmayo.com` on port `8317`. Set one
-Nix option in the machine's `hosts/<host>/default.nix`:
+Agents reach shared services through `agent-vault-router` on
+`http://127.0.0.1:28760/<name>`, which forwards through Agent Vault so it can inject
+each service's credential. Clients hold no keys and their settings never change per
+machine. Each service is declared under `agentServices` (`modules/shared/agent-services`):
+
+| Service | Client URL | Local endpoint | Injected credential |
+| --- | --- | --- | --- |
+| `llmproxy` | `http://127.0.0.1:28760/llmproxy` (`/v1` for OpenAI clients) | `http://llmproxy.localhost:8317` | CLIProxyAPI `client-key` |
+| `executor` | `http://127.0.0.1:28760/executor` | `http://executor.localhost:4788/mcp` | Executor bearer token |
+
+To use another machine's service, set its address in `hosts/<host>/default.nix`.
+This disables the local service:
 
 ```nix
-llmProxy.address = "127.0.0.1"; # Default: map the hostname locally and run CLIProxyAPI.
+agentServices.llmproxy.address = "https://tubby.<tailnet>.ts.net:8317";
 ```
 
-On a remote client, set that option to the proxy server's stable IP instead. Nix
-updates the hosts-file mapping and disables the local proxy service; no agent
-settings need changing. IPv6 loopback (`::1`) also selects the local service, but
-requires a matching server listener in the YAML settings.
+Addresses must use hostnames, such as Tailscale MagicDNS names, because Agent Vault
+rejects IP-based service hosts. Setting any address also allows Tailscale's ranges
+(`100.64.0.0/10`, `fd7a:115c:a1e0::/48`) in Agent Vault's network guard; add other
+private networks with `home-manager.users.tmx.services.agent-vault.networkAllowlist`.
+Local endpoints use `.localhost` names: NixOS adds them to the hosts file, and macOS
+resolves `.localhost` itself. The `llmproxy` address takes no path; the router passes
+every subpath through to it. Rebuild, then restart the router, to switch.
+New Nix files must be tracked first (`git add -N <file>`); never use a `path:`
+flake ref, which would copy gitignored credentials under `home-files/` into the
+Nix store.
 
-NixOS uses `networking.hosts`. On macOS, activation maintains a marked block in
-`/etc/hosts`, preserves all unrelated entries, and saves the original file as
-`/etc/hosts.before-llmproxy` before its first change. Rebuild Nix to apply the mapping
-before starting clients with the new hostname. New Nix files must be tracked first
-(`git add -N <file>`); never use a `path:` flake ref, which would copy gitignored
-credentials under `home-files/` into the Nix store.
-
-This does not change `server.host: 127.0.0.1`, open firewall ports, or configure TLS.
-Before using a remote client, make the proxy reachable on a trusted private
-interface or through a secure tunnel/reverse proxy. A hosts-file entry alone does
-not expose or encrypt the service; do not publish the unauthenticated API online.
+This does not change `server.host: 127.0.0.1` on the serving machine, open firewall
+ports, or configure TLS there. Before using a remote client, make the proxy reachable
+on a trusted private interface or through a secure tunnel/reverse proxy; do not
+publish the API online.
 
 ### Restarting the service
 
@@ -449,7 +455,7 @@ release and runs three user services using launchd on macOS and systemd on Linux
 - `agent-vault-credentials`: an authenticated credential-refresh endpoint on
   `127.0.0.1:14323` and unattended provisioning of the vault and client environment.
   It does not forward MCP traffic.
-- `executor-router`: Caddy serving named MCP routes on `127.0.0.1:28760`, forwarding
+- `agent-vault-router`: Caddy serving named routes on `127.0.0.1:28760`, forwarding
   each to its configured target through Agent Vault. It streams requests/responses, including
   SSE, and preserves MCP session headers. It has no credential-generation logic,
   stdio bridge or automatic retries. Browser-origin requests are rejected. Caddy's
@@ -463,6 +469,7 @@ routing and Agent Vault's credential rules:
 | Client URL | Configured upstream | Injected credential |
 | --- | --- | --- |
 | `http://127.0.0.1:28760/executor` | `${EXECUTOR_MCP_URL}` from Nix | SOPS bearer token |
+| `http://127.0.0.1:28760/llmproxy/…` | `${LLM_PROXY_URL}` from Nix | CLIProxyAPI client key |
 | `http://127.0.0.1:28760/payload-staging` | `https://payload.eleven2.dev/api/mcp` | Staging IAP token |
 | `http://127.0.0.1:28760/payload-production` | `https://payload.elevenlabs.io/api/mcp` | Production IAP token |
 
@@ -470,7 +477,9 @@ Add a service to this map to expose `/<service-name>` through Caddy. Each entry
 has a `target` URL and optional credential `headers`; omit headers for a public
 service. Environment placeholders use `${VARIABLE}` and are resolved by each
 service at startup. Restart the credential helper and Caddy after editing the map.
-Unknown names and arbitrary subpaths return 404; the request cannot choose a URL
+A target without a path exposes its whole host: `/<name>/<subpath>` is forwarded
+to `<target>/<subpath>`. A target with a path is served only at `/<name>`. Otherwise
+unknown names and subpaths return 404; the request cannot choose a URL
 outside the configured map.
 
 API keys can be added in either of two ways, and both can be used at once:
@@ -512,8 +521,8 @@ installation or global network-proxy setting is needed. Restart existing agent
 sessions and applications that launch them after changing the launchers.
 
 Agent Vault injects credentials only for the configured service hosts and paths;
-other destinations pass through without injected credentials. Loopback IPs and
-the model endpoint `llmproxy.tristanmayo.com` bypass the proxy. Keep `localhost`
+other destinations pass through without injected credentials. Loopback IPs,
+including the router on `127.0.0.1:28760`, bypass the proxy. Keep `localhost`
 out of `noProxy`: suffix matching would also bypass `executor.localhost`.
 
 The credential endpoint adapts the configured fixed `gcloud` commands and SOPS
@@ -542,8 +551,8 @@ The owner's password is in `~/.agent-vault/owner-password`; keep this directory
 when restarting or rebuilding. The service reconciles only the `dotfiles` vault.
 
 Check readiness with `curl http://127.0.0.1:14323/health`. On macOS, logs are in
-`~/Library/Logs/agent-vault*.log` and `~/Library/Logs/executor-router*.log`; on Linux use
-`journalctl --user -u agent-vault -u agent-vault-credentials -u executor-router`. Restart both Agent Vault services
+`~/Library/Logs/agent-vault*.log` and `~/Library/Logs/agent-vault-router*.log`; on Linux use
+`journalctl --user -u agent-vault -u agent-vault-credentials -u agent-vault-router`. Restart both Agent Vault services
 after editing ports, or just the helper after editing services/credential sources.
 Restart the router after changing its upstream URL, client proxy token or CA.
 Restart agent processes if their network-proxy address, client token or CA changes.

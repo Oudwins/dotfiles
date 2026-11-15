@@ -4,8 +4,8 @@ model_reasoning_effort = "medium"
 
 [model_providers.cliproxyapi]
 name = "CLIProxyAPI"
-base_url = "http://llmproxy.tristanmayo.com:8317/v1"
-model_catalog_url = "http://llmproxy.tristanmayo.com:8317/v1/models"
+base_url = "http://127.0.0.1:28760/llmproxy/v1"
+model_catalog_url = "http://127.0.0.1:28760/llmproxy/v1/models"
 wire_api = "responses"
 requires_openai_auth = false
 experimental_bearer_token = "local"

@@ -27,7 +27,7 @@ func newTestHelper(t *testing.T) *helper {
 	state = t.TempDir()
 	h, err := newHelper(&config{
 		ServerPort: 14321, ProxyPort: 14322, CredentialPort: 14323,
-		NoProxy:     []string{"127.0.0.1", "::1", "llmproxy.tristanmayo.com"},
+		NoProxy:     []string{"127.0.0.1", "::1"},
 		Credentials: map[string]credentialSpec{"TOKEN": {File: filepath.Join(state, "upstream-token")}},
 		Services:    map[string]route{"executor": {Target: "http://executor.localhost:4788/mcp"}},
 	})
@@ -57,6 +57,21 @@ func TestLoadConfigSubstitutesEnvironmentAndRejectsUnsafeTargets(t *testing.T) {
 		if _, err := loadConfig(path); err == nil {
 			t.Errorf("expected %s to be rejected", content)
 		}
+	}
+}
+
+func TestServiceRulesCoverTargetPathOrWholeHost(t *testing.T) {
+	rules := serviceRules(map[string]route{
+		"executor": {Target: "http://executor.localhost:4788/mcp"},
+		"llmproxy": {Target: "http://llmproxy.localhost:8317"},
+		"root":     {Target: "https://example.com/"},
+	})
+	paths := map[string]string{}
+	for _, rule := range rules {
+		paths[rule.Name] = rule.Host + rule.Path
+	}
+	if paths["executor"] != "executor.localhost:4788/mcp*" || paths["llmproxy"] != "llmproxy.localhost:8317/*" || paths["root"] != "example.com/*" {
+		t.Fatalf("unexpected rules %v", paths)
 	}
 }
 
@@ -180,7 +195,7 @@ func TestNetworkProxyEnvironmentAndCAArePrivateAndExcludeModelProxy(t *testing.T
 		t.Fatalf("unexpected environment %v", environment)
 	}
 	noProxy := strings.Split(environment["NO_PROXY"], ",")
-	if slices.Contains(noProxy, "localhost") || !slices.Contains(noProxy, "llmproxy.tristanmayo.com") {
+	if slices.Contains(noProxy, "localhost") || !slices.Contains(noProxy, "127.0.0.1") {
 		t.Fatalf("unexpected NO_PROXY %v", noProxy)
 	}
 	for _, name := range []string{"EXECUTOR_MCP_URL", "CODEX_EXECUTOR_CONFIG"} {

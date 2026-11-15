@@ -286,7 +286,12 @@ func serviceRules(services map[string]route) []serviceRule {
 		if len(entry.Headers) > 0 {
 			auth = serviceAuth{Type: "custom", Headers: entry.Headers}
 		}
-		rules = append(rules, serviceRule{Name: name, Host: target.Host, Path: strings.TrimRight(target.Path, "/") + "*", Auth: auth})
+		// Agent Vault rejects a bare "*", so a target without a path covers "/*".
+		path := strings.TrimRight(target.Path, "/") + "*"
+		if path == "*" {
+			path = "/*"
+		}
+		rules = append(rules, serviceRule{Name: name, Host: target.Host, Path: path, Auth: auth})
 	}
 	return rules
 }

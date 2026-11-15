@@ -2,10 +2,13 @@
   "serverPort": 14321,
   "proxyPort": 14322,
   "credentialPort": 14323,
-  "noProxy": ["127.0.0.1", "::1", "llmproxy.tristanmayo.com"],
+  "noProxy": ["127.0.0.1", "::1"],
   "credentials": {
     "EXECUTOR_TOKEN": {
       "file": "~/.config/sops-nix/secrets/executor/token"
+    },
+    "CLI_PROXY_API_KEY": {
+      "file": "~/.config/sops-nix/secrets/cli-proxy-api/client-key"
     },
     "PAYLOAD_STAGING_IAP": {
       "command": [
@@ -26,6 +29,10 @@
     "executor": {
       "target": "${EXECUTOR_MCP_URL}",
       "headers": { "Authorization": "Bearer {{ EXECUTOR_TOKEN }}" }
+    },
+    "llmproxy": {
+      "target": "${LLM_PROXY_URL}",
+      "headers": { "Authorization": "Bearer {{ CLI_PROXY_API_KEY }}" }
     },
     "payload-staging": {
       "target": "https://payload.eleven2.dev/api/mcp",

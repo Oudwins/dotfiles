@@ -11,13 +11,13 @@ let
   modes = {
     agent-vault = "server";
     agent-vault-credentials = "credentials";
-    executor-router = "router";
+    agent-vault-router = "router";
   };
   arguments =
     mode:
     if mode == "router" then
       [
-        "${pkgs.executor-router}/bin/executor-router"
+        "${pkgs.agent-vault-router}/bin/agent-vault-router"
         cfg.configFile
       ]
     else
@@ -29,7 +29,13 @@ let
       ];
   environment = {
     AGENT_VAULT_TELEMETRY = "false";
-    AGENT_VAULT_NETWORK_ALLOWLIST = "127.0.0.1/32,::1/128";
+    AGENT_VAULT_NETWORK_ALLOWLIST = lib.concatStringsSep "," (
+      [
+        "127.0.0.1/32"
+        "::1/128"
+      ]
+      ++ cfg.networkAllowlist
+    );
   }
   // cfg.environment;
 in
@@ -49,7 +55,12 @@ in
     environment = lib.mkOption {
       type = lib.types.attrsOf lib.types.str;
       default = { };
-      description = "Service environment, including the machine's Executor endpoint.";
+      description = "Service environment, including each agent service's upstream URL.";
+    };
+    networkAllowlist = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ ];
+      description = "Private networks (CIDRs) Agent Vault may connect to besides loopback; all other private and CGNAT ranges stay blocked.";
     };
   };
 
@@ -58,7 +69,7 @@ in
       cfg.package
       runner
       pkgs.agent-vault-clients
-      pkgs.executor-router
+      pkgs.agent-vault-router
     ];
 
     home.sessionPath = [ "${pkgs.agent-vault-clients}/bin" ];

@@ -1,6 +1,6 @@
 # Agent CLIs and the per-user agent services (Executor, Agent Vault, PR review
 # server). roles/agents.nix imports this for the main user.
-{ config, pkgs, ... }:
+{ config, configLib, pkgs, ... }:
 {
   imports = [
     ../executor
@@ -29,6 +29,12 @@
   services.pr-review-server.enable = true;
 
   sops.secrets."executor/token" = { };
+  # The same key CLIProxyAPI accepts (see modules/shared/cli-proxy-api); Agent
+  # Vault injects it into llmproxy requests.
+  sops.secrets."cli-proxy-api/client-key" = {
+    sopsFile = configLib.secretFile "sops/shared/cli-proxy-api.yaml";
+    key = "client-key";
+  };
 
   services.executor = {
     authTokenFile = config.sops.secrets."executor/token".path;

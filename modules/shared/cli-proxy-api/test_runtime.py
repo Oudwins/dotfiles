@@ -251,6 +251,29 @@ class MergeTests(unittest.TestCase):
         )
         self.assertIn('"$WRITABLE_PATH/auth"', source)
 
+    def test_client_key_joins_accepted_keys(self):
+        source = (HERE / "default.nix").read_text()
+        expression = re.search(
+            r"\| \$\{lib.getExe pkgs.yq-go\} '([^']+)' >", source
+        ).group(1)
+        for config, expected in [
+            ({"client-key": "shared", "access": {"api-keys": ["other"]}}, ["other", "shared"]),
+            ({"client-key": "shared"}, ["shared"]),
+            ({"access": {"api-keys": ["other"]}}, ["other"]),
+        ]:
+            with self.subTest(config=config):
+                result = subprocess.run(
+                    [os.environ.get("YQ", "yq"), "-o=json", expression, "-"],
+                    input=json.dumps(config),
+                    text=True,
+                    capture_output=True,
+                    env={**os.environ, "WRITABLE_PATH": "/state"},
+                )
+                self.assertEqual(result.returncode, 0, result.stderr)
+                merged = json.loads(result.stdout)
+                self.assertEqual(merged["access"]["api-keys"], expected)
+                self.assertNotIn("client-key", merged)
+
     def test_reject_duplicate_and_empty_names(self):
         for names in [["openai", "openai"], [""], [None]]:
             with self.subTest(names=names):
