@@ -9,7 +9,7 @@
     # NixOS hosts built with `channel = "unstable"` (iss, iss-dev).
     nixos-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
 
-    # Private: sops files + soft secrets. `just` overrides this with ~/nix-secrets.
+    # Private: sops files + soft secrets. SECRETS=/path/to/checkout overrides the pin in `just`.
     secrets = {
       url = "git+ssh://git@github.com/Oudwins/nix-secrets.git";
       inputs.nixpkgs.follows = "nixpkgs";

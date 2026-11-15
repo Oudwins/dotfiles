@@ -1,17 +1,17 @@
 # Everyday commands for every machine in this repo.
 #
-# Secrets come from the private nix-secrets flake. By default every recipe uses
-# the local checkout at ~/nix-secrets (including uncommitted edits); run with
-# SECRETS=pinned to use the revision locked in flake.lock instead. `bootstrap`
-# always uses the locked revision (nixos-anywhere can't override inputs), so
-# push nix-secrets and run `just update secrets` before bootstrapping.
+# Secrets come from the private nix-secrets flake, pinned in flake.lock.
+# Set SECRETS to a local checkout path to include uncommitted edits instead.
+# `bootstrap` always uses the locked revision (nixos-anywhere can't override
+# inputs), so push nix-secrets and run `just update secrets` before bootstrapping.
 
 set shell := ["bash", "-euo", "pipefail", "-c"]
 set positional-arguments
 
 repo := justfile_directory()
-secrets_dir := env("NIX_SECRETS_DIR", home_directory() / "nix-secrets")
-override := if env("SECRETS", "local") == "pinned" { "" } else { "--override-input secrets git+file://" + secrets_dir }
+secrets := env("SECRETS", "")
+secrets_dir := absolute_path(if secrets == "" { home_directory() / "nix-secrets" } else { secrets })
+override := if secrets == "" { "" } else { "--override-input secrets " + quote("git+file://" + secrets_dir) }
 
 # List recipes
 default:
@@ -32,9 +32,10 @@ help:
       just secrets <name>      edit a sops file: a host (tubby), user (tmx) or shared
                                (wifi-control) name, or a path such as hosts/new-host
       just soft                edit the soft secrets (plain values merged into my.*)
-      Recipes use your local ~/nix-secrets, uncommitted edits included. Prefix
-      SECRETS=pinned to use the revision locked in flake.lock instead, and set
-      NIX_SECRETS_DIR to use another checkout.
+      Builds and deploys use the revision locked in flake.lock by default.
+      Set SECRETS to a checkout path to include uncommitted edits instead:
+        SECRETS=~/nix-secrets just switch
+      Editing commands use ~/nix-secrets unless SECRETS is set.
       After editing: commit and push nix-secrets, then `just update secrets`.
 
     Inputs

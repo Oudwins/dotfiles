@@ -16,9 +16,19 @@ CI (`.github/workflows/check.yml`) needs the read-only deploy key secret
 
 ## Local vs pinned secrets
 
-Recipes use `~/nix-secrets` directly, including uncommitted edits, so secrets
-changes apply without pushing. `SECRETS=pinned just …` uses the revision locked in
-`flake.lock` instead; bump it with `just update secrets` after pushing nix-secrets.
+Builds and deploys use the revision locked in `flake.lock` by default. Nix fetches
+it automatically; no local nix-secrets checkout is needed. To include uncommitted
+edits instead, set `SECRETS` to a checkout path:
+
+```sh
+SECRETS=~/nix-secrets just switch
+```
+
+`just secrets` and `just soft` edit `~/nix-secrets` by default, or the checkout named
+by `SECRETS`. After committing and pushing nix-secrets, run `just update secrets`
+and commit and push dotfiles' updated `flake.lock`. Other machines only need to
+pull dotfiles and switch.
+
 Plain `nixos-rebuild switch --sudo --flake .#<host>` also works against the pin.
 New secrets files must be known to git (`just secrets` runs `git add -N` for you).
 For a different master key, e.g. iss: `MASTER_KEY=/etc/ssh/iss_ssh_master_key just bootstrap …`.

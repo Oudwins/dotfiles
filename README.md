@@ -69,13 +69,19 @@ sudo systemctl reset-failed nixos-rebuild-switch-to-configuration.service
 
 ### Secrets
 
+Builds and deploys use pinned secrets by default; a local checkout is only needed
+for editing. Set `SECRETS` to a checkout path to test uncommitted changes:
+
 ```sh
 just secrets tubby          # edit a sops file (host, user or shared name)
 just soft                   # edit soft secrets (plain values merged into my.*)
-just deploy tubby           # applies straight from your local ~/nix-secrets
+SECRETS=~/nix-secrets just deploy tubby
 # then commit + push nix-secrets and pin it here:
 just update secrets
 ```
+
+Commit and push the updated `flake.lock`. Other machines only need to pull dotfiles
+and run `just switch`; Nix fetches the matching secrets automatically.
 
 ### New machines
 
