@@ -25,6 +25,7 @@ plain assignment.
 ### Everyday commands
 
 ```sh
+just help                   # how to use these commands
 just switch                 # build + activate this machine (nixos or macos)
 just deploy tubby           # deploy a server using its my.deploy settings
 just build vela             # build a host without activating it

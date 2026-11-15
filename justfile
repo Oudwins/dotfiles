@@ -17,6 +17,43 @@ override := if env("SECRETS", "local") == "pinned" { "" } else { "--override-inp
 default:
     @just --list
 
+# How to use these recipes
+help:
+    #!/usr/bin/env bash
+    cat <<'EOF'
+    Everyday
+      just switch              build and activate this machine (nixos or macos)
+      just deploy <host>       deploy a server over SSH (address, user and port from my.deploy)
+      just build <host>        build a host without activating it
+      just check               evaluate every host and package (what CI runs)
+      just check-build         build every host and package
+
+    Secrets (private repo, checked out at ~/nix-secrets)
+      just secrets <name>      edit a sops file: a host (tubby), user (tmx) or shared
+                               (wifi-control) name, or a path such as hosts/new-host
+      just soft                edit the soft secrets (plain values merged into my.*)
+      Recipes use your local ~/nix-secrets, uncommitted edits included. Prefix
+      SECRETS=pinned to use the revision locked in flake.lock instead, and set
+      NIX_SECRETS_DIR to use another checkout.
+      After editing: commit and push nix-secrets, then `just update secrets`.
+
+    Inputs
+      just update              update every flake input
+      just update <input>...   update only those inputs (e.g. nixpkgs secrets)
+
+    New machines
+      just bootstrap <vm|vps|encrypted> <host> <user@address> [script options]
+      Uses the pinned secrets, so push nix-secrets and `just update secrets` first.
+      Reads the master key with sudo (override with MASTER_KEY=/path/to/key).
+
+    Good to know
+      - Nix only sees files git tracks. Register a new file with `git add -N <file>`
+        before building; never use a path: flake ref (it copies gitignored
+        credentials into the Nix store).
+      - First switch on a machine without just: nix run nixpkgs#just -- switch
+      - `just` alone lists every recipe.
+    EOF
+
 # Build and activate this machine (nixos or macos)
 switch *args:
     #!/usr/bin/env bash
@@ -93,9 +130,9 @@ soft:
 update *inputs:
     nix flake update --flake "{{repo}}" "$@"
 
-# Evaluate every host and package (what CI runs). Not `nix flake check
-# --no-build`: some modules need small builds during evaluation (shiori's key,
-# hermes-agent's package.json), which --no-build refuses.
+# Not `nix flake check --no-build`: hermes-agent needs a small build during
+# evaluation (it reads package.json from a fetched source), which that refuses.
+# Evaluate every host and package (what CI runs)
 check:
     nix eval --raw "{{repo}}#checks.x86_64-linux" {{override}} \
       --apply 'cs: builtins.concatStringsSep "\n" (builtins.attrValues (builtins.mapAttrs (n: d: n + " " + d.drvPath) cs)) + "\n"'
