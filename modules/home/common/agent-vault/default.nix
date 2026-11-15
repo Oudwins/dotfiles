@@ -11,13 +11,13 @@ let
   modes = {
     agent-vault = "server";
     agent-vault-credentials = "credentials";
-    executor-router = "router";
+    agent-vault-router = "router";
   };
   arguments =
     mode:
     if mode == "router" then
       [
-        "${pkgs.executor-router}/bin/executor-router"
+        "${pkgs.agent-vault-router}/bin/agent-vault-router"
         cfg.configFile
       ]
     else
@@ -29,7 +29,15 @@ let
       ];
   environment = {
     AGENT_VAULT_TELEMETRY = "false";
-    AGENT_VAULT_NETWORK_ALLOWLIST = "127.0.0.1/32,::1/128";
+    AGENT_VAULT_OWNER_EMAIL = cfg.ownerEmail;
+    AGENT_VAULT_OWNER_PASSWORD_FILE = cfg.ownerPasswordFile;
+    AGENT_VAULT_NETWORK_ALLOWLIST = lib.concatStringsSep "," (
+      [
+        "127.0.0.1/32"
+        "::1/128"
+      ]
+      ++ cfg.networkAllowlist
+    );
   }
   // cfg.environment;
 in
@@ -46,10 +54,23 @@ in
       default = "${config.home.homeDirectory}/.config/agent-vault/config.json";
       description = "Stow-managed configuration for proxy ports, credential sources and upstream services.";
     };
+    ownerEmail = lib.mkOption {
+      type = lib.types.str;
+      description = "Email of the owner account the helper registers and signs in with.";
+    };
+    ownerPasswordFile = lib.mkOption {
+      type = lib.types.str;
+      description = "File holding the owner account's password.";
+    };
     environment = lib.mkOption {
       type = lib.types.attrsOf lib.types.str;
       default = { };
-      description = "Service environment, including the machine's Executor endpoint.";
+      description = "Service environment, including each agent service's upstream URL.";
+    };
+    networkAllowlist = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ ];
+      description = "Private networks (CIDRs) Agent Vault may connect to besides loopback; all other private and CGNAT ranges stay blocked.";
     };
   };
 
@@ -58,7 +79,7 @@ in
       cfg.package
       runner
       pkgs.agent-vault-clients
-      pkgs.executor-router
+      pkgs.agent-vault-router
     ];
 
     home.sessionPath = [ "${pkgs.agent-vault-clients}/bin" ];
@@ -85,12 +106,12 @@ in
           ]
           ++ lib.optional (mode == "router") "agent-vault-credentials.service";
         }
-        // lib.optionalAttrs (mode == "credentials") { PartOf = [ "agent-vault.service" ]; };
+        // lib.optionalAttrs (mode != "server") { PartOf = [ "agent-vault.service" ]; };
         Service = {
           ExecStart = lib.escapeShellArgs (arguments mode);
           Environment = lib.mapAttrsToList (key: value: "${key}=${value}") environment;
           Restart = "always";
-          RestartSec = 5;
+          RestartSec = if mode == "credentials" then 60 else 5;
           UMask = "0077";
         };
         Install.WantedBy = [ "default.target" ];
@@ -105,7 +126,7 @@ in
           EnvironmentVariables = environment;
           KeepAlive = true;
           RunAtLoad = true;
-          ThrottleInterval = 5;
+          ThrottleInterval = if mode == "credentials" then 60 else 5;
           ProcessType = "Background";
           StandardOutPath = "${config.home.homeDirectory}/Library/Logs/${name}.log";
           StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/${name}.error.log";

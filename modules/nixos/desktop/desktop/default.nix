@@ -24,6 +24,7 @@
     Option "ScrollPixelDistance" "8"
   '';
 
+  services.picom.enable = true;
   services.autorandr.enable = true;
   services.gnome.gnome-keyring.enable = true;
   security.pam.services.sddm.enableGnomeKeyring = true;

@@ -28,11 +28,6 @@ in
       enable = true;
     };
     httpPort = port;
-    # TODO: proper backup and restore setup
-    # https://docs.gitea.com/administration/backup-and-restore
-    dump = {
-      enable = true;
-    };
     # extraConfig =
     #   let
     #     docutils = pkgs.python37.withPackages (

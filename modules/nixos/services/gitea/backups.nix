@@ -22,9 +22,22 @@ in
     healthchecks.enable = true;
 
     extraConfig = {
-      # nothing is needed here because gitea handles the dumps itself
-      backupPrepareCommand = '''';
-      paths = [ "${dataDir}/dump" ];
+      # consistent copy of the live sqlite db; the raw files are excluded below
+      backupPrepareCommand = ''
+        ${pkgs.sqlite}/bin/sqlite3 ${dataDir}/data/gitea.db ".backup '${dataDir}/backup/gitea.db'"
+      '';
+      paths = [
+        "${dataDir}/repositories"
+        "${dataDir}/data"
+        "${dataDir}/custom"
+        "${dataDir}/backup"
+      ];
+      exclude = [
+        "${dataDir}/data/gitea.db*"
+        "${dataDir}/data/indexers"
+        "${dataDir}/data/queues"
+        "${dataDir}/data/repo-archive"
+      ];
     };
   };
 

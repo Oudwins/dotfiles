@@ -74,7 +74,9 @@ let
         exit 1
       fi
       # Index provider groups by name while merging, then restore their lists.
-      # All other lists keep the normal replacement semantics.
+      # All other lists keep the normal replacement semantics. Then OAuth state
+      # goes to the private state directory, and the shared client-key (which
+      # Agent Vault injects for agents) joins the accepted client keys.
       # shellcheck disable=SC2016
       ${lib.getExe pkgs.yq-go} eval-all '
         # An empty api-keys key (e.g. a bare "api-keys:" in secrets.yaml) is null;
@@ -86,7 +88,7 @@ let
         with(select(has("api-keys"));
           .api-keys |= with_entries(.value |= ([to_entries[] | .value]))
         )
-      ' "''${inputs[@]}" | ${lib.getExe pkgs.yq-go} '.oauth.auth-dir = (strenv(WRITABLE_PATH) + "/auth")' > "$temporary_config"
+      ' "''${inputs[@]}" | ${lib.getExe pkgs.yq-go} '.oauth.auth-dir = (strenv(WRITABLE_PATH) + "/auth") | with(select(has("client-key")); .access.api-keys = ((.access.api-keys // []) + [.client-key] | unique) | del(.client-key))' > "$temporary_config"
       ${pkgs.coreutils}/bin/chown ${user}:${user} "$temporary_config"
       ${pkgs.coreutils}/bin/mv -fT "$temporary_config" "$runtime_dir/config.yaml"
       ${pkgs.coreutils}/bin/rm -f "$secrets"

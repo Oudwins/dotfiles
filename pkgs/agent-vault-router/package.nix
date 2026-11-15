@@ -11,13 +11,13 @@ let
     handler = "static_response";
     status_code = status;
   };
-  config = writeText "executor-router.json" (
+  config = writeText "agent-vault-router.json" (
     builtins.toJSON {
       admin = {
         disabled = true;
         config.persist = false;
       };
-      apps.http.servers.executor = {
+      apps.http.servers.router = {
         automatic_https.disable = true;
         routes = [
           {
@@ -60,7 +60,7 @@ let
   );
 in
 writeShellApplication {
-  name = "executor-router";
+  name = "agent-vault-router";
   runtimeInputs = [
     caddy
     jq
@@ -69,7 +69,7 @@ writeShellApplication {
   text = ''
     # shellcheck source=/dev/null
     . "$HOME/.agent-vault/proxy.env"
-    exec caddy run --config - < <(
+    router_config=$(
       python -c '
     import os, sys
     from pathlib import Path
@@ -83,26 +83,39 @@ writeShellApplication {
           | (.value.target | capture("^(?<scheme>https?)://(?<authority>[^/?#@ ]+)(?<path>/[^?#]*)?(?<query>\\?[^#]*)?$") // error("Invalid target for " + $name)) as $target
           | ($target.authority + (if $target.authority | test(":[0-9]+$") then "" elif $target.scheme == "https" then ":443" else ":80" end)) as $dial
           | {
-              match: [{path: ["/" + $name, "/" + $name + "/"]}],
-              handle: [
-                {handler: "rewrite", uri: (($target.path // "/") + ($target.query // "?") + (if $target.query then "&" else "" end) + "{http.request.uri.query}")},
-                {
-                  handler: "reverse_proxy", flush_interval: -1,
-                  upstreams: [{dial: $dial}],
-                  headers: {request: {set: {Host: [$target.authority]}, delete: ["Proxy-Authorization"]}},
-                  transport: ({protocol: "http", compression: false, network_proxy: {from: "url", url: env.HTTP_PROXY}}
-                    + if $target.scheme == "https" then {tls: {ca: {provider: "file", pem_files: [env.SSL_CERT_FILE]}}} else {} end)
-                }
-              ],
-              terminal: true
-            }
+              handler: "reverse_proxy", flush_interval: -1,
+              upstreams: [{dial: $dial}],
+              headers: {request: {set: {Host: [$target.authority]}, delete: ["Proxy-Authorization"]}},
+              transport: ({protocol: "http", compression: false, network_proxy: {from: "url", url: env.HTTP_PROXY}}
+                + if $target.scheme == "https" then {tls: {ca: {provider: "file", pem_files: [env.SSL_CERT_FILE]}}} else {} end)
+            } as $proxy
+          # A target without a path or query exposes its whole host, so subpaths pass
+          # through. Any other target is served only at its exact URL, which keeps
+          # requests (including ../ tricks) inside the path its credentials cover.
+          | if (($target.path // "/") == "/") and ($target.query == null) then
+              {
+                match: [{path: ["/" + $name, "/" + $name + "/*"]}],
+                handle: [{handler: "rewrite", strip_path_prefix: ("/" + $name)}, $proxy],
+                terminal: true
+              }
+            else
+              {
+                match: [{path: ["/" + $name, "/" + $name + "/"]}],
+                handle: [
+                  {handler: "rewrite", uri: (($target.path // "/") + ($target.query // "?") + (if $target.query then "&" else "" end) + "{http.request.uri.query}")},
+                  $proxy
+                ],
+                terminal: true
+              }
+            end
         ) as $routes
         | $base[0]
-        | .apps.http.servers.executor.listen = ["127.0.0.1:" + (env.EXECUTOR_ROUTER_PORT // "28760")]
-        | .apps.http.servers.executor.routes += $routes + [
+        | .apps.http.servers.router.listen = ["127.0.0.1:" + (env.AGENT_VAULT_ROUTER_PORT // "28760")]
+        | .apps.http.servers.router.routes += $routes + [
             {handle: [{handler: "static_response", status_code: 404}]}
           ]
       '
     )
+    exec caddy run --config - <<< "$router_config"
   '';
 }

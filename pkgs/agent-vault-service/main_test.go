@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -25,9 +27,13 @@ func jwt(exp int64) string {
 
 func newTestHelper(t *testing.T) *helper {
 	state = t.TempDir()
+	passwordFile := filepath.Join(state, "owner-password")
+	os.WriteFile(passwordFile, []byte("owner-test-password\n"), 0o600)
+	t.Setenv("AGENT_VAULT_OWNER_EMAIL", "tmx@example.com")
+	t.Setenv("AGENT_VAULT_OWNER_PASSWORD_FILE", passwordFile)
 	h, err := newHelper(&config{
 		ServerPort: 14321, ProxyPort: 14322, CredentialPort: 14323,
-		NoProxy:     []string{"127.0.0.1", "::1", "llmproxy.tristanmayo.com"},
+		NoProxy:     []string{"127.0.0.1", "::1"},
 		Credentials: map[string]credentialSpec{"TOKEN": {File: filepath.Join(state, "upstream-token")}},
 		Services:    map[string]route{"executor": {Target: "http://executor.localhost:4788/mcp"}},
 	})
@@ -57,6 +63,21 @@ func TestLoadConfigSubstitutesEnvironmentAndRejectsUnsafeTargets(t *testing.T) {
 		if _, err := loadConfig(path); err == nil {
 			t.Errorf("expected %s to be rejected", content)
 		}
+	}
+}
+
+func TestServiceRulesCoverTargetPathOrWholeHost(t *testing.T) {
+	rules := serviceRules(map[string]route{
+		"executor": {Target: "http://executor.localhost:4788/mcp"},
+		"llmproxy": {Target: "http://llmproxy.localhost:8317"},
+		"root":     {Target: "https://example.com/"},
+	})
+	paths := map[string]string{}
+	for _, rule := range rules {
+		paths[rule.Name] = rule.Host + rule.Path
+	}
+	if paths["executor"] != "executor.localhost:4788/mcp*" || paths["llmproxy"] != "llmproxy.localhost:8317/*" || paths["root"] != "example.com/*" {
+		t.Fatalf("unexpected rules %v", paths)
 	}
 }
 
@@ -176,11 +197,12 @@ func TestNetworkProxyEnvironmentAndCAArePrivateAndExcludeModelProxy(t *testing.T
 	environment := clientEnvironment(h.config, "test-capability", certificate)
 	if environment["HTTP_PROXY"] != "http://test-capability:dotfiles@127.0.0.1:14322" ||
 		environment["HTTPS_PROXY"] != environment["HTTP_PROXY"] || environment["http_proxy"] != environment["HTTP_PROXY"] ||
-		environment["no_proxy"] != environment["NO_PROXY"] || environment["CODEX_CA_CERTIFICATE"] != certificate {
+		environment["no_proxy"] != environment["NO_PROXY"] || environment["CODEX_CA_CERTIFICATE"] != certificate ||
+		environment["AGENT_VAULT_HEALTH_URL"] != "http://127.0.0.1:14323/health" {
 		t.Fatalf("unexpected environment %v", environment)
 	}
 	noProxy := strings.Split(environment["NO_PROXY"], ",")
-	if slices.Contains(noProxy, "localhost") || !slices.Contains(noProxy, "llmproxy.tristanmayo.com") {
+	if slices.Contains(noProxy, "localhost") || !slices.Contains(noProxy, "127.0.0.1") {
 		t.Fatalf("unexpected NO_PROXY %v", noProxy)
 	}
 	for _, name := range []string{"EXECUTOR_MCP_URL", "CODEX_EXECUTOR_CONFIG"} {
@@ -272,9 +294,135 @@ func TestBootstrapPreservesProxyTokenAndMergesServices(t *testing.T) {
 	}
 }
 
+func TestBootstrapRejectsDisabledProxyBeforeLogin(t *testing.T) {
+	h := newTestHelper(t)
+	vault := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/v1/status":
+			io.WriteString(w, `{"initialized": true}`)
+		case "/v1/mitm/ca.pem":
+			http.NotFound(w, r)
+		default:
+			t.Errorf("unexpected request to %s", r.URL.Path)
+			http.Error(w, "unexpected request", http.StatusInternalServerError)
+		}
+	}))
+	defer vault.Close()
+	h.address = vault.URL
+	if err := h.bootstrap(context.Background()); err == nil || !strings.Contains(err.Error(), "proxy CA is unavailable") {
+		t.Fatalf("unexpected bootstrap error: %v", err)
+	}
+	if h.ready.Load() {
+		t.Fatal("helper reported ready without a proxy")
+	}
+	if _, err := os.Stat(filepath.Join(state, "proxy.env")); !os.IsNotExist(err) {
+		t.Fatal("helper published an environment without a working proxy")
+	}
+}
+
+func TestBootstrapExplainsOwnerAuthenticationFailure(t *testing.T) {
+	h := newTestHelper(t)
+	vault := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/v1/status":
+			io.WriteString(w, `{"initialized": true}`)
+		case "/v1/mitm/ca.pem":
+			io.WriteString(w, "test-ca-certificate")
+		case "/v1/auth/login":
+			http.Error(w, "Invalid email or password", http.StatusUnauthorized)
+		default:
+			t.Errorf("unexpected request to %s", r.URL.Path)
+			http.Error(w, "unexpected request", http.StatusInternalServerError)
+		}
+	}))
+	defer vault.Close()
+	h.address = vault.URL
+	err := h.bootstrap(context.Background())
+	if err == nil || !strings.Contains(err.Error(), "owner authentication failed") || !strings.Contains(err.Error(), "AGENT_VAULT_OWNER_PASSWORD_FILE") {
+		t.Fatalf("unexpected bootstrap error: %v", err)
+	}
+	if h.ready.Load() {
+		t.Fatal("helper reported ready without authenticating")
+	}
+}
+
 func must[T any](value T, err error) T {
 	if err != nil {
 		panic(err)
 	}
 	return value
+}
+
+func TestResetOnOwnerChange(t *testing.T) {
+	for _, scenario := range []string{"unchanged", "email", "password", "missing-record", "missing-database", "empty-password", "unreadable-password"} {
+		t.Run(scenario, func(t *testing.T) {
+			state = t.TempDir()
+			passwordFile := filepath.Join(t.TempDir(), "owner-password")
+			os.WriteFile(passwordFile, []byte("first-password\n"), 0o600)
+			t.Setenv("AGENT_VAULT_OWNER_EMAIL", "tmx@example.com")
+			t.Setenv("AGENT_VAULT_OWNER_PASSWORD_FILE", passwordFile)
+			if err := resetOnOwnerChange(); err != nil {
+				t.Fatal(err)
+			}
+			original, err := os.ReadFile(filepath.Join(state, "owner"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			files := []string{
+				"agent-vault.db", "agent-vault.db-shm", "agent-vault.db-wal",
+				"ca/ca.crt.pem", "ca/ca.key.enc", "ca.pem", "proxy.env", "proxy.env.tmp",
+				"managed-services.json", "proxy-token", "owner-password",
+			}
+			os.MkdirAll(filepath.Join(state, "ca"), 0o700)
+			for _, name := range append(slices.Clone(files), "master-password", "credential-token") {
+				if err := os.WriteFile(filepath.Join(state, name), []byte(name), 0o600); err != nil {
+					t.Fatal(err)
+				}
+			}
+			switch scenario {
+			case "email":
+				t.Setenv("AGENT_VAULT_OWNER_EMAIL", "new@example.com")
+			case "password", "missing-database":
+				os.WriteFile(passwordFile, []byte("second-password\n"), 0o600)
+				if scenario == "missing-database" {
+					os.Remove(filepath.Join(state, "agent-vault.db"))
+				}
+			case "missing-record":
+				os.Remove(filepath.Join(state, "owner"))
+			case "empty-password":
+				os.WriteFile(passwordFile, []byte(" \n"), 0o600)
+			case "unreadable-password":
+				os.Remove(passwordFile)
+			}
+			invalid := scenario == "empty-password" || scenario == "unreadable-password"
+			if err := resetOnOwnerChange(); (err != nil) != invalid {
+				t.Fatalf("unexpected reset error: %v", err)
+			}
+			preserve := scenario == "unchanged" || invalid
+			for _, name := range files {
+				_, err := os.Stat(filepath.Join(state, name))
+				if preserve && err != nil {
+					t.Errorf("expected %s to survive: %v", name, err)
+				} else if !preserve && !errors.Is(err, fs.ErrNotExist) {
+					t.Errorf("expected %s to be removed, got %v", name, err)
+				}
+			}
+			for _, name := range []string{"master-password", "credential-token"} {
+				if content, err := os.ReadFile(filepath.Join(state, name)); err != nil || string(content) != name {
+					t.Errorf("expected %s to be preserved: %v", name, err)
+				}
+			}
+			recorded, err := os.ReadFile(filepath.Join(state, "owner"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			changed := scenario == "email" || scenario == "password" || scenario == "missing-database"
+			if (string(recorded) != string(original)) != changed {
+				t.Fatal("owner fingerprint does not match the reset result")
+			}
+			if info, err := os.Stat(filepath.Join(state, "owner")); err != nil || info.Mode().Perm() != 0o600 {
+				t.Fatalf("owner fingerprint must remain private: %v", err)
+			}
+		})
+	}
 }
