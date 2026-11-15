@@ -8,4 +8,6 @@
   };
 
   programs.gamemode.enable = true;
+  # for online play needed to connect over tailscale
+  networking.firewall.trustedInterfaces = [ "tailscale0" ];
 }
