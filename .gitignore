@@ -62,8 +62,8 @@ home-files/tmx/.config/tokscale/cursor-credentials.json
 # Managed by Company
 home-files/tmx/.npmrc
 
-# Skill script dependencies
-agents/commands/*/node_modules/
+# Node.js dependencies
+node_modules/
 
 # Servers infra
 .env

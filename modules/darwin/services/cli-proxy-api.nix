@@ -16,7 +16,12 @@ in
       isHidden = true;
     };
     launchd.daemons.cli-proxy-api.serviceConfig = {
-      ProgramArguments = [ (lib.getExe config.system.build.cli-proxy-api) ];
+      # The Nix volume may not be mounted when launchd loads system daemons.
+      ProgramArguments = [
+        "/bin/sh"
+        "-c"
+        "/bin/wait4path /nix/store && exec ${lib.escapeShellArg (lib.getExe config.system.build.cli-proxy-api)}"
+      ];
       KeepAlive = true;
       RunAtLoad = true;
       ThrottleInterval = 5;
