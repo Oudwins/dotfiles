@@ -885,35 +885,41 @@ async function post(path, body, method = "POST") {
   if (!res.ok) throw new Error((await res.text()).trim() || res.statusText);
 }
 
-function renderThread(thread) {
+// The head, each comment's meta and each block of its body are rows, so the
+// cursor moves through threads like any other text.
+function renderThread(thread, anchorRow) {
   const comments = thread.comments.nodes;
   const collapsed = thread.isResolved !== toggledThreads.has(thread.id);
-  return safeLinks(
+  const el = h(
+    "div",
+    { class: `thread${collapsed ? " collapsed" : ""}${thread.isResolved ? " resolved" : ""}` },
     h(
       "div",
-      { class: `thread${collapsed ? " collapsed" : ""}${thread.isResolved ? " resolved" : ""}` },
-      h(
+      { class: "row thread-head" },
+      `${comments[0]?.author?.login ?? "ghost"} · ${comments.length} comment${comments.length === 1 ? "" : "s"}`,
+      thread.isResolved && " · resolved",
+      thread.isOutdated && " · outdated",
+    ),
+    comments.map((c) => {
+      const body = markdown(c.bodyHTML);
+      body.classList.add("comment-body");
+      return h(
         "div",
-        { class: "thread-head" },
-        `${comments[0]?.author?.login ?? "ghost"} · ${comments.length} comment${comments.length === 1 ? "" : "s"}`,
-        thread.isResolved && " · resolved",
-        thread.isOutdated && " · outdated",
-      ),
-      comments.map((c) =>
+        { class: `comment${c.state === "PENDING" ? " pending" : ""}` },
         h(
           "div",
-          { class: `comment${c.state === "PENDING" ? " pending" : ""}` },
-          h(
-            "div",
-            { class: "comment-meta" },
-            `${c.author?.login ?? "ghost"} · ${new Date(c.createdAt).toLocaleString()}`,
-            c.state === "PENDING" && h("span", { class: "badge" }, "pending"),
-          ),
-          h("div", { class: "comment-body md", html: c.bodyHTML }),
+          { class: "row comment-meta" },
+          `${c.author?.login ?? "ghost"} · ${new Date(c.createdAt).toLocaleString()}`,
+          c.state === "PENDING" && h("span", { class: "badge" }, "pending"),
         ),
-      ),
-    ),
+        body,
+      );
+    }),
   );
+  el.thread = thread;
+  el.anchorRow = anchorRow;
+  for (const row of el.querySelectorAll(".row")) row.threads = [thread];
+  return el;
 }
 
 // Inserts after the row and any threads or editor already following it.
@@ -924,6 +930,9 @@ function insertAfter(row, el) {
 }
 
 function renderThreads() {
+  // A cursor inside a thread goes back to the same row of the rebuilt thread.
+  const old = cursor?.closest(".thread");
+  const restore = old && { id: old.thread.id, anchorRow: old.anchorRow, i: [...old.querySelectorAll(".row")].indexOf(cursor) };
   for (const el of document.querySelectorAll(".thread, .orphan")) el.remove();
   for (const row of document.querySelectorAll(".has-thread")) {
     row.classList.remove("has-thread");
@@ -942,10 +951,17 @@ function renderThreads() {
     for (const row of targets) {
       row.classList.add("has-thread");
       row.threads.push(thread);
-      insertAfter(row, renderThread(thread));
+      insertAfter(row, renderThread(thread, row));
     }
   }
   if (orphans) orphans.hidden = !orphans.querySelector(".orphan");
+  if (!restore) return;
+  // Orphan rows are rebuilt too, so their threads are found by id instead.
+  const copies = [...tabEls[active].querySelectorAll(".thread")].filter((el) => el.thread.id === restore.id);
+  const el = copies.find((el) => el.anchorRow === restore.anchorRow) ?? copies[0];
+  const row = el?.querySelectorAll(".row")[restore.i];
+  if (row?.offsetParent) setCursor(row, false);
+  else setCursor(el?.firstElementChild ?? (restore.anchorRow.isConnected ? restore.anchorRow : rows()[0]));
 }
 
 // Drafts are kept per row and kind, so reopening an editor restores them.
@@ -998,8 +1014,9 @@ function closeEditor() {
 
 // GitHub anchors a comment to diff lines within one hunk.
 function comment() {
-  const sel = selection();
-  if (!sel.every((row) => row.line && !row.line.unchanged)) return flash("Comments go on diff lines");
+  // Threads between the selected diff lines are skipped.
+  const sel = selection().filter((row) => !row.closest(".thread"));
+  if (!sel.length || !sel.every((row) => row.line && !row.line.unchanged)) return flash("Comments go on diff lines");
   if (new Set(sel.map(hunkOf)).size > 1) return flash("A comment's lines must be in one hunk");
   const first = sel[0].line;
   const last = sel.at(-1).line;
@@ -1024,7 +1041,7 @@ const threadAtCursor = () => cursor.threads?.find((t) => !t.isResolved) ?? curso
 function reply() {
   const thread = threadAtCursor();
   if (!thread) return flash("No thread on this line");
-  openEditor(cursor, "reply", `Reply to ${thread.comments.nodes[0]?.author?.login ?? "thread"}`, (body) =>
+  openEditor(cursor.closest(".thread")?.anchorRow ?? cursor, "reply", `Reply to ${thread.comments.nodes[0]?.author?.login ?? "thread"}`, (body) =>
     post(`/threads/${thread.id}/replies`, { commitOid: commitOid(), body }),
   );
 }
