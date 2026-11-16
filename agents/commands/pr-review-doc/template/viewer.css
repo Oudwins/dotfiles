@@ -102,13 +102,22 @@ kbd {
   color: var(--fg);
 }
 
+#tabbar-end {
+  position: sticky;
+  right: 0;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-left: auto;
+  padding-left: 12px;
+  background: var(--bg-raised);
+  white-space: nowrap;
+}
+
 #review {
   display: flex;
   gap: 8px;
   align-items: center;
-  margin-left: auto;
-  padding-left: 12px;
-  white-space: nowrap;
 }
 
 #review[hidden],

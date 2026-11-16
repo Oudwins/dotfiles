@@ -638,7 +638,16 @@ const reviewEl = h(
     "Approve",
   ),
 );
-tabbar.append(reviewEl);
+const prLink = (href, label) => h("a", { href, target: "_blank", rel: "noreferrer" }, label);
+tabbar.append(
+  h(
+    "div",
+    { id: "tabbar-end" },
+    reviewEl,
+    prLink(pr.url, "GitHub"),
+    prLink(`https://app.graphite.dev/github/pr/${pr.owner}/${pr.repo}/${pr.number}`, "Graphite"),
+  ),
+);
 
 function renderReviewState() {
   const state = snapshot?.viewerReview;
