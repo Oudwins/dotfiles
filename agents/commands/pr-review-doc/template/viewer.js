@@ -515,7 +515,7 @@ const renderers = {
       h(
         "section",
         { class: "section" },
-        h("div", { class: "row section-head" }, h("h2", {}, `${i + 1}. ${section.title}`), markdown(section.why, false)),
+        h("div", { class: "row section-head" }, h("h2", {}, `${i + 1}. ${section.title}`)),
         section.hunks.map((id) => renderHunk(id, { review: true, folded: section.folded || isTest(hunks[id].path) })),
       ),
     ),
