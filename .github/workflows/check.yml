@@ -1,12 +1,38 @@
 name: check
 
+# Pushes and PRs that only touch files Nix never reads don't run at all.
+# docs/hosts-file is the one docs file a host reads (hosts/nixos), so it is
+# re-included after `!docs/**`; later patterns win.
 on:
   push:
     branches: [master]
+    paths: &nix-paths
+      - '**'
+      - '!home-files/**'
+      - '!agents/**'
+      - '!docs/**'
+      - 'docs/hosts-file'
+      - '!tests/**'
+      - '!scripts/**'
+      - '!infra/**'
+      - '!assets/**'
+      - '!templates/**'
+      - '!ssh/**'
+      - '!*.md'
+      - '!updateSymlinks.sh'
+      - '!renovate.json'
+      - '!.gitignore'
+      - '!.envrc'
   pull_request:
+    paths: *nix-paths
+  # Builds everything, so a host that failed on the base commit and was then
+  # skipped as unchanged can't stay hidden for long.
+  schedule:
+    - cron: '0 4 * * 1'
+  workflow_dispatch:
 
 concurrency:
-  group: check-${{ github.ref }}
+  group: check-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
 # `shell: bash` runs steps with `-eo pipefail`, so a failed `nix eval` in the
@@ -22,12 +48,16 @@ defaults:
 
 jobs:
   eval:
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     outputs:
-      hosts: ${{ steps.hosts.outputs.hosts }}
+      hosts: ${{ steps.changed.outputs.hosts }}
+      packages: ${{ steps.changed.outputs.packages }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          # The base commit must be local to evaluate it.
+          fetch-depth: 0
       - uses: cachix/install-nix-action@v31
       - uses: webfactory/ssh-agent@v0.9.1
         with:
@@ -43,13 +73,39 @@ jobs:
           domain=$(nix eval --raw --impure --expr '(builtins.getFlake (toString ./.)).inputs.secrets.soft.values.global.domain' 2>/dev/null)
           echo "canary.$domain"
       - name: Evaluate every host and package
-        run: nix shell nixpkgs#just -c just check
-      - id: hosts
-        name: List hosts to build
-        run: echo "hosts=$(nix eval --json .#nixosConfigurations --apply builtins.attrNames)" >> "$GITHUB_OUTPUT"
+        run: nix shell nixpkgs#just -c just check | tee "$RUNNER_TEMP/head.txt"
+      # A derivation's path hashes everything it imports, so an unchanged
+      # "<check> <drvPath>" line means nothing that check depends on changed.
+      # PRs diff against their base branch, pushes against the previous push.
+      # If the base can't be evaluated (force push, broken base), or this is a
+      # scheduled/manual run, everything is built.
+      - id: changed
+        name: Find hosts and packages whose derivations changed
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          head="$RUNNER_TEMP/head.txt" base="$RUNNER_TEMP/base.txt"
+          : > "$base"
+          if [ "$EVENT" = push ] || [ "$EVENT" = pull_request ]; then
+            if ! { git cat-file -e "$BASE^{commit}" \
+              && nix shell nixpkgs#just -c just check "git+file://$PWD?rev=$BASE&allRefs=1&shallow=1" > "$base"; }; then
+              echo "Could not evaluate base $BASE, building everything" >&2
+              : > "$base"
+            fi
+          fi
+          changed=$(grep -vxF -f "$base" "$head" | cut -d' ' -f1 || true)
+          hosts=$(sed -n 's/^nixos-//p' <<<"$changed" | jq -Rnc '[inputs | select(length > 0)]')
+          packages=$(sed '/^nixos-/d' <<<"$changed" | jq -Rnc '[inputs | select(length > 0)]')
+          echo "Hosts to build: $hosts"
+          echo "Packages to build: $packages"
+          echo "hosts=$hosts" >> "$GITHUB_OUTPUT"
+          echo "packages=$packages" >> "$GITHUB_OUTPUT"
 
   build:
     needs: eval
+    # An empty matrix is an error, so skip the job instead.
+    if: needs.eval.outputs.hosts != '[]'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -75,6 +131,7 @@ jobs:
 
   packages:
     needs: eval
+    if: needs.eval.outputs.packages != '[]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -88,8 +145,9 @@ jobs:
           [ "$(jq length <<<"$mask")" -gt 0 ] || { echo "No soft-secret values to mask" >&2; exit 1; }
           jq -r '.[] | split("\n")[] | select(length > 0)' <<<"$mask" \
             | while IFS= read -r value; do echo "::add-mask::$value"; done
-      - name: Build custom packages
+      - name: Build changed custom packages
+        env:
+          PACKAGES: ${{ needs.eval.outputs.packages }}
         run: |
-          nix eval --json .#packages.x86_64-linux --apply builtins.attrNames \
-            | jq -r '.[] | ".#packages.x86_64-linux.\(.)"' \
+          jq -r '.[] | ".#packages.x86_64-linux.\(.)"' <<<"$PACKAGES" \
             | xargs nix build --no-link --no-update-lock-file -L
