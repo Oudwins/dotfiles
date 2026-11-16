@@ -47,9 +47,8 @@ linked directory remain accessible through that link. Preview changes with
 
 ## Imported tstack skills
 
-Imported from [t3dotgg/tstack](https://github.com/t3dotgg/tstack/tree/1085050f3baed1ac724caa4a8166145fb2ac88af/skills), with MIT licenses included:
+Imported from [t3dotgg/tstack](https://github.com/t3dotgg/tstack/tree/11e37a74d0a6868c121cd0910ab2b3bd9873b92a/skills), with the [MIT license](../agents/skills/LICENSE.tstack) included:
 
-All seven are ordinary skills in `agents/skills/`: `babysit-pr`,
-`council`, `file-pr`, `full-send`, `full-stop`, `leaving-pr-comments`, and `sol-loop`.
-
-`modernize` and `takeover` are intentionally excluded.
+All nine are ordinary skills in `agents/skills/`: `babysit-pr`,
+`council`, `file-pr`, `full-send`, `full-stop`, `leaving-pr-comments`, `modernize`,
+`sol-loop`, and `takeover`.

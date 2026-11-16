@@ -9,15 +9,6 @@
     "enabled": true,
     "standbyHours": 72
   },
-  "projectSettingsOverrides": {
-    "14e4e57c-2263-4406-bec4-2e7a35590a85": {
-      "defaultModelSelection": {
-        "instanceId": "claudeAgent",
-        "model": "claude-opus-5-5"
-      },
-      "defaultThreadEnvMode": "local"
-    }
-  },
   "projectSettingsFolded": true,
   "deviceOnboardingCompleted": true,
   "sidebarAutoSettleAfterDays": null,
