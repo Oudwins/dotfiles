@@ -133,9 +133,9 @@ update *inputs:
 
 # Not `nix flake check --no-build`: hermes-agent needs a small build during
 # evaluation (it reads package.json from a fetched source), which that refuses.
-# Evaluate every host and package (what CI runs)
-check:
-    nix eval --raw "{{repo}}#checks.x86_64-linux" {{override}} \
+# Evaluate every host and package (what CI runs); CI also passes an older revision to diff against
+check flake=repo:
+    nix eval --raw "{{flake}}#checks.x86_64-linux" {{override}} \
       --apply 'cs: builtins.concatStringsSep "\n" (builtins.attrValues (builtins.mapAttrs (n: d: n + " " + d.drvPath) cs)) + "\n"'
 
 # Build every host and package
