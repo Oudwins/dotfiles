@@ -33,6 +33,7 @@ in {
       bun
       python3
       typescript
+      vscode-langservers-extracted
       markdownlint-cli
       # Rust (require for some nvim pkgs)
       rustc

@@ -691,11 +691,14 @@ require('lazy').setup({
             if not lang then
               return
             end
-            if vim.list_contains(ts.get_installed(), lang) then
+            if vim.list_contains(ts.get_installed 'parsers', lang) and vim.list_contains(ts.get_installed 'queries', lang) then
               attach(args.buf, lang)
             elseif vim.list_contains(available, lang) then
-              -- Autoinstall languages that are not installed
-              ts.install(lang):await(function()
+              -- Install missing or incomplete parsers and their highlight queries.
+              ts.install(lang, { force = true }):await(function(err, success)
+                if err or not success then
+                  return
+                end
                 vim.schedule(function()
                   if vim.api.nvim_buf_is_valid(args.buf) then
                     attach(args.buf, lang)

@@ -37,8 +37,6 @@
         OPENCODE_CONFIG_DIR = "${home}/.config/opencode";
         DOCKER_CLI_PLUGIN_EXTRA_DIRS = "/opt/homebrew/lib/docker/cli-plugins";
         GOOGLE_CLOUD_PROJECT = "xi-playground";
-        GOOGLE_APPLICATION_CREDENTIALS =
-          "/Users/tmx/.config/gcloud/application_default_credentials.json";
         CLOUD_ML_REGION = "us-east5";
         TERMINAL = "ghostty";
         EDITOR = "nvim";

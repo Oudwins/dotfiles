@@ -299,8 +299,8 @@ return {
 
         -- NOTE: WEB
         --
-        -- tsgo. Works great but doesn't have code actions
-        tsgo = {
+        -- Native TypeScript language server
+        tsc = {
           cmd = { 'tsc', '--lsp', '--stdio' },
           filetypes = {
             'javascript',
@@ -318,7 +318,7 @@ return {
             'tsconfig.base.json',
           },
         },
-        -- typescript alternative to ts_ls. Disabling in favor of tsgo for now
+        -- typescript alternative to ts_ls. Disabling in favor of tsc for now
         -- vtsls = {
         --   -- on_attach = function(client)
         --   --   client.server_capabilities.documentFormattingProvider = false
@@ -475,10 +475,10 @@ return {
       -- You can add other tools here that you want Mason to install
       -- for you, so that they are available from within Neovim.
 
-      -- Use mason-tool-installer for non-LSP tools (formatters, linters)
-      -- mason-lspconfig handles LSP server installation with proper name translation
+      -- Install servers through Mason unless Nix already provides them.
+      local nix_servers = { 'nil_ls', 'tsc', 'eslint', 'cssls' }
       local ensure_installed = vim.tbl_filter(function(name)
-        return name ~= 'nil_ls' -- installed by Nix, not Mason
+        return not vim.list_contains(nix_servers, name)
       end, vim.tbl_keys(servers))
       vim.list_extend(ensure_installed, {
 
@@ -498,7 +498,6 @@ return {
       for name, server in pairs(servers) do
         server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
         vim.lsp.config(name, server)
-        vim.lsp.enable(name)
       end
 
       -- Special Lua Config, as recommended by neovim help docs
@@ -528,7 +527,11 @@ return {
           Lua = {},
         },
       })
-      vim.lsp.enable 'lua_ls'
+      -- Mason enables managed servers only after installation completes.
+      require('mason-lspconfig').setup {
+        automatic_enable = vim.tbl_keys(servers),
+      }
+      vim.lsp.enable(nix_servers)
 
       -- Handles on attach functions in lsp's configs
       vim.api.nvim_create_autocmd('LspAttach', {
