@@ -2,7 +2,7 @@
   "serverPort": 14321,
   "proxyPort": 14322,
   "credentialPort": 14323,
-  "noProxy": ["127.0.0.1", "::1"],
+  "noProxy": ["127.0.0.1", "::1", "localhost"],
   "credentials": {
     "EXECUTOR_TOKEN": {
       "file": "~/.config/sops-nix/secrets/executor/token"

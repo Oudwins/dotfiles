@@ -80,9 +80,11 @@ installation or global network-proxy setting is needed. Restart existing agent
 sessions and applications that launch them after changing the launchers.
 
 Agent Vault injects credentials only for the configured service hosts and paths;
-other destinations pass through without injected credentials. Loopback IPs,
-including the router on `127.0.0.1:28760`, bypass the proxy. Keep `localhost`
-out of `noProxy`: suffix matching would also bypass `executor.localhost`.
+other destinations pass through without injected credentials. Loopback IPs
+and `localhost`, including the router on `127.0.0.1:28760`, bypass the proxy, so
+local dev servers on `http://localhost:<port>` work in agent sessions. Suffix
+matching also bypasses `*.localhost` service hosts; only the router calls those,
+and it sets its proxy explicitly, ignoring `NO_PROXY`.
 
 The credential endpoint adapts the configured fixed `gcloud` commands and SOPS
 file to Agent Vault's OAuth refresh protocol. Credentials are generated lazily,
