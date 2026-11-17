@@ -33,7 +33,7 @@ func newTestHelper(t *testing.T) *helper {
 	t.Setenv("AGENT_VAULT_OWNER_PASSWORD_FILE", passwordFile)
 	h, err := newHelper(&config{
 		ServerPort: 14321, ProxyPort: 14322, CredentialPort: 14323,
-		NoProxy:     []string{"127.0.0.1", "::1"},
+		NoProxy:     []string{"127.0.0.1", "::1", "localhost"},
 		Credentials: map[string]credentialSpec{"TOKEN": {File: filepath.Join(state, "upstream-token")}},
 		Services:    map[string]route{"executor": {Target: "http://executor.localhost:4788/mcp"}},
 	})
@@ -202,7 +202,7 @@ func TestNetworkProxyEnvironmentAndCAArePrivateAndExcludeModelProxy(t *testing.T
 		t.Fatalf("unexpected environment %v", environment)
 	}
 	noProxy := strings.Split(environment["NO_PROXY"], ",")
-	if slices.Contains(noProxy, "localhost") || !slices.Contains(noProxy, "127.0.0.1") {
+	if !slices.Contains(noProxy, "localhost") || !slices.Contains(noProxy, "127.0.0.1") {
 		t.Fatalf("unexpected NO_PROXY %v", noProxy)
 	}
 	for _, name := range []string{"EXECUTOR_MCP_URL", "CODEX_EXECUTOR_CONFIG"} {
