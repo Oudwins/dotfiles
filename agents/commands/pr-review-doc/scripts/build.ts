@@ -15,14 +15,12 @@ if (!workdir) throw new Error("Usage: bun build.ts <workdir> [--tabs a,b]");
 const only = values.tabs?.split(",");
 const wanted = (id: string) => !only || only.includes(id);
 const { pr, files, hunks }: { pr: Pr; files: File[]; hunks: Hunk[] } = await Bun.file(join(workdir, "pr.json")).json();
-const hunkIds = new Set(hunks.map((h) => h.id));
 for (const hunk of hunks) diff.set(hunk.id, hunk);
 
 const problems: string[] = [];
 const built = [];
 for (const tab of tabs) {
-  // The Pseudocode tab is read from review.json.
-  if (!wanted(tab.id) && !(tab.id === "review" && wanted("pseudocode"))) continue;
+  if (!wanted(tab.id)) continue;
   const path = join(workdir, "tabs", `${tab.id}.json`);
   if (!existsSync(path)) {
     if (tab.required) problems.push(`${path}: missing required tab`);
@@ -34,19 +32,12 @@ for (const tab of tabs) {
     continue;
   }
   if (tab.id === "review") {
-    const { sections } = result.data as z.output<(typeof tabs)[2]["schema"]>;
-    const placed = sections.flatMap((s) => s.hunks);
-    for (const id of placed) if (!hunkIds.has(id)) problems.push(`${path}: unknown hunk ${id}`);
+    const placed = (result.data as z.output<(typeof tabs)[2]["schema"]>).hunks;
     for (const id of new Set(placed.filter((id, i) => placed.indexOf(id) !== i))) {
       problems.push(`${path}: hunk ${id} is placed more than once`);
     }
     const unplaced = hunks.filter((h) => !placed.includes(h.id)).map((h) => h.id);
-    if (unplaced.length) problems.push(`${path}: hunks not placed in any section: ${unplaced.join(", ")}`);
-    if (wanted("review")) built.push({ id: tab.id, title: tab.title, data: result.data });
-    if (wanted("pseudocode") && sections.some((s) => s.pseudocode.length)) {
-      built.push({ id: "pseudocode", title: "Pseudocode", data: result.data });
-    }
-    continue;
+    if (unplaced.length) problems.push(`${path}: hunks not placed: ${unplaced.join(", ")}`);
   }
   if ("items" in result.data && !result.data.items.length) {
     console.log(`${tab.id}: no items, so the tab is left out`);
@@ -75,7 +66,7 @@ function show(oid: string, path: string) {
 
 // The signature as the page shows it, with each short alias's value beside its
 // name, so the layout can size cards for it. Mirrors `inlineValue` in viewer.js.
-function withAliasValues(signature: string, definitions: z.output<(typeof tabs)[7]["schema"]>["types"], before = false) {
+function withAliasValues(signature: string, definitions: z.output<(typeof tabs)[8]["schema"]>["types"], before = false) {
   return definitions.reduce((code, definition) => {
     const value = (before && definition.previous ? definition.previous : definition).type;
     if (!definition.inline || !value || value.includes("\n") || value.length > 72) return code;
@@ -157,8 +148,8 @@ const pages = await Promise.all(
       return { ...tab, data: { ...data, items } };
     }
     if (tab.id !== "architecture" && tab.id !== "interfaces") return tab;
-    const graph = tab.data as z.output<(typeof tabs)[5]["schema"]>;
-    const typeData = tab.id === "interfaces" ? tab.data as z.output<(typeof tabs)[7]["schema"]> : null;
+    const graph = tab.data as z.output<(typeof tabs)[6]["schema"]>;
+    const typeData = tab.id === "interfaces" ? tab.data as z.output<(typeof tabs)[8]["schema"]> : null;
     for (const definition of typeData?.types ?? []) {
       const oid = definition.source.side === "base" ? pr.mergeBaseOid : pr.headOid;
       if (!show(oid, definition.source.path).split("\n")[definition.source.line - 1]) {

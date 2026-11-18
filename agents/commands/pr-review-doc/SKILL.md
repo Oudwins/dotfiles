@@ -31,7 +31,7 @@ Reply with the URL, the tabs you left out and why, and anything you could not wo
 | [At a glance](tabs/at-a-glance.md) | `at-a-glance.json` | Always |
 | [Quick view](tabs/quick-view.md) | `quick-view.json` | Always |
 | [Review](tabs/review.md) | `review.json` | Always |
-| [Pseudocode](tabs/pseudocode.md) | `pseudocode` in `review.json` | Sections with logic; the tab is hidden when no section has pseudocode |
+| [Pseudocode](tabs/pseudocode.md) | `pseudocode.json` | The PR has logic: branches, loops, async work, state changes, error handling or side effects |
 | [Architecture](tabs/architecture.md) | `architecture.json` | The PR changes how modules, services or components connect in a way the diff doesn't make obvious, or adds several parts that work together |
 | [Data model](tabs/data-model.md) | `data-model.json` | Schemas, migrations, persisted shapes, core types or store state change |
 | [Interfaces](tabs/interfaces.md) | `interfaces.json` | Contracts change: stored or wire shapes (schemas, routes, events, config), or interfaces unrelated code uses |

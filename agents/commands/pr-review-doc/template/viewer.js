@@ -511,23 +511,15 @@ const renderers = {
   ],
   "quick-view": renderQuickView,
   review: (data) => [
-    ...data.sections.map((section, i) =>
-      h(
-        "section",
-        { class: "section" },
-        h("div", { class: "row section-head" }, h("h2", {}, `${i + 1}. ${section.title}`)),
-        section.hunks.map((id) => renderHunk(id, { review: true, folded: section.folded || isTest(hunks[id].path) })),
-      ),
-    ),
+    data.hunks.map((id) => renderHunk(id, { review: true, folded: data.folded.includes(id) || isTest(hunks[id].path) })),
     // Threads whose line is not in this diff, e.g. outdated ones.
     h("section", { class: "section orphans", hidden: "" }, h("div", { class: "row section-head" }, h("h2", {}, "Other threads"))),
   ],
-  // The Review tab's sections with their pseudocode first and the code
-  // folded underneath, one fold per file.
+  // Each section's pseudocode first and its code folded underneath, one fold
+  // per file.
   pseudocode: (data) =>
     data.sections.map(
       (section, i) =>
-        section.pseudocode.length > 0 &&
         h(
           "section",
           { class: "section" },
