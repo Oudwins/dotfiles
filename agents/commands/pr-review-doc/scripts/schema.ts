@@ -78,6 +78,8 @@ const ref = z
   });
 const refs = z.array(ref).default([]);
 
+const hunkId = z.string().refine((id) => diff.has(id), { error: (issue) => `unknown hunk ${issue.input}` });
+
 // Code the PR doesn't change, by line range at the head commit, or at the
 // merge base for code the PR removes or replaces.
 const excerpt = z.strictObject({
@@ -175,8 +177,7 @@ const findings = <Kind extends z.ZodType>(kind: Kind) =>
   });
 
 // Tabs in display order. Required tabs must exist; the others appear only
-// when their JSON file exists. Tabs without items are left out. The
-// Pseudocode tab is built from review.json, after the Review tab.
+// when their JSON file exists. Tabs without items are left out.
 export const tabs = [
   {
     id: "at-a-glance",
@@ -208,16 +209,24 @@ export const tabs = [
     title: "Review",
     required: true,
     schema: z.strictObject({
+      // Every hunk once, in reading order.
+      hunks: z.array(hunkId).min(1),
+      // Generated or mechanical hunks that start folded.
+      folded: z.array(hunkId).default([]),
+    }),
+  },
+  {
+    id: "pseudocode",
+    title: "Pseudocode",
+    required: false,
+    schema: z.strictObject({
       sections: z
         .array(
           z.strictObject({
             title: text,
             why: markdown,
-            hunks: z.array(z.string().regex(/^h\d+$/)).min(1),
-            // Shown in the Pseudocode tab, above the section's hunks.
-            pseudocode: z.array(z.string()).default([]),
-            // Generated or mechanical code starts folded in the Review tab.
-            folded: z.boolean().default(false),
+            pseudocode: z.array(z.string()).min(1),
+            hunks: z.array(hunkId).min(1),
           }),
         )
         .min(1),
