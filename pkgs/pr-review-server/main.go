@@ -14,6 +14,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -82,6 +83,7 @@ func main() {
 	mux.HandleFunc("DELETE /api/pr/{owner}/{repo}/{number}/comments/{comment}", s.deleteComment)
 	mux.HandleFunc("POST /api/pr/{owner}/{repo}/{number}/review", s.submitReview)
 	mux.HandleFunc("POST /api/pr/{owner}/{repo}/{number}/comments", s.addComment)
+	mux.HandleFunc("POST /api/pr/{owner}/{repo}/{number}/attachments", s.attach)
 
 	log.Printf("listening on http://%s", *addr)
 	log.Fatal(http.ListenAndServe(*addr, s.guard(mux)))
@@ -95,7 +97,9 @@ func (s *server) guard(next http.Handler) http.Handler {
 			return
 		}
 		if r.Method != http.MethodGet {
-			if r.Header.Get("Origin") != "http://"+r.Host || r.Header.Get("Content-Type") != "application/json" {
+			// Neither type can be sent cross-origin without a preflight.
+			contentType := r.Header.Get("Content-Type")
+			if r.Header.Get("Origin") != "http://"+r.Host || contentType != "application/json" && !strings.HasPrefix(contentType, "image/") {
 				http.Error(w, "forbidden origin", http.StatusForbidden)
 				return
 			}
@@ -525,6 +529,42 @@ func (s *server) addComment(w http.ResponseWriter, r *http.Request) {
   addComment(input: {subjectId: $subjectId, body: $body}) { commentEdge { node { id } } }
 }`, map[string]any{"subjectId": res.Repository.PullRequest.ID, "body": in.Body}, &struct{}{})
 	})
+}
+
+// attach uploads an image pasted into a comment to GitHub's user-attachments
+// store, as dropping it into a comment on github.com does, and answers with
+// {"url": ...}. The asset is only visible to others once a comment links it.
+func (s *server) attach(w http.ResponseWriter, r *http.Request) {
+	p, ok := s.pr(w, r)
+	if !ok {
+		return
+	}
+	var stderr bytes.Buffer
+	cmd := exec.CommandContext(r.Context(), "gh", "api", "--hostname", "github.com", fmt.Sprintf("repos/%s/%s", p.owner, p.repo), "--jq", ".id")
+	cmd.Stderr = &stderr
+	repoID, err := cmd.Output()
+	if err == nil {
+		query := url.Values{
+			"name":          {r.URL.Query().Get("name")},
+			"content_type":  {r.Header.Get("Content-Type")},
+			"repository_id": {string(bytes.TrimSpace(repoID))},
+		}
+		stderr.Reset()
+		// The upload host only takes the gh token when pinned to github.com.
+		cmd = exec.CommandContext(r.Context(), "gh", "api", "--hostname", "github.com", "-X", "POST",
+			"https://uploads.github.com/user-attachments/assets?"+query.Encode(),
+			"-H", "Content-Type: "+r.Header.Get("Content-Type"), "--input", "-")
+		cmd.Stdin = r.Body
+		cmd.Stderr = &stderr
+		var out []byte
+		if out, err = cmd.Output(); err == nil {
+			w.Header().Set("Content-Type", "application/json")
+			w.Write(out)
+			return
+		}
+	}
+	log.Printf("%s %s: %v: %s", r.Method, r.URL.Path, err, bytes.TrimSpace(stderr.Bytes()))
+	http.Error(w, fmt.Sprintf("%v: %s", err, bytes.TrimSpace(stderr.Bytes())), http.StatusBadGateway)
 }
 
 // submitReview answers at once and submits in the background, so the review
