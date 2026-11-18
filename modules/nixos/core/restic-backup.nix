@@ -28,6 +28,19 @@ in
             default = config.users.users.root.name;
           };
           healthchecks.enable = lib.mkEnableOption "";
+          # systemd LoadCredential entries ("id:/path") made available to the job via
+          # $CREDENTIALS_DIRECTORY, so it can read secrets without running as root
+          loadCredentials = lib.mkOption {
+            type = lib.types.listOf lib.types.str;
+            default = [ ];
+          };
+          # Runs after the job succeeds or fails, as its own unit with the same user and
+          # credentials. Use instead of backupCleanupCommand (ExecStopPost), which runs
+          # after systemd has already removed the credentials.
+          cleanupCommand = lib.mkOption {
+            type = lib.types.nullOr lib.types.lines;
+            default = null;
+          };
           extraConfig = lib.mkOption {
             type = lib.types.attrsOf lib.types.anything;
             default = { };
@@ -102,6 +115,29 @@ in
       }
       // value.extraConfig
     ) cfg;
+
+    systemd.services = lib.mkMerge [
+      (lib.mapAttrs' (
+        name: value:
+        # mkIf rather than filterAttrs: the attr names must not depend on option values
+        lib.nameValuePair "restic-backups-${name}" {
+          serviceConfig.LoadCredential = lib.mkIf (value.loadCredentials != [ ]) value.loadCredentials;
+          onSuccess = lib.mkIf (value.cleanupCommand != null) [ "restic-backups-${name}-cleanup.service" ];
+          onFailure = lib.mkIf (value.cleanupCommand != null) [ "restic-backups-${name}-cleanup.service" ];
+        }
+      ) cfg)
+      (lib.mapAttrs' (
+        name: value:
+        lib.nameValuePair "restic-backups-${name}-cleanup" {
+          script = value.cleanupCommand;
+          serviceConfig = {
+            Type = "oneshot";
+            User = value.user;
+            LoadCredential = lib.mkIf (value.loadCredentials != [ ]) value.loadCredentials;
+          };
+        }
+      ) (lib.filterAttrs (_: value: value.cleanupCommand != null) cfg))
+    ];
 
     # backup healthchecks. Not yet tested TODO
     # systemd.services = lib.mkMerge [

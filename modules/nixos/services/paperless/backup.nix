@@ -23,7 +23,7 @@ in
 
     extraConfig = {
       backupPrepareCommand = ''
-        ${dataDir}/paperless-manage document_exporter ${dataDir}/backup ${
+        ${lib.getExe config.services.paperless.manage} document_exporter ${dataDir}/backup ${
           lib.concatStringsSep " " [
             "--compare-checksums"
             "--delete"
@@ -42,7 +42,7 @@ in
       name = "${serviceName}-restore";
       text = ''
         sudo -u ${userName} restic-${serviceName} restore --target / latest
-        sudo -u ${userName} ${dataDir}/paperless-manage document_importer ${dataDir}/backup
+        sudo -u ${userName} ${lib.getExe config.services.paperless.manage} document_importer ${dataDir}/backup
       '';
     })
   ];
