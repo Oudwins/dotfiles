@@ -3,12 +3,12 @@
   configLib,
   lib,
   pkgs,
+  isDarwin,
   ...
 }:
 
 let
   cfg = config.services.cli-proxy-api;
-  isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
   user = if isDarwin then "_cliproxyapi" else "cli-proxy-api";
   runtimeDir = if isDarwin then "/private/var/run/cli-proxy-api" else "/run/cli-proxy-api";
   command = pkgs.writeShellScriptBin "cli-proxy-api" ''
@@ -145,8 +145,78 @@ in
     };
   };
 
-  config = lib.mkIf cfg.enable {
-    environment.systemPackages = [ command ];
-    system.build.cli-proxy-api = command;
-  };
+  config = lib.mkIf cfg.enable (
+    {
+      environment.systemPackages = [ command ];
+      system.build.cli-proxy-api = command;
+    }
+    // (
+      if isDarwin then
+        {
+          users.knownUsers = [ user ];
+          users.knownGroups = [ user ];
+          users.groups.${user}.gid = cfg.darwinUid;
+          users.users.${user} = {
+            uid = cfg.darwinUid;
+            gid = cfg.darwinUid;
+            home = cfg.stateDir;
+            isHidden = true;
+          };
+          launchd.daemons.cli-proxy-api.serviceConfig = {
+            # The Nix volume may not be mounted when launchd loads system daemons.
+            ProgramArguments = [
+              "/bin/sh"
+              "-c"
+              "/bin/wait4path /nix/store && exec ${lib.escapeShellArg (lib.getExe command)}"
+            ];
+            KeepAlive = true;
+            RunAtLoad = true;
+            ThrottleInterval = 5;
+            ProcessType = "Background";
+            Umask = 63;
+            SoftResourceLimits.Core = 0;
+            HardResourceLimits.Core = 0;
+            StandardOutPath = "/var/log/cli-proxy-api.log";
+            StandardErrorPath = "/var/log/cli-proxy-api.error.log";
+          };
+        }
+      else
+        {
+          users.groups.${user} = { };
+          users.users.${user} = {
+            isSystemUser = true;
+            group = user;
+            home = cfg.stateDir;
+          };
+          systemd.tmpfiles.rules = [
+            "d ${cfg.stateDir} 0700 ${user} ${user} - -"
+          ];
+          systemd.services.cli-proxy-api = {
+            description = "CLIProxyAPI";
+            after = [ "network-online.target" ];
+            wants = [ "network-online.target" ];
+            wantedBy = [ "multi-user.target" ];
+            serviceConfig = {
+              # Root prepares credentials; the launcher permanently drops UID/GID before exec.
+              ExecStart = lib.getExe command;
+              Group = user;
+              RuntimeDirectory = "cli-proxy-api";
+              RuntimeDirectoryMode = "0750";
+              RuntimeDirectoryPreserve = "restart";
+              ReadWritePaths = [
+                runtimeDir
+                cfg.stateDir
+              ];
+              ProtectSystem = "strict";
+              NoNewPrivileges = true;
+              LimitCORE = 0;
+              # Upstream can exit successfully even when configuration loading fails.
+              Restart = "always";
+              RestartSec = 5;
+              UMask = "0077";
+            };
+          };
+        }
+    )
+  );
 }

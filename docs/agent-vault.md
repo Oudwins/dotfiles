@@ -158,7 +158,7 @@ bridge is provided. The package version and platform checksums live in
 Agents reach shared services through `agent-vault-router` on
 `http://127.0.0.1:28760/<name>`, which forwards through Agent Vault so it can inject
 each service's credential. Clients hold no keys and their settings never change per
-machine. Each service is declared under `agentServices` (`modules/shared/agent-services`):
+machine. Each service is wired in `roles/agents.nix`:
 
 | Service | Client URL | Local endpoint | Injected credential |
 | --- | --- | --- | --- |
@@ -169,7 +169,7 @@ To use another machine's service, set its address in `hosts/<host>/default.nix`.
 This disables the local service:
 
 ```nix
-agentServices.llmproxy.address = "https://tubby.<tailnet>.ts.net:8317";
+agents.llmproxy.address = "https://tubby.<tailnet>.ts.net:8317";
 ```
 
 Addresses must use hostnames, such as Tailscale MagicDNS names, because Agent Vault
@@ -199,7 +199,7 @@ Agent Vault, which injects the SOPS bearer token. To use another machine's
 Executor, set its URL in `hosts/<host>/default.nix`; this disables the local service:
 
 ```nix
-agentServices.executor.address = "https://executor.<tailnet>.ts.net/mcp";
+agents.executor.address = "https://executor.<tailnet>.ts.net/mcp";
 ```
 
 Without an address, the router uses the local `http://executor.localhost:4788/mcp`.

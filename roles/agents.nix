@@ -1,41 +1,187 @@
 # Coding agents on a workstation: the LLM proxy (CLIProxyAPI), the Executor MCP
-# gateway, Agent Vault, the PR review server and agent CLIs. Import this role
-# from a host and configure it there:
+# gateway, Agent Vault, the PR review server and agent CLIs. This role is the
+# only place these modules are imported and wired together. Import it from a
+# host and, to use another machine's service instead of the local one, set:
 #
-#   agentServices.llmproxy.address = "https://tubby.<tailnet>.ts.net:8317"; # remote proxy
-#   agentServices.executor.address = "https://executor.<tailnet>.ts.net/mcp"; # remote Executor
-#
-# Addresses must be hostnames (e.g. Tailscale MagicDNS), not IPs.
+#   agents.llmproxy.address = "https://tubby.<tailnet>.ts.net:8317"; # remote proxy
+#   agents.executor.address = "https://executor.<tailnet>.ts.net/mcp"; # remote Executor
 #
 # Skills and commands live in agents/ and are linked by updateSymlinks.sh.
 {
   config,
+  configLib,
   lib,
+  pkgs,
   isDarwin,
   ...
 }:
 
+let
+  cfg = config.agents;
+  user = config.my.username;
+  ownerEmail = "${user}@${config.my.domain}";
+  # Agent Vault rejects IP-based service hosts, so the host must contain a letter.
+  host = "[A-Za-z0-9.-]*[A-Za-z][A-Za-z0-9.-]*(:[0-9]+)?";
+  address =
+    pattern: example:
+    lib.mkOption {
+      type = lib.types.nullOr (lib.types.strMatching "https?://${host}${pattern}");
+      default = null;
+      inherit example;
+      description = "Remote endpoint to use instead of the local service, which is then disabled. Must be a hostname such as a Tailscale MagicDNS name, not an IP.";
+    };
+  # Agents reach each service through Agent Vault's router at
+  # http://127.0.0.1:28760/<name>, which injects its credential. The entries in
+  # home-files/tmx/.config/agent-vault/config.json read these variables.
+  services = {
+    # The port matches home-files/tmx/.cli-proxy-api/config.yaml.
+    llmproxy = {
+      local = "http://llmproxy.localhost:8317";
+      variable = "LLM_PROXY_URL";
+    };
+    executor = {
+      local = "http://executor.localhost:4788/mcp";
+      variable = "EXECUTOR_MCP_URL";
+    };
+  };
+  anyRemote = lib.any (name: cfg.${name}.address != null) (lib.attrNames services);
+in
 {
-  imports = [
-    ../modules/shared/agent-services
-    ../modules/shared/cli-proxy-api
-    (
-      if isDarwin then
-        ../modules/darwin/services/cli-proxy-api.nix
-      else
-        ../modules/nixos/services/cli-proxy-api
-    )
-    ../modules/shared/llmproxy
-    ../modules/shared/mcp-gateway
-  ];
+  imports = [ ../modules/shared/cli-proxy-api ];
+
+  options.agents = {
+    # The router forwards subpaths only to targets without a path.
+    llmproxy.address = address "/?" "https://tubby.example.ts.net:8317";
+    executor.address = address "(/[^?#]*)?" "https://executor.example.ts.net/mcp";
+  };
 
   config = {
-    home-manager.users.${config.my.username} = {
-      imports = [ ../modules/home/common/agents ];
-      services.agent-vault.ownerEmail = "${config.my.username}@${config.my.domain}";
-    };
+    # LLM proxy
+    services.cli-proxy-api.enable = lib.mkDefault (cfg.llmproxy.address == null);
+
+    home-manager.users.${user} =
+      { config, ... }:
+      {
+        imports = [
+          ../modules/home/common/executor
+          ../modules/home/common/agent-vault
+          ../modules/home/common/pr-review-server
+          ../modules/home/common/npm-global
+        ];
+
+        # Agent Vault
+        services.agent-vault = {
+          enable = true;
+          inherit ownerEmail;
+          ownerPasswordFile = config.sops.secrets."agent-vault/owner-password".path;
+          environment = lib.mapAttrs' (
+            name: service:
+            lib.nameValuePair service.variable (
+              if cfg.${name}.address == null then service.local else cfg.${name}.address
+            )
+          ) services;
+          # MagicDNS names resolve into Tailscale's CGNAT and IPv6 ranges, which
+          # Agent Vault blocks unless allowlisted.
+          networkAllowlist = lib.mkIf anyRemote [
+            "100.64.0.0/10"
+            "fd7a:115c:a1e0::/48"
+          ];
+        };
+        sops.secrets."agent-vault/owner-password" = { };
+        # The same key CLIProxyAPI accepts; Agent Vault injects it into llmproxy requests.
+        sops.secrets."cli-proxy-api/client-key" = {
+          sopsFile = configLib.secretFile "sops/shared/cli-proxy-api.yaml";
+          key = "client-key";
+        };
+
+        # Executor MCP gateway
+        sops.secrets."executor/token" = { };
+        services.executor = {
+          enable = lib.mkDefault (cfg.executor.address == null);
+          authTokenFile = config.sops.secrets."executor/token".path;
+          dataDir = "${config.home.homeDirectory}/.executor";
+          scopeDir = "${config.home.homeDirectory}/.executor";
+          mcpServers = {
+            # Figma only allows MCP OAuth for allowlisted clients, and gates dynamic
+            # client registration on the client_name string, so we register as
+            # "Claude Code". This way Executor's own redirect URI gets registered,
+            # which borrowing a static allowlisted client_id cannot do.
+            figma_mcp = {
+              name = "Figma MCP";
+              description = "Figma MCP";
+              endpoint = "https://mcp.figma.com/mcp";
+              authentication = "oauth2";
+              oauthClients.default = {
+                authorizationUrl = "https://www.figma.com/oauth/mcp";
+                tokenUrl = "https://api.figma.com/v1/oauth/token";
+                registrationEndpoint = "https://api.figma.com/v1/oauth/mcp/register";
+                clientName = "Claude Code";
+                scopes = [ "mcp:connect" ];
+                resource = "https://mcp.figma.com/mcp";
+              };
+            };
+            linear_mcp = {
+              name = "Linear MCP";
+              description = "Linear MCP";
+              endpoint = "https://mcp.linear.app/mcp";
+              authentication = "oauth2";
+            };
+            posthog_mcp = {
+              name = "Posthog MCP";
+              description = "Posthog MCP";
+              endpoint = "https://mcp.posthog.com/mcp";
+              authentication = "oauth2";
+            };
+          };
+        };
+
+        # PR review server
+        services.pr-review-server.enable = true;
+
+        # Agent CLIs update too often to pin, so npm installs them into ~/.npm when
+        # missing; update with `npm update -g`.
+        programs.npm-global.packages = {
+          "@anthropic-ai/claude-code" = { };
+          "@openai/codex" = { };
+          "opencode-ai" = { };
+          "@earendil-works/pi-coding-agent".flags = [ "--ignore-scripts" ];
+        };
+
+        # OpenCode's stable runtime gates Responses WebSockets behind this flag.
+        home.sessionVariables.OPENCODE_EXPERIMENTAL_WEBSOCKETS = "1";
+        home.packages = with pkgs; [
+          jq
+          bun
+          btca
+          jsonc2json
+          # Opencode for code linting
+          typescript-language-server
+          glab
+        ];
+
+        # Local AI
+        # ollama
+        # ollama run qwen3:8b
+        # ''
+        #   ram  model
+        #   8–16GB qwen3:4b
+        #   16–24GB qwen3:8b
+        #   32–36GB qwen3:14b or qwen3:32b
+        #
+        #   ---
+        #   Setup
+        #   -----
+        #   OLLAMA_CONTEXT_LENGTH=32768 ollama serve
+        #   ollama run qwen3:8b # only first time. To pull the model. You can also do ollama pull {model}
+        #   ollama run qwen3-coder:30b
+        # '';
+      };
   }
   // lib.optionalAttrs (!isDarwin) {
+    # Local endpoints use .localhost names; macOS resolves them itself.
+    networking.extraHosts = lib.concatMapStrings (
+      service: "127.0.0.1 ${builtins.head (builtins.match "https?://([^/:]+).*" service.local)}\n"
+    ) (lib.attrValues services);
     # OpenCode's prebuilt binaries need a dynamic loader.
     programs.nix-ld.enable = true;
   };
