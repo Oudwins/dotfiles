@@ -33,6 +33,14 @@ in
     enable = true;
     settings = {
       security.secret_key = "$__file{${config.sops.secrets."grafana/secret_key".path}}";
+      smtp = {
+        enabled = true;
+        host = "${config.my.smtp.host}:${toString config.my.smtp.port}";
+        user = config.my.smtp.from;
+        password = "$__file{/run/credentials/grafana.service/smtp-password}";
+        from_address = config.my.smtp.from;
+        from_name = "Grafana";
+      };
       server = {
         # domain = grafanaDomain;
         http_port = grafanaPort;
@@ -60,6 +68,10 @@ in
       ];
     };
   };
+
+  systemd.services.grafana.serviceConfig.LoadCredential = [
+    "smtp-password:${config.my.smtp.passwordFile}"
+  ];
 
   services.nginx.virtualHosts."${grafanaDomain}" = {
     useACMEHost = "${config.my.server.location}.${config.my.domain}";

@@ -23,6 +23,17 @@ in
       type = types.attrsOf types.str;
       default = { };
     };
+    # Mail relay services send notifications through (the mailserver on iss).
+    # The `from` address is also the SMTP login. Hosts set passwordFile.
+    smtp = {
+      host = required;
+      port = mkOption {
+        type = types.port;
+        default = 465;
+      };
+      from = str "no-reply@${config.my.domain}";
+      passwordFile = mkOption { type = types.str; };
+    };
     username = str "tmx";
     initialPassword = str "nixos";
 

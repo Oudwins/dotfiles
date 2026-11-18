@@ -80,7 +80,13 @@ in {
       owner = "nginx";
       group = "nginx";
     };
-  } // mailPasswordSecrets;
+  } // mailPasswordSecrets // {
+    # Shared with the hosts whose services send as this account.
+    ${mkPasswordSecretName config.my.smtp.from} =
+      mailPasswordSecrets.${mkPasswordSecretName config.my.smtp.from} // {
+        sopsFile = configLib.secretFile "sops/shared/mail.yaml";
+      };
+  };
 
   my.wordpressLiteSpeedProxy = {
     enable = true;
@@ -228,6 +234,11 @@ in {
         passwordFile = config.sops.secrets.${
             mkPasswordSecretName "void@${config.my.domain}"
           }.path;
+      };
+
+      # Service notifications (vaultwarden, gitea, grafana, ...)
+      ${config.my.smtp.from} = {
+        passwordFile = config.sops.secrets.${mkPasswordSecretName config.my.smtp.from}.path;
       };
 
       # Heike

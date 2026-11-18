@@ -1,4 +1,4 @@
-{ config, configLib, pkgs, ... }@args:
+{ config, configLib, lib, pkgs, ... }@args:
 let
   user = "nextcloud";
   group = "nextcloud";
@@ -81,7 +81,18 @@ in
       # ensures thrash and versions are deleted after a while. Otherwise nextcloud could keep the data around until it feels you "need" to delete it
       trashbin_retention_obligation = "30,60";
       version_retention_obligation = "30,180";
+
+      # Email
+      mail_smtpmode = "smtp";
+      mail_smtphost = config.my.smtp.host;
+      mail_smtpport = config.my.smtp.port;
+      mail_smtpsecure = "ssl";
+      mail_smtpauth = true;
+      mail_smtpname = config.my.smtp.from;
+      mail_from_address = builtins.head (lib.splitString "@" config.my.smtp.from);
+      mail_domain = lib.last (lib.splitString "@" config.my.smtp.from);
     };
+    secrets.mail_smtppassword = config.my.smtp.passwordFile;
 
     # infra
     configureRedis = true;
