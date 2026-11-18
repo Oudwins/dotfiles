@@ -5,7 +5,11 @@ let
   domain =
     "${config.my.services.mealie.subdomain}.${config.my.server.location}.${config.my.domain}";
 in {
-  imports = [ ./backup.nix (configLib.relativeToRoot "modules/nixos/services/nginx") ];
+  imports = [
+    ./backup.nix
+    (configLib.relativeToRoot "modules/nixos/services/nginx")
+    (configLib.relativeToRoot "modules/nixos/core/smtp-env.nix")
+  ];
 
   sops.secrets."openrouter/api_key" = { };
   sops.templates."mealie-openrouter.env".content = ''
@@ -26,7 +30,18 @@ in {
       OPENAI_MODEL = "openrouter/free";
       OPENAI_ENABLE_IMAGE_SERVICES = "false";
       OPENAI_ENABLE_TRANSCRIPTION_SERVICES = "false";
+      # Email (password from my.smtp.envFiles.mealie)
+      SMTP_HOST = config.my.smtp.host;
+      SMTP_PORT = toString config.my.smtp.port;
+      SMTP_AUTH_STRATEGY = "SSL";
+      SMTP_FROM_EMAIL = config.my.smtp.from;
+      SMTP_USER = config.my.smtp.from;
     };
+  };
+
+  my.smtp.envFiles.mealie = {
+    variable = "SMTP_PASSWORD";
+    units = [ "mealie" ];
   };
 
   services.nginx.virtualHosts."${domain}" = {

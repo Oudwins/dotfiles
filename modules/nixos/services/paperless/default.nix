@@ -1,11 +1,13 @@
 {
   config,
+  configLib,
   pkgs,
   ...
 }@args:
 {
   imports = [
     ./backup.nix
+    (configLib.relativeToRoot "modules/nixos/core/smtp-env.nix")
   ];
 
   sops.secrets."paperless/admin_pass" = {
@@ -42,7 +44,19 @@
       PAPERLESS_CSRF_TRUSTED_ORIGINS = "https://${config.my.services.paperless.subdomain}.${config.my.server.location}.${config.my.domain}";
       PAPERLESS_ALLOWED_HOSTS = "https://${config.my.services.paperless.subdomain}.${config.my.server.location}.${config.my.domain}";
       CORS_ALLOWED_HOSTS = "https://${config.my.services.paperless.subdomain}.${config.my.server.location}.${config.my.domain}";
+
+      # Email (password from my.smtp.envFiles.paperless)
+      PAPERLESS_EMAIL_HOST = config.my.smtp.host;
+      PAPERLESS_EMAIL_PORT = config.my.smtp.port;
+      PAPERLESS_EMAIL_HOST_USER = config.my.smtp.from;
+      PAPERLESS_EMAIL_FROM = config.my.smtp.from;
+      PAPERLESS_EMAIL_USE_SSL = "true";
     };
+  };
+
+  my.smtp.envFiles.paperless = {
+    variable = "PAPERLESS_EMAIL_HOST_PASSWORD";
+    units = [ "paperless-web" "paperless-task-queue" ];
   };
 
   # Set up SSL + Domain

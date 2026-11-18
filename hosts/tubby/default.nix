@@ -76,6 +76,11 @@ in
   my.solidtime.dbEnvironmentFile = config.sops.secrets."solidtime/db_env_file".path;
   services.shiori.environmentFile = config.sops.secrets."shiori/env_file".path;
 
+  # SMTP login for service emails (no-reply account on iss's mailserver).
+  sops.secrets."mail/passwords/${config.my.smtp.from}".sopsFile =
+    configLib.secretFile "sops/shared/mail.yaml";
+  my.smtp.passwordFile = config.sops.secrets."mail/passwords/${config.my.smtp.from}".path;
+
   # SERVER OPTIONS
   my.server.location = "t";
 

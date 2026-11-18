@@ -68,13 +68,13 @@ let
 
     # Mail
     MAIL_MAILER = "smtp";
-    MAIL_HOST = "";
-    MAIL_PORT = "";
+    MAIL_HOST = config.my.smtp.host;
+    MAIL_PORT = toString config.my.smtp.port;
     MAIL_ENCRYPTION = "tls";
-    MAIL_FROM_ADDRESS = "no-reply@your-domain.com";
+    MAIL_FROM_ADDRESS = config.my.smtp.from;
     MAIL_FROM_NAME = serviceName;
-    MAIL_USERNAME = "";
-    MAIL_PASSWORD = "";
+    MAIL_USERNAME = config.my.smtp.from;
+    # MAIL_PASSWORD comes from my.smtp.envFiles.solidtime
 
     # Queue
     QUEUE_CONNECTION = "database";
@@ -96,6 +96,7 @@ in
   imports = [
     (configLib.relativeToRoot "modules/nixos/services/nginx")
     (configLib.relativeToRoot "modules/nixos/services/containers")
+    (configLib.relativeToRoot "modules/nixos/core/smtp-env.nix")
     ./backup.nix
   ];
 
@@ -111,6 +112,11 @@ in
   };
 
   config = {
+
+  my.smtp.envFiles.solidtime = {
+    variable = "MAIL_PASSWORD";
+    units = [ "${serviceName}_app" "${serviceName}_scheduler" "${serviceName}_queue" ];
+  };
 
   systemd.tmpfiles.rules = [
     "d ${dataDir} 0777 ${user} ${group} -"
@@ -186,6 +192,7 @@ in
       // environmentVariables;
       environmentFiles = [
         config.my.solidtime.environmentFile
+        config.my.smtp.envFiles.solidtime.path
       ];
       networks = [ networkName ];
       dependsOn = [ "${serviceName}_db" ];
@@ -208,6 +215,7 @@ in
       // environmentVariables;
       environmentFiles = [
         config.my.solidtime.environmentFile
+        config.my.smtp.envFiles.solidtime.path
       ];
       networks = [ networkName ];
       dependsOn = [ "${serviceName}_db" ];
@@ -232,6 +240,7 @@ in
 
       environmentFiles = [
         config.my.solidtime.environmentFile
+        config.my.smtp.envFiles.solidtime.path
       ];
 
       networks = [ networkName ];

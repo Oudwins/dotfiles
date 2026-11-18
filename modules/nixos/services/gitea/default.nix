@@ -28,6 +28,15 @@ in
       enable = true;
     };
     httpPort = port;
+    settings.mailer = {
+      ENABLED = true;
+      PROTOCOL = "smtps";
+      SMTP_ADDR = config.my.smtp.host;
+      SMTP_PORT = config.my.smtp.port;
+      FROM = "Gitea <${config.my.smtp.from}>";
+      USER = config.my.smtp.from;
+    };
+    mailerPasswordFile = "/run/credentials/gitea.service/smtp-password";
     # extraConfig =
     #   let
     #     docutils = pkgs.python37.withPackages (
@@ -50,6 +59,10 @@ in
     #     IS_INPUT_FILE = false
     #   '';
   };
+
+  systemd.services.gitea.serviceConfig.LoadCredential = [
+    "smtp-password:${config.my.smtp.passwordFile}"
+  ];
 
   services.nginx.virtualHosts = {
     "${config.my.services.gitea.subdomain}.${config.my.server.location}.${config.my.domain}" = {

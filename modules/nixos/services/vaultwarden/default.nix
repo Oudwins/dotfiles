@@ -34,10 +34,22 @@ in
 
       USER_ATTACHMENT_LIMIT = 1; # KB. Set low so we don't use this function since I'm not going to back them up.
 
+      SMTP_HOST = config.my.smtp.host;
+      SMTP_PORT = config.my.smtp.port;
+      SMTP_SECURITY = "force_tls";
+      SMTP_FROM = config.my.smtp.from;
+      SMTP_FROM_NAME = "Vaultwarden";
+      SMTP_USERNAME = config.my.smtp.from;
+      SMTP_PASSWORD_FILE = "/run/credentials/vaultwarden.service/smtp-password";
+
       # LOG_LEVEL = "debug";
       # USE_SYSLOG=false # Not needed. But might want to add it to debug in the future
     };
   };
+
+  systemd.services.vaultwarden.serviceConfig.LoadCredential = [
+    "smtp-password:${config.my.smtp.passwordFile}"
+  ];
 
   environment.systemPackages = with pkgs; [
     vaultwarden # installs the CLI might be useful for token generation or other things.
