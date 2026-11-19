@@ -874,6 +874,11 @@ const sameDiff = () => Boolean(pr.diffHash) && snapshot?.diffHash === pr.diffHas
 const commitOid = () => (sameDiff() ? snapshot.headOid : pr.headOid);
 let editor = null;
 const drafts = new Map();
+// Numbers upload placeholders so two pasted images can't swap places.
+let uploads = 0;
+// Image uploads still running, per draft key.
+const uploading = new Map();
+const waitMessage = "Wait for the images to finish uploading";
 // Thread ids whose default collapsed state (resolved = collapsed) is flipped.
 const toggledThreads = new Set();
 
@@ -972,11 +977,49 @@ function openEditor(row, kind, title, submit) {
   const key = row ? `${kind}:${anchor(row.line?.side, row.line?.num, row.line?.path)}` : kind;
   const textarea = h("textarea", {
     rows: row ? 4 : 8,
-    placeholder: `Markdown. ⌘↵ posts ${row ? "to your pending review" : "to the PR"}, Esc closes.`,
+    placeholder: `Markdown; paste images. ⌘↵ posts ${row ? "to your pending review" : "to the PR"}, Esc closes.`,
   });
   const error = h("div", { class: "editor-error" });
   editor = h("div", { class: "editor" }, h("div", { class: "editor-title" }, title), textarea, error);
+  editor.key = key;
   textarea.value = drafts.get(key) ?? "";
+  // Pasted images upload to GitHub, holding their place with a placeholder
+  // like github.com does.
+  textarea.addEventListener("paste", (e) => {
+    const images = [...e.clipboardData.files].filter((file) => file.type.startsWith("image/"));
+    if (!images.length) return;
+    e.preventDefault();
+    for (const file of images) {
+      const alt = file.name.replace(/[[\]\\]/g, "\\$&");
+      const placeholder = `![Uploading ${alt} #${++uploads}…]()`;
+      textarea.setRangeText(`${placeholder}\n`, textarea.selectionStart, textarea.selectionEnd, "end");
+      uploading.set(key, (uploading.get(key) ?? 0) + 1);
+      let failure = "";
+      fetch(`${api}/attachments?name=${encodeURIComponent(file.name)}`, { method: "POST", headers: { "Content-Type": file.type }, body: file })
+        .then(async (res) => {
+          if (!res.ok) throw new Error((await res.text()).trim() || res.statusText);
+          return `![${alt}](${(await res.json()).url})`;
+        })
+        .catch((err) => {
+          failure = `Upload failed: ${err.message}`;
+          return "";
+        })
+        .then((link) => {
+          uploading.set(key, uploading.get(key) - 1);
+          // The editor may have been closed into a draft, or reopened, meanwhile.
+          if (editor?.key !== key) {
+            if (drafts.has(key)) drafts.set(key, drafts.get(key).replace(placeholder, () => link));
+            return;
+          }
+          const live = editor.querySelector("textarea");
+          const at = live.value.indexOf(placeholder);
+          if (at >= 0) live.setRangeText(link, at, at + placeholder.length, "preserve");
+          const note = editor.querySelector(".editor-error");
+          if (failure) note.textContent = failure;
+          else if (!uploading.get(key) && note.textContent === waitMessage) note.textContent = "";
+        });
+    }
+  });
   textarea.addEventListener("keydown", async (e) => {
     e.stopPropagation();
     if (e.key === "Escape") {
@@ -984,6 +1027,7 @@ function openEditor(row, kind, title, submit) {
       closeEditor();
     } else if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
+      if (uploading.get(key)) return (error.textContent = waitMessage);
       if (!textarea.value.trim()) return;
       textarea.disabled = true;
       error.textContent = "Posting…";
