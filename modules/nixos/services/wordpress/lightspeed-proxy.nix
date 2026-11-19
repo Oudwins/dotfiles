@@ -972,6 +972,9 @@ let
     let site = siteInfo.site;
     in lib.nameValuePair site.domain ({
       serverAliases = siteInfo.extraDomainNames;
+      # NGINX2Shell (CVE-2026-123007/123633) is only reachable over HTTP/2.
+      # Re-enable once nixpkgs ships nginx >= 1.30.7.
+      http2 = false;
       # password for protected sites.
       # must be in htpasswd format
       # generate one with -> openssl passwd -apr1 'your-password-here'
