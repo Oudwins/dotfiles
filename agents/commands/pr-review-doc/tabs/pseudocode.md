@@ -15,7 +15,7 @@ The PR's logic as pseudocode, grouped into sections, so the reviewer can follow 
 }
 ```
 
-- Write sections only for code with logic: branches, loops, async work, state changes, error handling or side effects. Leave out declarative code, where steps would only restate the diff: config, schemas, registration, types, markup and styling, generated files, lockfiles, formatting. Hunks may be left out. Leave the file out when no code has logic.
+- Write sections only for backend code with logic: branches, loops, async work, state changes, error handling or side effects. Favour complex logic: multi-step flows, concurrency, retries, transactions. Leave out frontend code (components, hooks, client state), simple logic a reviewer can follow from the diff, and declarative code, where steps would only restate the diff: config, schemas, registration, types, markup and styling, generated files, lockfiles, formatting. Hunks may be left out. Leave the file out when no backend code has logic worth tracing.
 - Order sections and their hunks as in the Review tab.
 - Group by concern, not by file. `title` names the concern ("Retry loop for webhook delivery"), not the file.
 - `why` is 1-3 sentences on what the section does and where it sits in the chain (what calls it), plus anything easy to miss in the code. Don't narrate the diff line by line.
