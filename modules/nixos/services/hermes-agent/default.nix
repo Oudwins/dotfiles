@@ -10,6 +10,7 @@ let
   big_model = "deepseek-v4.1-flash";
   small_model = "deepseek-v4.1-flash";
   nano_model = small_model;
+  vision_model = "qwen3.8-flash";
   base_url = "https://opencode.ai/zen/go/v1";
   elevenlabsScribeStt = pkgs.writeShellApplication {
     name = "elevenlabs-scribe-stt";
@@ -100,13 +101,11 @@ in {
         inherit provider base_url;
         default = big_model;
       };
-      toolsets = [ "all" ];
       tool_output = {
         max_bytes = 75000;
         max_lines = 5000;
         max_line_length = 5000;
       };
-      max_turns = 100;
 
       approvals = {
         mode = "off"; # skip all!
@@ -119,6 +118,9 @@ in {
         max_spawn_depth = 3;
         subagent_auto_approve = true;
       };
+      # extraPackages never reach the container's PATH; /nix/store is mounted,
+      # so point the browser at Nix's Chromium directly.
+      browser.executable_path = lib.getExe pkgs.chromium;
       terminal = {
         backend = "local";
         cwd = ".";
@@ -142,6 +144,14 @@ in {
           inherit provider;
           inherit base_url;
         };
+        vision = {
+          model = vision_model;
+          inherit provider base_url;
+        };
+        background_review = {
+          model = small_model;
+          inherit provider base_url;
+        };
       };
 
       memory = {
@@ -154,7 +164,7 @@ in {
         personality = "concise";
       };
       agent = {
-        max_turns = 60;
+        max_turns = 100;
         verbose = false;
       };
 

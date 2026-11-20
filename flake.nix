@@ -47,7 +47,7 @@
       url = "gitlab:simple-nixos-mailserver/nixos-mailserver";
       inputs.nixpkgs.follows = "nixos-unstable";
     };
-    hermes-agent.url = "github:NousResearch/hermes-agent/v2026.9.7";
+    hermes-agent.url = "github:NousResearch/hermes-agent/v0.23.3";
     tuwunel.url = "github:matrix-construct/tuwunel/v1.9.3";
 
     # Darwin-specific inputs
