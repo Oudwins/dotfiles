@@ -47,9 +47,9 @@ one appears.
    that could. If you are on the default branch, create a branch first.
 2. **Prove it.** Get proof for every change you made. See "Proof".
 3. **Get feedback.** Use the `sol-loop` skill to verify changes.
-4. **File the PR** with the `file-pr` skill. Rebase onto the latest default
-   branch first. Add one short line to the description that says how you proved
-   the change.
+4. **File the PR** with the `file-pr` skill. Rebase onto the latest base
+   branch first: the default branch, or the parent PR's branch in a stack.
+   Add one short line to the description that says how you proved the change.
 5. **Babysit the PR** with the `babysit-pr` skill. Fix real findings and CI
    failures. Get proof for each fix before you push it.
 6. **Merge** when the merge gate passes.
@@ -88,14 +88,42 @@ Full confidence means all of these are true on the latest commit:
 - Review bots have finished, and each finding is fixed or dismissed with a
   written reason.
 - No human review still requests changes.
-- The branch is up to date with the default branch, and GitHub reports it as
-  mergeable.
+- The repo's review rules are met. See "Pending reviewers".
+- The PR's base is the default branch, the branch is up to date with it, and
+  GitHub reports it as mergeable. See "Stacked PRs".
 
 Merge with the method the repo uses. Check the allowed methods and recent merged
 PRs. If the repo uses a merge queue or auto-merge, stay until GitHub reports the
 PR as merged. Merge through branch protection as configured. Never use `--admin`
 or other bypasses. You can ignore automated reviews that request "needs human
 review" if you have high confidence in your changes.
+
+### Pending reviewers
+
+Requested reviewers who have not reviewed yet do not block a merge. The
+repo's rules decide how many approvals the PR needs: branch protection or
+rulesets, and a policy bot's status check if the repo has one. Check them with
+`gh pr view --json reviewDecision,mergeStateStatus,statusCheckRollup`.
+
+- The rules are met and GitHub reports the PR as mergeable: merge, even while
+  other review requests are still open.
+- The rules still need more approvals: keep watching until those reviews
+  arrive. Do not ask the user.
+
+### Stacked PRs
+
+A PR whose base is another PR's branch cannot merge until every PR below it
+has merged. Never merge it into its parent's branch, and do not ask the user.
+If this task owns the PRs below, take each through the merge gate and merge
+them bottom-up.
+
+Otherwise, babysit this PR against its parent as usual, and also watch the
+lowest unmerged PR below it. This is the one PR you watch without working on
+it. When it merges, move the watch to the next unmerged PR below. Once every
+PR below has merged, restack this PR onto the default branch: `gt sync` and
+`gt restack` for a Graphite stack, otherwise rebase and retarget with
+`gh pr edit --base`. Push with `--force-with-lease`. Merge when the merge gate
+passes.
 
 ## Asking the user
 
@@ -108,7 +136,9 @@ the PR link, what blocks you, and the options with your recommendation first.
 Ask only when you cannot continue alone:
 
 - You cannot prove the change.
-- The merge gate cannot pass, and you cannot fix that yourself.
+- The merge gate cannot pass, and you cannot fix that yourself. Waiting for
+  required reviews or for PRs below it in a stack does not count. Keep
+  watching.
 - The next step is outside the grant above: deleting data, touching production,
   changing things outside the repo, closing a PR, or force-pushing any other
   branch.
