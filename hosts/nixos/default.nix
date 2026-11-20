@@ -62,6 +62,8 @@
 
   # Open ports in the firewall.
   networking.firewall = {
+    # T3 Code, reached from other devices over the tailnet only
+    interfaces.tailscale0.allowedTCPPorts = [ 3773 ];
     # allowedTCPPorts = [
     #   42000
     #   42001
