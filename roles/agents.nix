@@ -45,6 +45,10 @@ let
     };
   };
   anyRemote = lib.any (name: cfg.${name}.address != null) (lib.attrNames services);
+  endpoint =
+    name: if cfg.${name}.address == null then services.${name}.local else cfg.${name}.address;
+  origin = url: builtins.head (builtins.match "(https?://[^/]+).*" url);
+  agentVaultConfig = lib.importJSON ../home-files/tmx/.config/agent-vault/config.json;
 in
 {
   imports = [ ../modules/shared/cli-proxy-api ];
@@ -75,10 +79,7 @@ in
           inherit ownerEmail;
           ownerPasswordFile = config.sops.secrets."agent-vault/owner-password".path;
           environment = lib.mapAttrs' (
-            name: service:
-            lib.nameValuePair service.variable (
-              if cfg.${name}.address == null then service.local else cfg.${name}.address
-            )
+            name: service: lib.nameValuePair service.variable (endpoint name)
           ) services;
           # MagicDNS names resolve into Tailscale's CGNAT and IPv6 ranges, which
           # Agent Vault blocks unless allowlisted.
@@ -137,6 +138,31 @@ in
 
         # PR review server
         services.pr-review-server.enable = true;
+
+        # Dashboard links follow each service to its remote address when one is set.
+        my.dashboard.services = {
+          agent-vault = {
+            label = "Agent Vault";
+            description = "Credentials for coding agents";
+            url = "http://127.0.0.1:${toString agentVaultConfig.serverPort}";
+            category = "agents";
+            icon = "mdi-safe";
+          };
+          executor = {
+            label = "Executor";
+            description = "MCP gateway";
+            url = origin (endpoint "executor");
+            category = "agents";
+            icon = "mdi-hub";
+          };
+          llmproxy = {
+            label = "LLM proxy";
+            description = "CLIProxyAPI management";
+            url = "${lib.removeSuffix "/" (endpoint "llmproxy")}/management.html";
+            category = "agents";
+            icon = "mdi-robot";
+          };
+        };
 
         # Agent CLIs update too often to pin, so npm installs them into ~/.npm when
         # missing; update with `npm update -g`.
