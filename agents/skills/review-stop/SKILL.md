@@ -29,8 +29,9 @@ Use one watcher, as described in `babysit-pr`:
   times out or exits on an event that is not the review.
 
 Ignore CI, bot, and base branch events, except a PR below this one merging
-(see "Stacked PRs"). When an event needs no action, end your turn without a
-message.
+(see "Stacked PRs"), and required checks finishing (for example a policy
+bot) after an approval without feedback. When an event needs no action, end
+your turn without a message.
 
 ## Act on each review
 
@@ -40,7 +41,8 @@ conversation comments.
 - **Feedback:** stop once each reviewer you wait on has submitted a review
   (approved, changes requested, or commented), and report it. See "Report
   feedback".
-- **No feedback so far:** after each approval, check whether the repo's rules
+- **No feedback so far:** after each approval, and when a required check
+  finishes after one, check whether the repo's rules
   allow the merge now: branch protection or rulesets, and a policy bot's
   status check if the repo has one (`gh pr view --json
   reviewDecision,mergeStateStatus,statusCheckRollup`). If they do, merge,
@@ -67,12 +69,11 @@ Report the PR link, each reviewer's verdict, and the merge commit.
 
 Never merge a PR into its parent's branch. While PRs below it are open, also
 watch the lowest one, and keep acting on reviews of this PR as above. When it
-merges, check this PR's base. If it still points at the merged branch, or the
-PR is BEHIND only because of the stack, restack it onto the default branch:
-`gt sync` and `gt restack` for a Graphite stack, otherwise rebase and
-`gh pr edit --base`. Push with `--force-with-lease`. If the restack conflicts,
-report it and stop. Repeat until the base is the default branch, then merge as
-above. If the push dismissed the approval, wait for a new one.
+merges, move the watch to the next unmerged PR below. Once every PR below has
+merged, restack this PR onto the default branch: `gt sync` and `gt restack`
+for a Graphite stack, otherwise rebase and `gh pr edit --base`. Push with
+`--force-with-lease`. If the restack conflicts, report it and stop. Then merge
+as above. If the push dismissed the approval, wait for a new one.
 
 ## Report feedback
 

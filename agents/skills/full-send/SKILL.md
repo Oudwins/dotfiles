@@ -119,10 +119,10 @@ them bottom-up.
 
 Otherwise, babysit this PR against its parent as usual, and also watch the
 lowest unmerged PR below it. This is the one PR you watch without working on
-it. When it merges, restack this PR onto the default branch: `gt sync` and
+it. When it merges, move the watch to the next unmerged PR below. Once every
+PR below has merged, restack this PR onto the default branch: `gt sync` and
 `gt restack` for a Graphite stack, otherwise rebase and retarget with
-`gh pr edit --base`. Push with `--force-with-lease`, then repeat for the next
-PR below until the base is the default branch. Merge when the merge gate
+`gh pr edit --base`. Push with `--force-with-lease`. Merge when the merge gate
 passes.
 
 ## Asking the user
