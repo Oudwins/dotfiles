@@ -37,8 +37,13 @@ and mergeability. Confirm it is open, not a draft, and not set to merge
 without the user. If someone else merged it, report that instead.
 
 - **Ready to merge:** the merge gate passes. Leave the PR open and unmerged.
-- **Waiting for required approval:** only human approval remains. Confirm
-  that this is the actual blocker.
+  Open review requests do not change this when the repo's review rules are
+  met (see full-send's "Pending reviewers").
+- **Waiting for required approval:** only approvals that the repo's rules
+  require remain. Confirm that this is the actual blocker.
+- **Waiting on the stack:** everything passes except that PRs below it in the
+  stack are unmerged. Skip full-send's wait for them, since that wait exists
+  only to merge. List the PRs it waits on.
 - **Blocked:** explain what prevents readiness, what you tried, and what is
   needed. Follow full-send's rules for asking the user.
 
