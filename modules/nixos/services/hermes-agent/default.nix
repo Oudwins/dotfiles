@@ -148,14 +148,6 @@ in {
           model = vision_model;
           inherit provider base_url;
         };
-        web_extract = {
-          model = small_model;
-          inherit provider base_url;
-        };
-        session_search = {
-          model = small_model;
-          inherit provider base_url;
-        };
         background_review = {
           model = small_model;
           inherit provider base_url;
