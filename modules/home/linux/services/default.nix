@@ -1,6 +1,14 @@
 { config, ... }:
 
 {
+  my.dashboard.services.syncthing = {
+    label = "Syncthing";
+    description = "File synchronization";
+    url = "http://${config.services.syncthing.guiAddress}";
+    category = "apps";
+    icon = "syncthing";
+  };
+
   services = {
     syncthing = {
       enable = true;

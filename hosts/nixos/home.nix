@@ -10,6 +10,15 @@
         ../../modules/home/linux
       ];
 
+      # Installed outside Nix; this is the port it listens on.
+      my.dashboard.services.t3code = {
+        label = "T3 Code";
+        description = "Coding agent workspace";
+        url = "http://127.0.0.1:3773";
+        category = "agents";
+        icon = "mdi-code-braces";
+      };
+
       home.packages = with pkgs;
         [
           xclip # clipboard

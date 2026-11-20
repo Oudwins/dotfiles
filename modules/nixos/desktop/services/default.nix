@@ -22,6 +22,13 @@
     pkgs.gutenprint
     pkgs.cnijfilter2
   ];
+  home-manager.users.${config.my.username}.my.dashboard.services.cups = {
+    label = "CUPS";
+    description = "Printers";
+    url = "http://${builtins.head config.services.printing.listenAddresses}";
+    category = "system";
+    icon = "mdi-printer";
+  };
 
   services.pulseaudio.enable = false;
   security.rtkit.enable = true;
