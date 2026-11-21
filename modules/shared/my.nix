@@ -75,6 +75,7 @@ in
       memos = "memos";
       executor = "executor";
       llmproxy = "llmproxy";
+      llmSessions = "llm-sessions";
       t3code = "t3";
       artifacts = "artifacts";
       firecrawl = "firecrawl";

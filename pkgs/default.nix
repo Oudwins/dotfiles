@@ -6,6 +6,7 @@ pkgs: rec {
   beads = pkgs.callPackage ./beads/package.nix { };
   btca = pkgs.callPackage ./btca/package.nix { };
   cli-proxy-api = pkgs.callPackage ./cli-proxy-api/package.nix { };
+  cpa-session-recorder = pkgs.callPackage ./cpa-session-recorder/package.nix { };
   executor = pkgs.callPackage ./executor/package.nix { };
   jsonc2json = pkgs.callPackage ./jsonc2json/package.nix { };
   agent-vault = pkgs.callPackage ./agent-vault/package.nix { };
