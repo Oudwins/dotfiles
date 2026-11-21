@@ -57,6 +57,8 @@ in
     # The router forwards subpaths only to targets without a path.
     llmproxy.address = address "/?" "https://tubby.example.ts.net:8317";
     executor.address = address "(/[^?#]*)?" "https://executor.example.ts.net/mcp";
+    # Needs executor/cloudflare-token in the user's sops file.
+    executor.cloudflare.enable = lib.mkEnableOption "the Cloudflare MCP in Executor, authenticated with an API token";
   };
 
   config = {
@@ -98,6 +100,7 @@ in
 
         # Executor MCP gateway
         sops.secrets."executor/token" = { };
+        sops.secrets."executor/cloudflare-token" = lib.mkIf cfg.executor.cloudflare.enable { };
         services.executor = {
           enable = lib.mkDefault (cfg.executor.address == null);
           authTokenFile = config.sops.secrets."executor/token".path;
@@ -133,6 +136,17 @@ in
               description = "Posthog MCP";
               endpoint = "https://mcp.posthog.com/mcp";
               authentication = "oauth2";
+            };
+          }
+          // lib.optionalAttrs cfg.executor.cloudflare.enable {
+            cloudflare_mcp = {
+              name = "Cloudflare MCP";
+              description = "Cloudflare MCP";
+              endpoint = "https://mcp.cloudflare.com/mcp";
+              # Executor runs its own code mode, so take Cloudflare's tools directly.
+              queryParams.codemode = "false";
+              authentication = "bearer";
+              tokenFile = config.sops.secrets."executor/cloudflare-token".path;
             };
           };
         };

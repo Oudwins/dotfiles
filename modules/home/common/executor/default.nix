@@ -120,9 +120,16 @@ let
           type = types.enum [
             "none"
             "oauth2"
+            "bearer"
           ];
           default = "none";
           description = "Authentication method offered when connecting the MCP server.";
+        };
+
+        tokenFile = mkOption {
+          type = types.nullOr types.str;
+          default = null;
+          description = "File holding the token sent as `Authorization: Bearer <token>` when authentication = \"bearer\".";
         };
 
         oauthClients = mkOption {
@@ -176,9 +183,36 @@ let
     }
   );
 
+  # Executor stores a bearer template as placements, but its add endpoint takes
+  # the apiKey form; both read the connection value named "token".
+  bearerTemplate = {
+    slug = "bearer";
+    kind = "apikey";
+    placements = [
+      {
+        carrier = "header";
+        name = "Authorization";
+        prefix = "Bearer ";
+      }
+    ];
+  };
+  bearerAddTemplate = {
+    slug = "bearer";
+    type = "apiKey";
+    headers.Authorization = [
+      "Bearer "
+      {
+        type = "variable";
+        name = "token";
+      }
+    ];
+  };
+
   authTemplate =
     server:
-    if server.transport == "stdio" && server.secretEnvironmentVariables != [ ] then
+    if server.authentication == "bearer" then
+      [ bearerTemplate ]
+    else if server.transport == "stdio" && server.secretEnvironmentVariables != [ ] then
       [
         {
           slug = "stdio_env";
@@ -249,7 +283,8 @@ let
           headers
           queryParams
           ;
-        inherit authenticationTemplate;
+        authenticationTemplate =
+          if server.authentication == "bearer" then [ bearerAddTemplate ] else authenticationTemplate;
       }
       // lib.optionalAttrs (server.transport == "stdio") {
         inherit (server) command args;
@@ -294,6 +329,7 @@ let
         oauthClientPayloads
         oauthDcrClientPayloads
         ;
+      inherit (server) tokenFile;
       needsDefaultConnection =
         server.authentication == "none" && server.secretEnvironmentVariables == [ ];
     };
@@ -380,6 +416,25 @@ let
             --request POST \
             --data-binary "$payload" \
             "$api_base/api/connections" >/dev/null
+        fi
+
+        # Connection values can't be updated, so a rotated token means recreating
+        # the connection. Deleting it leaves the old value in Executor's secret
+        # store, so only recreate when the token's hash changes.
+        token_file="$(jq --raw-output '.tokenFile // empty' <<<"$server")"
+        if [[ -n "$token_file" ]]; then
+          token_hash_file="$data_dir/managed-tokens/$slug"
+          token_hash="$(sha256sum "$token_file" | cut -d ' ' -f 1)"
+          if [[ "$(cat "$token_hash_file" 2>/dev/null)" != "$token_hash" ]] \
+            || ! request "$api_base/api/connections/org/$slug/default" >/dev/null 2>&1; then
+            request --request DELETE "$api_base/api/connections/org/$slug/default" >/dev/null 2>&1 || true
+            jq --compact-output --rawfile token "$token_file" \
+              '{ owner: "org", name: "default", integration: .slug, template: "bearer", value: ($token | rtrimstr("\n")) }' \
+              <<<"$server" \
+              | request --request POST --data-binary @- "$api_base/api/connections" >/dev/null
+            mkdir -p "$data_dir/managed-tokens"
+            echo "$token_hash" >"$token_hash_file"
+          fi
         fi
 
         while IFS= read -r oauth_client; do
@@ -579,6 +634,10 @@ in
         {
           assertion = server.transport != "stdio" || server.authentication == "none";
           message = "services.executor.mcpServers.${slug}.authentication is only supported for remote MCP servers";
+        }
+        {
+          assertion = (server.authentication == "bearer") == (server.tokenFile != null);
+          message = "services.executor.mcpServers.${slug}: tokenFile must be set exactly when authentication = \"bearer\"";
         }
         {
           assertion = server.oauthClients == { } || server.authentication == "oauth2";
