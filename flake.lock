@@ -1209,11 +1209,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795253018,
-        "narHash": "sha256-+z3IN+y/pDR1i8ADMNLmyHHrH8Z/ay3Ns1LyLJ9lSRE=",
+        "lastModified": 1795257976,
+        "narHash": "sha256-IjLhjkpxFn5WUmtYbxsDOy+jU3fQ2jQVZXrAYVBK2LU=",
         "ref": "refs/heads/master",
-        "rev": "37a43dbf65c3fcfda2f414e078c4a63069c6f586",
-        "revCount": 13,
+        "rev": "d00ae853b074e6913dcfb882891f9bd0e8b1aafc",
+        "revCount": 15,
         "type": "git",
         "url": "ssh://git@github.com/Oudwins/nix-secrets.git"
       },
