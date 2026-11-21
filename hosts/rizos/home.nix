@@ -11,7 +11,6 @@ in
       imports = [
         ../../users/tmx/home.nix
         ../../modules/home/common
-        ../../modules/home/linux/dotfiles
       ];
 
       sops.age = {

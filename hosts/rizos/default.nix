@@ -29,6 +29,7 @@ in
     # Coding agents: LLM proxy, Executor, Agent Vault, agent CLIs and T3 Code
     inputs.home-manager.nixosModules.home-manager
     (configLib.relativeToRoot "roles/agents.nix")
+    (configLib.relativeToRoot "modules/nixos/core/dotfiles-bootstrap.nix")
     ./home.nix
   ] ++ lib.optional (builtins.pathExists ./hardware-configuration.nix)
     ./hardware-configuration.nix;
@@ -48,6 +49,11 @@ in
 
   # Root decrypts the proxy's keys with the master key, not tmx's SSH key.
   services.cli-proxy-api.sshKeyFile = config.my.networking.sshMasterKeyPath;
+  # Its configuration is a Stow-managed file.
+  systemd.services.cli-proxy-api = {
+    wants = [ "dotfiles-bootstrap.service" ];
+    after = [ "dotfiles-bootstrap.service" ];
+  };
 
   services.nginx.virtualHosts = lib.mapAttrs' (
     name: port:

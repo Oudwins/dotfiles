@@ -148,9 +148,9 @@ After the first deploy (or a reinstall):
 
 1. Point a Cloudflare DNS record for `*.r.<domain>` at rizos's tailnet IP.
 2. Nothing to do for the Stow-managed files the proxy and Agent Vault read:
-   the `dotfiles-bootstrap` user service clones this repo to `~/dotfiles` if
-   missing and runs `./updateSymlinks.sh` at boot
-   (`journalctl --user -u dotfiles-bootstrap` if they are missing).
+   the `dotfiles-bootstrap` service clones this repo to `~/dotfiles` if
+   missing and runs `./updateSymlinks.sh` at boot, before the proxy and tmx's
+   user services start (`journalctl -u dotfiles-bootstrap` if they are missing).
 3. Log the proxy's OAuth providers in again (`sudo cli-proxy-api -claude-login`
    and so on), or copy `/var/lib/cli-proxy-api/auth` from the old machine.
 4. Pair T3 Code: `t3 auth pairing create --base-url https://t3.r.<domain>` and
