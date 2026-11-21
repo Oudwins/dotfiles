@@ -7,7 +7,6 @@
     upgrade = true;
   };
   homebrew.casks = [
-    "cursor"
     "telegram"
     "beekeeper-studio"
     "obsidian"

@@ -25,7 +25,6 @@ sudo cli-proxy-api -claude-login --no-browser
   - Starship
 - Raycast
   - Disable spotlight
-- Cursor
 - https://github.com/koekeishiya/skhd
   - Hotkeys to launch apps
 - remap keys

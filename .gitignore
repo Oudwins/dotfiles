@@ -39,7 +39,6 @@ home-files/tmx/.config/btca/
 home-files/tmx/.config/buildkit/buildkitd.toml
 home-files/tmx/.config/cc-proxy/auth/credentials.json
 home-files/tmx/.config/containerd/config.toml
-home-files/tmx/.config/Cursor/User/settings.json.bak
 home-files/tmx/.config/elevenlabs/gar-npm-token.mjs
 home-files/tmx/.config/elevenscribe/
 home-files/tmx/.config/gh/hosts.yml

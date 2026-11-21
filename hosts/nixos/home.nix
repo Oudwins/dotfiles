@@ -40,7 +40,6 @@
       in {
         TERMINAL = "ghostty";
         EDITOR = "nvim";
-        CODE_EDITOR = lib.mkDefault "cursor .";
         CODE_PROJECTS_PARENT_DIRS = builtins.concatStringsSep ":"
           (map (dir: "${home}/${dir}") projectParentDirs);
         CODE_PROJECTS =
