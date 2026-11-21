@@ -44,7 +44,6 @@ let
       variable = "EXECUTOR_MCP_URL";
     };
   };
-  anyRemote = lib.any (name: cfg.${name}.address != null) (lib.attrNames services);
   endpoint =
     name: if cfg.${name}.address == null then services.${name}.local else cfg.${name}.address;
   origin = url: builtins.head (builtins.match "(https?://[^/]+).*" url);
@@ -83,9 +82,10 @@ in
           environment = lib.mapAttrs' (
             name: service: lib.nameValuePair service.variable (endpoint name)
           ) services;
-          # MagicDNS names resolve into Tailscale's CGNAT and IPv6 ranges, which
-          # Agent Vault blocks unless allowlisted.
-          networkAllowlist = lib.mkIf anyRemote [
+          # MagicDNS names (remote services, the tailnet package registry) resolve
+          # into Tailscale's CGNAT and IPv6 ranges, which Agent Vault blocks unless
+          # allowlisted.
+          networkAllowlist = [
             "100.64.0.0/10"
             "fd7a:115c:a1e0::/48"
           ];
