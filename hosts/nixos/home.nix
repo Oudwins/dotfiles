@@ -34,7 +34,7 @@
           "projects"
           ".config"
         ];
-        projects = [ "dotfiles" ];
+        projects = [ "dotfiles" "nix-secrets" ];
         worktreeParentDirs = [ ".droner/worktrees" ];
         obsidianDirs = [ "notes" ];
       in {
