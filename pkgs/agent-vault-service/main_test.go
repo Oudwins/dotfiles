@@ -81,6 +81,15 @@ func TestServiceRulesCoverTargetPathOrWholeHost(t *testing.T) {
 	}
 }
 
+func TestServiceRulesUseExplicitAuth(t *testing.T) {
+	rules := serviceRules(map[string]route{
+		"github": {Target: "https://github.com", Auth: &serviceAuth{Type: "basic", Username: "GITHUB_TOKEN"}},
+	})
+	if auth := rules[0].Auth; auth.Type != "basic" || auth.Username != "GITHUB_TOKEN" || auth.Headers != nil {
+		t.Fatalf("unexpected auth %+v", auth)
+	}
+}
+
 func TestFileCredentialAndPrivateStateSurviveRestart(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "token")
 	for _, content := range []string{"saved-token", "replacement"} {
@@ -193,9 +202,10 @@ func TestHealthOnlyReportsReadyAfterProvisioning(t *testing.T) {
 
 func TestNetworkProxyEnvironmentAndCAArePrivateAndExcludeModelProxy(t *testing.T) {
 	h := newTestHelper(t)
+	h.config.Environment = map[string]string{"GH_TOKEN": "agent-vault"}
 	certificate := filepath.Join(state, "ca.pem")
 	environment := clientEnvironment(h.config, "test-capability", certificate)
-	if environment["HTTP_PROXY"] != "http://test-capability:dotfiles@127.0.0.1:14322" ||
+	if environment["GH_TOKEN"] != "agent-vault" || environment["HTTP_PROXY"] != "http://test-capability:dotfiles@127.0.0.1:14322" ||
 		environment["HTTPS_PROXY"] != environment["HTTP_PROXY"] || environment["http_proxy"] != environment["HTTP_PROXY"] ||
 		environment["no_proxy"] != environment["NO_PROXY"] || environment["CODEX_CA_CERTIFICATE"] != certificate ||
 		environment["AGENT_VAULT_HEALTH_URL"] != "http://127.0.0.1:14323/health" {

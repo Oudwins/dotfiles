@@ -51,6 +51,8 @@ type credentialSpec struct {
 type route struct {
 	Target  string            `json:"target"`
 	Headers map[string]string `json:"headers"`
+	// Agent Vault's own auth config, for types headers can't express (basic).
+	Auth *serviceAuth `json:"auth"`
 }
 
 type config struct {
@@ -60,6 +62,8 @@ type config struct {
 	NoProxy        []string                  `json:"noProxy"`
 	Credentials    map[string]credentialSpec `json:"credentials"`
 	Services       map[string]route          `json:"services"`
+	// Extra variables for agent sessions, e.g. placeholder tokens the vault replaces.
+	Environment map[string]string `json:"environment"`
 }
 
 func loadConfig(path string) (*config, error) {
@@ -290,6 +294,7 @@ func clientEnvironment(cfg *config, token, certificate string) map[string]string
 	for _, name := range []string{"SSL_CERT_FILE", "CODEX_CA_CERTIFICATE", "NODE_EXTRA_CA_CERTS", "REQUESTS_CA_BUNDLE", "CURL_CA_BUNDLE", "GIT_SSL_CAINFO", "DENO_CERT"} {
 		environment[name] = certificate
 	}
+	maps.Copy(environment, cfg.Environment)
 	return environment
 }
 
@@ -318,8 +323,10 @@ func publishEnvironment(environment map[string]string) error {
 }
 
 type serviceAuth struct {
-	Type    string            `json:"type"`
-	Headers map[string]string `json:"headers,omitempty"`
+	Type     string            `json:"type"`
+	Headers  map[string]string `json:"headers,omitempty"`
+	Username string            `json:"username,omitempty"`
+	Password string            `json:"password,omitempty"`
 }
 
 type serviceRule struct {
@@ -338,6 +345,9 @@ func serviceRules(services map[string]route) []serviceRule {
 		auth := serviceAuth{Type: "passthrough"}
 		if len(entry.Headers) > 0 {
 			auth = serviceAuth{Type: "custom", Headers: entry.Headers}
+		}
+		if entry.Auth != nil {
+			auth = *entry.Auth
 		}
 		// Agent Vault rejects a bare "*", so a target without a path covers "/*".
 		path := strings.TrimRight(target.Path, "/") + "*"
