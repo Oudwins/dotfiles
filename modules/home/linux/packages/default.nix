@@ -33,7 +33,6 @@
     fzf
     bc
     vscode-fhs
-    unstable.code-cursor
     unstable.bruno
     gnupg
     awscli2

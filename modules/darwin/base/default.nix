@@ -23,7 +23,6 @@
         # }
         { app = "/Applications/Google Chrome.app"; }
         { app = "${pkgs.firefox}/Applications/Firefox.app"; }
-        { app = "/Applications/cursor.app"; }
         { app = "/Applications/Telegram.app"; }
       ];
     };
