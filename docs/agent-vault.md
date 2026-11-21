@@ -173,8 +173,9 @@ agents.llmproxy.address = "https://tubby.<tailnet>.ts.net:8317";
 ```
 
 Addresses must use hostnames, such as Tailscale MagicDNS names, because Agent Vault
-rejects IP-based service hosts. Setting any address also allows Tailscale's ranges
-(`100.64.0.0/10`, `fd7a:115c:a1e0::/48`) in Agent Vault's network guard; add other
+rejects IP-based service hosts. Agent Vault's network guard always allows Tailscale's
+ranges (`100.64.0.0/10`, `fd7a:115c:a1e0::/48`), so remote services and other tailnet
+hosts, such as the package registry, are reachable through the proxy; add other
 private networks with `home-manager.users.tmx.services.agent-vault.networkAllowlist`.
 Local endpoints use `.localhost` names: NixOS adds them to the hosts file, and macOS
 resolves `.localhost` itself. The `llmproxy` address takes no path; the router passes
