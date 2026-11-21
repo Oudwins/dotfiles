@@ -61,6 +61,8 @@ in
     (configLib.relativeToRoot "modules/nixos/services/memos")
     (configLib.relativeToRoot "modules/nixos/services/immich")
     (configLib.relativeToRoot "modules/nixos/services/memos")
+    (configLib.relativeToRoot "modules/nixos/services/llmproxy") # CLIProxyAPI for the workstations
+    (configLib.relativeToRoot "modules/nixos/services/llm-sessions") # records its traffic into ClickHouse
 
   ];
 
