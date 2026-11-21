@@ -74,6 +74,8 @@ in
       mealie = "mealie";
       memos = "memos";
       executor = "executor";
+      llmproxy = "llmproxy";
+      t3code = "t3";
       firecrawl = "firecrawl";
       wifiControl = "wifi";
       gitea = "gitea";

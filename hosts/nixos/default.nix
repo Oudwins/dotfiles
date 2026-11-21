@@ -13,6 +13,14 @@
 
   sops.defaultSopsFile = args.configLib.secretFile "sops/hosts/nixos.yaml";
 
+  # Agents use rizos's LLM proxy and Executor ("r" is rizos's my.server.location).
+  agents = let
+    rizos = name: "https://${config.my.services.${name}.subdomain}.r.${config.my.domain}";
+  in {
+    llmproxy.address = rizos "llmproxy";
+    executor.address = "${rizos "executor"}/mcp";
+  };
+
   # virtual keyboard tool
   programs.ydotool = { enable = true; };
 
