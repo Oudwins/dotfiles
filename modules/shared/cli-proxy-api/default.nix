@@ -11,6 +11,27 @@ let
   cfg = config.services.cli-proxy-api;
   user = if isDarwin then "_cliproxyapi" else "cli-proxy-api";
   runtimeDir = if isDarwin then "/private/var/run/cli-proxy-api" else "/run/cli-proxy-api";
+  # The host only loads regular files named after the plugin ID, so copy rather than link.
+  pluginDir = pkgs.runCommand "cli-proxy-api-plugins" { } (
+    lib.concatStrings (
+      lib.mapAttrsToList (
+        id: plugin:
+        let
+          file = "${id}${pkgs.stdenv.hostPlatform.extensions.sharedLibrary}";
+        in
+        ''
+          install -Dm444 ${plugin.package}/lib/${file} "$out/${file}"
+        ''
+      ) cfg.plugins
+    )
+  );
+  pluginsConfig = pkgs.writeText "cli-proxy-api-plugins.json" (
+    builtins.toJSON {
+      enabled = true;
+      dir = "${pluginDir}";
+      configs = lib.mapAttrs (_: plugin: plugin.settings // { enabled = true; }) cfg.plugins;
+    }
+  );
   command = pkgs.writeShellScriptBin "cli-proxy-api" ''
     set -euo pipefail
     umask 077
@@ -88,7 +109,9 @@ let
         with(select(has("api-keys"));
           .api-keys |= with_entries(.value |= ([to_entries[] | .value]))
         )
-      ' "''${inputs[@]}" | ${lib.getExe pkgs.yq-go} '.oauth.auth-dir = (strenv(WRITABLE_PATH) + "/auth") | with(select(has("client-key")); .access.api-keys = ((.access.api-keys // []) + [.client-key] | unique) | del(.client-key))' > "$temporary_config"
+      ' "''${inputs[@]}"${
+        lib.optionalString (cfg.plugins != { }) " | ${lib.getExe pkgs.yq-go} '.plugins *= load(\"${pluginsConfig}\")'"
+      } | ${lib.getExe pkgs.yq-go} '.oauth.auth-dir = (strenv(WRITABLE_PATH) + "/auth") | with(select(has("client-key")); .access.api-keys = ((.access.api-keys // []) + [.client-key] | unique) | del(.client-key))' > "$temporary_config"
       ${pkgs.coreutils}/bin/chown ${user}:${user} "$temporary_config"
       ${pkgs.coreutils}/bin/mv -fT "$temporary_config" "$runtime_dir/config.yaml"
       ${pkgs.coreutils}/bin/rm -f "$secrets"
@@ -137,6 +160,25 @@ in
       type = lib.types.str;
       default = "/var/lib/cli-proxy-api";
       description = "Private persistent directory for OAuth credentials, logs and management panel assets.";
+    };
+    plugins = lib.mkOption {
+      default = { };
+      description = "Plugins to load, keyed by plugin ID. Each package provides lib/<id>.so (.dylib on macOS); settings become plugins.configs.<id>.";
+      type = lib.types.attrsOf (
+        lib.types.submodule {
+          options = {
+            package = lib.mkOption {
+              type = lib.types.package;
+              description = "Package containing the plugin library.";
+            };
+            settings = lib.mkOption {
+              type = lib.types.attrsOf lib.types.anything;
+              default = { };
+              description = "Plugin configuration. Reference secrets by file path; values end up in the Nix store.";
+            };
+          };
+        }
+      );
     };
     darwinUid = lib.mkOption {
       type = lib.types.int;
@@ -208,6 +250,8 @@ in
                 cfg.stateDir
               ];
               ProtectSystem = "strict";
+              # The host copies plugins into $TMPDIR before loading them.
+              PrivateTmp = true;
               NoNewPrivileges = true;
               LimitCORE = 0;
               # Upstream can exit successfully even when configuration loading fails.

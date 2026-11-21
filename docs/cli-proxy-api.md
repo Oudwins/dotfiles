@@ -177,6 +177,57 @@ errors are in `/var/log/cli-proxy-api.error.log` on macOS or
 does not require a login session or lingering. On macOS the RAM disk is reused
 across restarts and disappears on reboot.
 
+## Serving it from a server and recording sessions
+
+`modules/nixos/services/llmproxy` runs the proxy on a server (tubby imports it)
+behind nginx at `https://llmproxy.<location>.<domain>`. The proxy stays on
+loopback and reads the tracked `config.yaml` and the shared SOPS file with the
+server's master key. nginx allows 256 MB request bodies, does not buffer
+streams, and returns 403 for the management API and panel, so use those over SSH
+(`ssh -L 8317:127.0.0.1:8317 tubby`). To use it, log in on the server
+(`sudo cli-proxy-api --codex-device-login --no-browser`, …) and then point a
+workstation at it:
+
+```nix
+agents.llmproxy.address = "https://llmproxy.<location>.<domain>";
+```
+
+`modules/nixos/services/llm-sessions` records everything that proxy serves into
+a local ClickHouse (database `llm`), using the `session-recorder` plugin
+(`pkgs/cpa-session-recorder`):
+
+- `usage`: one row per usage record (tokens, latency, TTFT, credential, model,
+  session ID).
+- `exchanges`: one row per model execution, with the client's request body and
+  the response as delivered to the client (`response_body`, or every stream
+  chunk or WebSocket event in `response_chunks`). Stored exactly as sent and
+  sorted by session. Executions over 64 MB are cut short and flagged `truncated`.
+
+Session IDs come from CLIProxyAPI, e.g. `claude:<uuid>` (sub-agents
+`claude:<uuid>:agent:<id>`, with `parent_session_id`), `codex:<id>` or
+`header:<X-Session-ID>`. Rows are dropped, not retried, while ClickHouse is
+down, and the data is not backed up. Grafana gets an "LLM sessions" data
+source with read-only access. Query as admin on the server:
+
+```bash
+sudo sh -c 'CLICKHOUSE_PASSWORD="$(cat /var/lib/llm-sessions/default)" clickhouse client'
+```
+
+```sql
+-- Tokens per model per day
+SELECT toDate(ts) AS day, model, sum(input_tokens) AS input, sum(output_tokens) AS output
+FROM llm.usage GROUP BY day, model ORDER BY day;
+-- The full conversation of each Claude Code session is its latest request
+SELECT session_id, argMax(request_body, ts) FROM llm.exchanges
+WHERE session_id LIKE 'claude:%' GROUP BY session_id
+INTO OUTFILE 'claude-sessions.parquet' FORMAT Parquet;
+```
+
+The ClickHouse passwords are generated on the server under `/var/lib/llm-sessions`
+and never leave it. `llm-sessions-schema` creates missing tables on start; change
+existing ones with `ALTER TABLE`. Other plugins can be loaded the same way with
+`services.cli-proxy-api.plugins.<id> = { package; settings; }`.
+
 ## Configuration notes and recommendations
 
 - Use the [v8 options](https://help.router-for.me/configuration/options.html) and
