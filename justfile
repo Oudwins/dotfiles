@@ -119,7 +119,7 @@ secrets name:
       exit 1
     fi
     mkdir -p "$(dirname "$file")"
-    nix develop "{{secrets_dir}}" -c sops "$file"
+    nix develop "{{secrets_dir}}" -c sops "$file" || [[ $? -eq 200 ]]
     # New files are untracked; make them visible to git+file flake inputs.
     git add --intent-to-add -- "$file"
 
