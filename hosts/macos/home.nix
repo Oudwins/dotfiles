@@ -30,7 +30,7 @@
       home.sessionVariables = let
         home = config.home.homeDirectory;
         projectDirs = [ "Documents" "Documents2" ];
-        projects = [ "dotfiles" ];
+        projects = [ "dotfiles" "nix-secrets" ];
         worktreeParentDirs = [ ".droner/worktrees" ];
       in {
         OPENCODE_CONFIG = "${home}/.config/opencode/opencode.jsonc";
