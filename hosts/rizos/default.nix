@@ -1,15 +1,5 @@
 { config, configLib, inputs, outputs, lib, ... }:
 
-let
-  hm = config.home-manager.users.${config.my.username};
-  # Coding agents on nixos reach these over the tailnet as <subdomain>.r.<domain>.
-  proxied = {
-    # Matches home-files/tmx/.cli-proxy-api/config.yaml.
-    llmproxy = 8317;
-    executor = hm.services.executor.port;
-    t3code = hm.services.t3code.port;
-  };
-in
 {
   imports = [
     (configLib.relativeToRoot "modules/nixos/hardware/disko/encryptedDisko.nix")
@@ -25,10 +15,13 @@ in
 
     (configLib.relativeToRoot "modules/nixos/core/tailscale.nix")
     (configLib.relativeToRoot "modules/nixos/services/ssl/cloudflare")
+    (configLib.relativeToRoot "modules/nixos/services/dashboard")
 
     # Coding agents: LLM proxy, Executor, Agent Vault, agent CLIs and T3 Code
     inputs.home-manager.nixosModules.home-manager
     (configLib.relativeToRoot "roles/agents.nix")
+    # Serves them to agents on nixos as <subdomain>.r.<domain>
+    (configLib.relativeToRoot "modules/nixos/services/remote-agents")
     (configLib.relativeToRoot "modules/nixos/core/dotfiles-bootstrap.nix")
     ./home.nix
   ] ++ lib.optional (builtins.pathExists ./hardware-configuration.nix)
@@ -55,24 +48,6 @@ in
     after = [ "dotfiles-bootstrap.service" ];
   };
 
-  services.nginx.virtualHosts = lib.mapAttrs' (
-    name: port:
-    lib.nameValuePair "${config.my.services.${name}.subdomain}.${config.my.server.location}.${config.my.domain}" {
-      useACMEHost = "${config.my.server.location}.${config.my.domain}";
-      addSSL = true;
-      locations."/" = {
-        proxyPass = "http://127.0.0.1:${toString port}";
-        proxyWebsockets = true;
-        recommendedProxySettings = true;
-        # Stream model responses and MCP events, and allow large prompts and uploads.
-        extraConfig = ''
-          proxy_buffering off;
-          proxy_read_timeout 1h;
-          client_max_body_size 0;
-        '';
-      };
-    }
-  ) proxied;
   # DNS points *.r.<domain> at the tailnet address; the services stay off the LAN.
   networking.firewall.interfaces.tailscale0.allowedTCPPorts = [ 443 ];
 
