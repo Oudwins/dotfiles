@@ -21,8 +21,6 @@
           "/etc/ssh/ssh_host_ed25519_key"
           config.my.networking.sshMasterKeyPath
         ];
-        # generate key if it doesn't exist
-        generateKey = true;
       };
     };
   };
