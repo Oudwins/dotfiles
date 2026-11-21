@@ -440,6 +440,64 @@ in {
     };
 
     #########################################################
+    # Recyclarr
+    # Syncs TRaSH Guides quality definitions, profiles and
+    # custom formats into Sonarr/Radarr (daily timer)
+    # https://trash-guides.info/Recyclarr/
+    # Templates: https://github.com/recyclarr/config-templates
+    #########################################################
+
+    # Sonarr/Radarr generate their API keys into config.xml; read them from there
+    # so Recyclarr always uses the live keys
+    systemd.services.recyclarr-api-keys = {
+      description = "Export Sonarr and Radarr API keys for Recyclarr";
+      requires = [ "sonarr.service" "radarr.service" ];
+      after = [ "sonarr.service" "radarr.service" ];
+      serviceConfig = {
+        Type = "oneshot";
+        UMask = "0077";
+        RuntimeDirectory = "recyclarr-api-keys";
+        RuntimeDirectoryPreserve = true;
+      };
+      script = ''
+        extract() { sed -n 's:.*<ApiKey>\(.*\)</ApiKey>.*:\1:p' "$1/config.xml" | grep . > "$RUNTIME_DIRECTORY/$2"; }
+        extract ${config.services.sonarr.dataDir} sonarr
+        extract ${config.services.radarr.dataDir} radarr
+      '';
+    };
+
+    systemd.services.recyclarr = {
+      requires = [ "recyclarr-api-keys.service" ];
+      after = [ "recyclarr-api-keys.service" ];
+    };
+
+    services.recyclarr = {
+      enable = true;
+      configuration = {
+        # https://github.com/recyclarr/config-templates/blob/master/sonarr/templates/web-1080p.yml
+        sonarr.sonarr-main = {
+          base_url = "http://localhost:${toString sonarrPort}";
+          api_key._secret = "/run/recyclarr-api-keys/sonarr";
+          quality_definition.type = "series";
+          quality_profiles = [{
+            trash_id = "72dae194fc92bf828f32cde7744e51a1"; # WEB-1080p
+            reset_unmatched_scores.enabled = true;
+          }];
+        };
+        # https://github.com/recyclarr/config-templates/blob/master/radarr/templates/hd-bluray-web.yml
+        radarr.radarr-main = {
+          base_url = "http://localhost:${toString radarrPort}";
+          api_key._secret = "/run/recyclarr-api-keys/radarr";
+          quality_definition.type = "movie";
+          quality_profiles = [{
+            trash_id = "d1d67249d3890e49bc12e275d989a7e9"; # HD Bluray + WEB
+            reset_unmatched_scores.enabled = true;
+          }];
+        };
+      };
+    };
+
+    #########################################################
     # Navidrome
     #
     #########################################################
