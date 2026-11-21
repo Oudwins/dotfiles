@@ -418,14 +418,23 @@ let
             "$api_base/api/connections" >/dev/null
         fi
 
-        # Connection values can't be updated, so recreate it to pick up a rotated token.
+        # Connection values can't be updated, so a rotated token means recreating
+        # the connection. Deleting it leaves the old value in Executor's secret
+        # store, so only recreate when the token's hash changes.
         token_file="$(jq --raw-output '.tokenFile // empty' <<<"$server")"
         if [[ -n "$token_file" ]]; then
-          request --request DELETE "$api_base/api/connections/org/$slug/default" >/dev/null 2>&1 || true
-          jq --compact-output --rawfile token "$token_file" \
-            '{ owner: "org", name: "default", integration: .slug, template: "bearer", value: ($token | rtrimstr("\n")) }' \
-            <<<"$server" \
-            | request --request POST --data-binary @- "$api_base/api/connections" >/dev/null
+          token_hash_file="$data_dir/managed-tokens/$slug"
+          token_hash="$(sha256sum "$token_file" | cut -d ' ' -f 1)"
+          if [[ "$(cat "$token_hash_file" 2>/dev/null)" != "$token_hash" ]] \
+            || ! request "$api_base/api/connections/org/$slug/default" >/dev/null 2>&1; then
+            request --request DELETE "$api_base/api/connections/org/$slug/default" >/dev/null 2>&1 || true
+            jq --compact-output --rawfile token "$token_file" \
+              '{ owner: "org", name: "default", integration: .slug, template: "bearer", value: ($token | rtrimstr("\n")) }' \
+              <<<"$server" \
+              | request --request POST --data-binary @- "$api_base/api/connections" >/dev/null
+            mkdir -p "$data_dir/managed-tokens"
+            echo "$token_hash" >"$token_hash_file"
+          fi
         fi
 
         while IFS= read -r oauth_client; do
