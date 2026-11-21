@@ -25,6 +25,8 @@ routing and Agent Vault's credential rules:
 | `http://127.0.0.1:28760/llmproxy/…` | `${LLM_PROXY_URL}` from Nix | CLIProxyAPI client key |
 | `http://127.0.0.1:28760/payload-staging` | `https://payload.eleven2.dev/api/mcp` | Staging IAP token |
 | `http://127.0.0.1:28760/payload-production` | `https://payload.elevenlabs.io/api/mcp` | Production IAP token |
+| `http://127.0.0.1:28760/github-api/…` | `https://api.github.com` | SOPS GitHub token (Bearer) |
+| `http://127.0.0.1:28760/github/…` | `https://github.com` | SOPS GitHub token (Basic, for git over https) |
 
 Add a service to this map to expose `/<service-name>` through Caddy. Each entry
 has a `target` URL and optional credential `headers`; omit headers for a public
@@ -34,6 +36,17 @@ A target without a path exposes its whole host: `/<name>/<subpath>` is forwarded
 to `<target>/<subpath>`. A target with a path is served only at `/<name>`. Otherwise
 unknown names and subpaths return 404; the request cannot choose a URL
 outside the configured map.
+
+Instead of `headers`, an entry may set `auth` to one of Agent Vault's own auth
+configs, for types headers can't express, e.g.
+`{ "type": "basic", "username": "GITHUB_TOKEN" }`.
+
+`gh` and git reach GitHub through the forward proxy, which injects the token from
+nix-secrets `sops/users/tmx.yaml` (`github/token`, declared in `roles/agents.nix`).
+Agents never hold it: the `environment` map in `config.json` adds a placeholder
+`GH_TOKEN` to `proxy.env` (gh refuses to run without one), and the vault replaces
+the `Authorization` header it sends. Outside agent sessions, `gh` uses its own
+`gh auth login`.
 
 API keys can be added in either of two ways, and both can be used at once:
 

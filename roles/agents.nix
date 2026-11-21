@@ -98,6 +98,10 @@ in
           key = "client-key";
         };
 
+        # Agent Vault injects it into GitHub requests (gh and git over https);
+        # agent sessions only see a placeholder GH_TOKEN.
+        sops.secrets."github/token" = { };
+
         # Executor MCP gateway
         sops.secrets."executor/token" = { };
         sops.secrets."executor/cloudflare-token" = lib.mkIf cfg.executor.cloudflare.enable { };
