@@ -28,8 +28,14 @@
     ./hardware-configuration.nix;
 
   sops.defaultSopsFile = configLib.secretFile "sops/hosts/rizos.yaml";
-  # Decrypts tmx's home-manager secrets; tmx has no personal SSH key here.
+  # Decrypts tmx's home-manager secrets.
   sops.secrets."users/tmx/age_key".owner = config.my.username;
+  # tmx's default SSH key (e.g. for GitHub); its public key is in a comment
+  # above it in rizos.yaml.
+  sops.secrets."users/tmx/ssh_key" = {
+    owner = config.my.username;
+    path = "${config.users.users.${config.my.username}.home}/.ssh/id_ed25519";
+  };
 
   home-manager = {
     useGlobalPkgs = true;

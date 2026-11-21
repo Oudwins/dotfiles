@@ -38,6 +38,10 @@ in {
     systemd.tmpfiles.rules = let
       user = config.users.users.${config.my.username}.name;
       group = config.users.users.${config.my.username}.group;
-    in [ "d /home/${config.my.username}/.ssh/sockets 0750 ${user} ${group} -" ];
+    in [
+      # Otherwise tmpfiles creates ~/.ssh as root for the sockets directory.
+      "d /home/${config.my.username}/.ssh 0700 ${user} ${group} -"
+      "d /home/${config.my.username}/.ssh/sockets 0750 ${user} ${group} -"
+    ];
   };
 }
