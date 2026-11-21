@@ -71,6 +71,7 @@ in
           ../modules/home/common/agent-vault
           ../modules/home/common/pr-review-server
           ../modules/home/common/npm-global
+          ../modules/home/common/t3code
         ];
 
         # Agent Vault

@@ -12,6 +12,7 @@ pkgs: rec {
   agent-vault-clients = pkgs.callPackage ./agent-vault-clients/package.nix { };
   agent-vault-router = pkgs.callPackage ./agent-vault-router/package.nix { };
   pr-review-server = pkgs.callPackage ./pr-review-server/package.nix { };
+  t3code = pkgs.callPackage ./t3code/package.nix { };
 
   # Servers
   manager-server = pkgs.callPackage ./managerio { };
