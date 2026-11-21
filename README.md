@@ -60,7 +60,7 @@ just check                  # evaluate every host and package (what CI runs)
 just deploy tubby           # repeat per host: faker, rizos, vela, vela-dev, iss, iss-dev
 
 # rizos after a reboot: unlock the encrypted disk
-ssh -t -p 2222 root@<rizos-address>
+ssh -t -J root@tubby -i ~/.ssh/id_ed25519 -o HostKeyAlias=rizos-initrd -p 2222 root@192.168.1.163
 
 # clean up an aborted switch on the server
 sudo systemctl stop nixos-rebuild-switch-to-configuration.service
