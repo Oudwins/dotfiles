@@ -12,8 +12,8 @@ and explore new ideas, skip fixes to code being replaced. Bring the following mo
 
 - opus 5.5 (high) 
 - gpt 6.1 sol (high)
-- Grok 4.7 (high, non fast version, its fast by default)
 - GLM-5.3 (high)
+- gemini-4-neon (high)
 
 In T3 Code, use `orchestrator_capabilities` to resolve the models, then
 `delegate_task` to start one delegate per model in parallel. Elsewhere, use
