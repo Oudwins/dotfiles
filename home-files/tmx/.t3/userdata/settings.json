@@ -43,7 +43,8 @@
         "kimi-k3",
         "kimi-k2.7-code",
         "glm-5.2",
-        "deepseek-v41-flash-1017"
+        "deepseek-v41-flash-1017",
+        "gemini-4-argon"
       ],
       "modelOrder": []
     }
