@@ -1,0 +1,9 @@
+id: agent-module-outside-agents-role
+valid:
+  - |
+    { imports = [ ../../roles/agents.nix ../../modules/nixos/services/executor ]; }
+invalid:
+  - |
+    { imports = [ ../../modules/home/common/executor ]; }
+  - |
+    { configLib, ... }: { imports = [ (configLib.relativeToRoot "modules/shared/cli-proxy-api") ]; }

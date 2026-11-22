@@ -1,0 +1,20 @@
+id: command-is-model-invocable
+valid:
+  - |
+    ---
+    name: commit
+    description: Create focused git commits.
+    disable-model-invocation: true
+    ---
+
+    # Commit
+invalid:
+  - |
+    ---
+    name: commit
+    description: Create focused git commits.
+    ---
+
+    # Commit
+  - |
+    # Commit

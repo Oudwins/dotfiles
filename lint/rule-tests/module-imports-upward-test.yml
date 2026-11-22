@@ -1,0 +1,11 @@
+id: module-imports-upward
+valid:
+  - |
+    { imports = [ ./backup.nix ../../core/tailscale.nix ]; }
+  - |
+    { configLib, ... }: { imports = [ (configLib.relativeToRoot "modules/nixos/core/sops") ]; }
+invalid:
+  - |
+    { imports = [ ../../../users/tmx/server.nix ]; }
+  - |
+    { configLib, ... }: { imports = [ (configLib.relativeToRoot "roles/server") ]; }

@@ -1,0 +1,30 @@
+# Settings for statix, run by `just lint` (see docs/lint.md).
+
+# Hosts and modules assign `my.*`, `sops.secrets.*` and `services.*` one line at
+# a time on purpose.
+disabled = ["repeated_keys"]
+
+# Baseline: files that already failed when this check was added. Only remove entries.
+ignore = [
+  "hosts/iss-dev/default.nix",
+  "hosts/iss/default.nix",
+  "hosts/macos/home.nix",
+  "hosts/nixos/home.nix",
+  "modules/darwin/pkgs/homebrew/default.nix",
+  "modules/home/common/executor/default.nix",
+  "modules/home/common/git/default.nix",
+  "modules/nixos/desktop/base/default.nix",
+  "modules/nixos/services/executor/default.nix",
+  "modules/nixos/services/firecrawl/default.nix",
+  "modules/nixos/services/immich/backup.nix",
+  "modules/nixos/services/memos/default.nix",
+  "modules/nixos/services/nextcloud/docs/onlyOffice_NOT_WORKING/onlyoffice/default.nix",
+  "modules/nixos/services/obsidian_remote/default.nix",
+  "modules/nixos/services/timetracking/solidtime/default.nix",
+  "modules/nixos/services/wifi-control/default.nix",
+  "modules/nixos/services/wordpress/default.nix",
+  "modules/nixos/services/wordpress/lightspeed-proxy.nix",
+  "modules/nixos/services/wordpress/lightspeed.nix",
+  "modules/shared/base/default.nix",
+  "modules/shared/sops/default.nix",
+]

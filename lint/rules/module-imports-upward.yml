@@ -1,0 +1,15 @@
+id: module-imports-upward
+language: nix
+severity: error
+message: Modules must not reach into hosts/, roles/ or users/; those layers import modules, not the other way round.
+files:
+  - modules/**
+rule:
+  any:
+    - kind: path_expression
+      regex: '^(\.\./)+(hosts|roles|users)(/|$)'
+    - kind: string_expression
+      regex: '^"(hosts|roles|users)(/|")'
+      inside:
+        kind: apply_expression
+        has: { field: function, regex: 'relativeToRoot$' }

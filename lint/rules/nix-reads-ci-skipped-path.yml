@@ -1,0 +1,20 @@
+id: nix-reads-ci-skipped-path
+language: nix
+severity: error
+message: .github/workflows/check.yml skips this directory, so a change to the file would never be built. Move the file, or re-include it in the workflow's paths and in this rule.
+# The directories check.yml excludes, minus templates/ (a flake output no check
+# builds). docs/hosts-file is re-included there.
+ignores:
+  # Baseline: files that already broke this rule when it was added. Only remove entries.
+  - roles/agents.nix
+rule:
+  all:
+    - any:
+        - kind: path_expression
+          regex: '^(\.\./)+(home-files|agents|docs|tests|scripts|infra|assets|ssh|lint)(/|$)'
+        - kind: string_expression
+          regex: '^"(home-files|agents|docs|tests|scripts|infra|assets|ssh|lint)(/|")'
+          inside:
+            kind: apply_expression
+            has: { field: function, regex: 'relativeToRoot$' }
+    - not: { regex: 'docs/hosts-file"?$' }
