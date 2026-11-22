@@ -69,15 +69,19 @@ writeShellApplication {
   text = ''
     # shellcheck source=/dev/null
     . "$HOME/.agent-vault/proxy.env"
+    [ $# -gt 0 ] || set -- "$HOME/.config/agent-vault/config.json"
+    # Later config files add to and override earlier ones, as in agent-vault-service.
     router_config=$(
       python -c '
     import os, sys
     from pathlib import Path
     from string import Template
-    print(Template(Path(sys.argv[1]).read_text()).substitute(os.environ))
-    ' "''${1:-$HOME/.config/agent-vault/config.json}" |
-      jq --slurpfile base ${config} '
-        .services | to_entries | map(
+    for path in sys.argv[1:]:
+        print(Template(Path(path).read_text()).substitute(os.environ))
+    ' "$@" |
+      jq --slurp --slurpfile base ${config} '
+        reduce .[] as $config ({}; . * $config)
+        | .services | to_entries | map(
           .key as $name
           | if $name | test("^[a-z0-9]+(-[a-z0-9]+)*$") | not then error("Invalid service name: " + $name) else . end
           | (.value.target | capture("^(?<scheme>https?)://(?<authority>[^/?#@ ]+)(?<path>/[^?#]*)?(?<query>\\?[^#]*)?$") // error("Invalid target for " + $name)) as $target

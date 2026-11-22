@@ -3,18 +3,12 @@
   "proxyPort": 14322,
   "credentialPort": 14323,
   "noProxy": ["127.0.0.1", "::1", "localhost"],
-  "environment": {
-    "GH_TOKEN": "agent-vault"
-  },
   "credentials": {
     "EXECUTOR_TOKEN": {
       "file": "~/.config/sops-nix/secrets/executor/token"
     },
     "CLI_PROXY_API_KEY": {
       "file": "~/.config/sops-nix/secrets/cli-proxy-api/client-key"
-    },
-    "GITHUB_TOKEN": {
-      "file": "~/.config/sops-nix/secrets/github/token"
     },
     "PAYLOAD_STAGING_IAP": {
       "command": [
@@ -39,14 +33,6 @@
     "llmproxy": {
       "target": "${LLM_PROXY_URL}",
       "headers": { "Authorization": "Bearer {{ CLI_PROXY_API_KEY }}" }
-    },
-    "github-api": {
-      "target": "https://api.github.com",
-      "headers": { "Authorization": "Bearer {{ GITHUB_TOKEN }}" }
-    },
-    "github": {
-      "target": "https://github.com",
-      "auth": { "type": "basic", "username": "GITHUB_TOKEN" }
     },
     "payload-staging": {
       "target": "https://payload.eleven2.dev/api/mcp",

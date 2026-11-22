@@ -8,6 +8,11 @@
 let
   cfg = config.services.agent-vault;
   runner = pkgs.agent-vault-service.override { agent-vault = cfg.package; };
+  json = pkgs.formats.json { };
+  configFiles = [
+    cfg.configFile
+  ]
+  ++ lib.optional (cfg.settings != { }) (json.generate "agent-vault-settings.json" cfg.settings);
   modes = {
     agent-vault = "server";
     agent-vault-credentials = "credentials";
@@ -18,15 +23,15 @@ let
     if mode == "router" then
       [
         "${pkgs.agent-vault-router}/bin/agent-vault-router"
-        cfg.configFile
       ]
+      ++ configFiles
     else
       [
         "${runner}/bin/agent-vault-service"
         mode
         "--config"
-        cfg.configFile
-      ];
+      ]
+      ++ configFiles;
   environment = {
     AGENT_VAULT_TELEMETRY = "false";
     AGENT_VAULT_OWNER_EMAIL = cfg.ownerEmail;
@@ -53,6 +58,11 @@ in
       type = lib.types.str;
       default = "${config.home.homeDirectory}/.config/agent-vault/config.json";
       description = "Stow-managed configuration for proxy ports, credential sources and upstream services.";
+    };
+    settings = lib.mkOption {
+      inherit (json) type;
+      default = { };
+      description = "Host-specific additions to configFile, in the same format, e.g. services that need a secret only some hosts have.";
     };
     ownerEmail = lib.mkOption {
       type = lib.types.str;
