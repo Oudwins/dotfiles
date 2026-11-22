@@ -66,6 +66,20 @@ func TestLoadConfigSubstitutesEnvironmentAndRejectsUnsafeTargets(t *testing.T) {
 	}
 }
 
+func TestLoadConfigMergesExtraFiles(t *testing.T) {
+	directory := t.TempDir()
+	base, extra := filepath.Join(directory, "config.json"), filepath.Join(directory, "extra.json")
+	os.WriteFile(base, []byte(`{"proxyPort": 14322, "services": {"executor": {"target": "http://executor.localhost:4788/mcp"}}}`), 0o600)
+	os.WriteFile(extra, []byte(`{"environment": {"GH_TOKEN": "agent-vault"}, "services": {"github": {"target": "https://github.com"}}}`), 0o600)
+	cfg, err := loadConfig(base, extra)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.ProxyPort != 14322 || len(cfg.Services) != 2 || cfg.Environment["GH_TOKEN"] != "agent-vault" {
+		t.Fatalf("unexpected config %+v", cfg)
+	}
+}
+
 func TestServiceRulesCoverTargetPathOrWholeHost(t *testing.T) {
 	rules := serviceRules(map[string]route{
 		"executor": {Target: "http://executor.localhost:4788/mcp"},

@@ -60,6 +60,8 @@ in
     executor.address = address "(/[^?#]*)?" "https://executor.example.ts.net/mcp";
     # Needs executor/cloudflare-token in the user's sops file.
     executor.cloudflare.enable = lib.mkEnableOption "the Cloudflare MCP in Executor, authenticated with an API token";
+    # Needs a token in nix-secrets sops/shared/github.yaml.
+    github.enable = lib.mkEnableOption "gh and git over https in agent sessions, with Agent Vault injecting a GitHub token";
   };
 
   config = {
@@ -101,8 +103,29 @@ in
         };
 
         # Agent Vault injects it into GitHub requests (gh and git over https);
-        # agent sessions only see a placeholder GH_TOKEN.
-        sops.secrets."github/token" = { };
+        # agent sessions only see a placeholder GH_TOKEN, because gh won't run
+        # without one.
+        sops.secrets."github/token" = lib.mkIf cfg.github.enable {
+          sopsFile = configLib.secretFile "sops/shared/github.yaml";
+          key = "token";
+        };
+        services.agent-vault.settings = lib.mkIf cfg.github.enable {
+          environment.GH_TOKEN = "agent-vault";
+          credentials.GITHUB_TOKEN.file = config.sops.secrets."github/token".path;
+          services = {
+            github-api = {
+              target = "https://api.github.com";
+              headers.Authorization = "Bearer {{ GITHUB_TOKEN }}";
+            };
+            github = {
+              target = "https://github.com";
+              auth = {
+                type = "basic";
+                username = "GITHUB_TOKEN";
+              };
+            };
+          };
+        };
 
         # Executor MCP gateway
         sops.secrets."executor/token" = { };

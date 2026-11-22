@@ -47,6 +47,7 @@
   users.users.${config.my.username}.linger = true;
 
   agents.executor.cloudflare.enable = true;
+  agents.github.enable = true;
 
   # Root decrypts the proxy's keys with the master key, not tmx's SSH key.
   services.cli-proxy-api.sshKeyFile = config.my.networking.sshMasterKeyPath;
