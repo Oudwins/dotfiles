@@ -120,8 +120,8 @@ in
     };
     secretsFile = lib.mkOption {
       type = lib.types.path;
-      default = configLib.secretFile "sops/shared/cli-proxy-api.yaml";
-      description = "SOPS-encrypted YAML overrides. Never supply a plaintext file here.";
+      example = lib.literalExpression ''configLib.secretFile "sops/shared/cli-proxy-api-personal.yaml"'';
+      description = "SOPS-encrypted YAML overrides: the host's CLIProxyAPI profile in nix-secrets. Never supply a plaintext file here.";
     };
     sshKeyFile = lib.mkOption {
       type = lib.types.str;

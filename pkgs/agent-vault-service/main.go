@@ -66,28 +66,31 @@ type config struct {
 	Environment map[string]string `json:"environment"`
 }
 
-func loadConfig(path string) (*config, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-	var missing []string
-	expanded := os.Expand(string(data), func(name string) string {
-		if name == "$" {
-			return "$"
-		}
-		value, ok := os.LookupEnv(name)
-		if !ok {
-			missing = append(missing, name)
-		}
-		return value
-	})
-	if len(missing) > 0 {
-		return nil, fmt.Errorf("config references unset variables: %s", strings.Join(missing, ", "))
-	}
+// Later files add to and override the maps of earlier ones.
+func loadConfig(paths ...string) (*config, error) {
 	var cfg config
-	if err := json.Unmarshal([]byte(expanded), &cfg); err != nil {
-		return nil, err
+	for _, path := range paths {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return nil, err
+		}
+		var missing []string
+		expanded := os.Expand(string(data), func(name string) string {
+			if name == "$" {
+				return "$"
+			}
+			value, ok := os.LookupEnv(name)
+			if !ok {
+				missing = append(missing, name)
+			}
+			return value
+		})
+		if len(missing) > 0 {
+			return nil, fmt.Errorf("config references unset variables: %s", strings.Join(missing, ", "))
+		}
+		if err := json.Unmarshal([]byte(expanded), &cfg); err != nil {
+			return nil, err
+		}
 	}
 	for _, entry := range cfg.Services {
 		target, err := url.Parse(entry.Target)
@@ -627,7 +630,7 @@ func (h *helper) run(ctx context.Context) error {
 
 func run(args []string) error {
 	if len(args) < 1 || (args[0] != "server" && args[0] != "credentials") {
-		return errors.New("usage: agent-vault-service {server|credentials} [--config path]")
+		return errors.New("usage: agent-vault-service {server|credentials} [--config path] [extra-config...]")
 	}
 	home, err := os.UserHomeDir()
 	if err != nil {
@@ -637,7 +640,7 @@ func run(args []string) error {
 	configPath := flags.String("config", filepath.Join(home, ".config/agent-vault/config.json"), "configuration file")
 	flags.Parse(args[1:])
 	syscall.Umask(0o077)
-	cfg, err := loadConfig(*configPath)
+	cfg, err := loadConfig(append([]string{*configPath}, flags.Args()...)...)
 	if err != nil {
 		return err
 	}

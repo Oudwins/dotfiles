@@ -20,6 +20,8 @@
     llmproxy.address = rizos "llmproxy";
     executor.address = "${rizos "executor"}/mcp";
   };
+  # rizos's proxy profile, for the client key Agent Vault sends it.
+  services.cli-proxy-api.secretsFile = args.configLib.secretFile "sops/shared/cli-proxy-api-personal.yaml";
 
   # virtual keyboard tool
   programs.ydotool = { enable = true; };

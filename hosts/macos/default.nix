@@ -10,6 +10,7 @@
     # ./config-files/aerospace.nix
   ];
   # services.aerospace.enable = false;
+  services.cli-proxy-api.secretsFile = configLib.secretFile "sops/shared/cli-proxy-api-work.yaml";
 
   home-manager = {
     useGlobalPkgs = true;

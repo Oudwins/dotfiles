@@ -19,6 +19,8 @@
 let
   cfg = config.agents;
   user = config.my.username;
+  # The profile of the proxy this host's agents use, local or remote.
+  proxySecretsFile = config.services.cli-proxy-api.secretsFile;
   ownerEmail = "${user}@${config.my.domain}";
   # Agent Vault rejects IP-based service hosts, so the host must contain a letter.
   host = "[A-Za-z0-9.-]*[A-Za-z][A-Za-z0-9.-]*(:[0-9]+)?";
@@ -58,6 +60,8 @@ in
     executor.address = address "(/[^?#]*)?" "https://executor.example.ts.net/mcp";
     # Needs executor/cloudflare-token in the user's sops file.
     executor.cloudflare.enable = lib.mkEnableOption "the Cloudflare MCP in Executor, authenticated with an API token";
+    # Needs a token in nix-secrets sops/shared/github.yaml.
+    github.enable = lib.mkEnableOption "gh and git over https in agent sessions, with Agent Vault injecting a GitHub token";
   };
 
   config = {
@@ -94,13 +98,34 @@ in
         sops.secrets."agent-vault/owner-password" = { };
         # The same key CLIProxyAPI accepts; Agent Vault injects it into llmproxy requests.
         sops.secrets."cli-proxy-api/client-key" = {
-          sopsFile = configLib.secretFile "sops/shared/cli-proxy-api.yaml";
+          sopsFile = proxySecretsFile;
           key = "client-key";
         };
 
         # Agent Vault injects it into GitHub requests (gh and git over https);
-        # agent sessions only see a placeholder GH_TOKEN.
-        sops.secrets."github/token" = { };
+        # agent sessions only see a placeholder GH_TOKEN, because gh won't run
+        # without one.
+        sops.secrets."github/token" = lib.mkIf cfg.github.enable {
+          sopsFile = configLib.secretFile "sops/shared/github.yaml";
+          key = "token";
+        };
+        services.agent-vault.settings = lib.mkIf cfg.github.enable {
+          environment.GH_TOKEN = "agent-vault";
+          credentials.GITHUB_TOKEN.file = config.sops.secrets."github/token".path;
+          services = {
+            github-api = {
+              target = "https://api.github.com";
+              headers.Authorization = "Bearer {{ GITHUB_TOKEN }}";
+            };
+            github = {
+              target = "https://github.com";
+              auth = {
+                type = "basic";
+                username = "GITHUB_TOKEN";
+              };
+            };
+          };
+        };
 
         # Executor MCP gateway
         sops.secrets."executor/token" = { };

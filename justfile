@@ -112,10 +112,16 @@ secrets name:
       */*|*.yaml) file="sops/{{name}}"; [[ $file == *.yaml ]] || file="$file.yaml" ;;
       *) for kind in hosts users shared; do
            [[ -e sops/$kind/{{name}}.yaml ]] && { file="sops/$kind/{{name}}.yaml"; break; }
+         done
+         # A new file: the kind whose path a .sops.yaml creation rule covers.
+         [[ -n $file ]] || for kind in hosts users shared; do
+           while read -r regex; do
+             [[ sops/$kind/{{name}}.yaml =~ $regex ]] && { file="sops/$kind/{{name}}.yaml"; break 2; }
+           done < <(sed -n 's/^ *- path_regex: //p' .sops.yaml)
          done ;;
     esac
     if [[ -z $file ]]; then
-      echo "No sops file for '{{name}}'. Use a path such as hosts/{{name}} to create one." >&2
+      echo "No sops file or .sops.yaml creation rule for '{{name}}'. Use a path such as hosts/{{name}} to create one." >&2
       exit 1
     fi
     mkdir -p "$(dirname "$file")"
