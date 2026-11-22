@@ -50,6 +50,7 @@
 
   # Root decrypts the proxy's keys with the master key, not tmx's SSH key.
   services.cli-proxy-api.sshKeyFile = config.my.networking.sshMasterKeyPath;
+  services.cli-proxy-api.secretsFile = configLib.secretFile "sops/shared/cli-proxy-api-personal.yaml";
   # Its configuration is a Stow-managed file.
   systemd.services.cli-proxy-api = {
     wants = [ "dotfiles-bootstrap.service" ];

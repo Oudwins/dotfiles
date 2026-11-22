@@ -142,7 +142,7 @@ interface only. nixos uses the proxy and Executor from here.
 
 tmx's home-manager secrets are decrypted with a dedicated age key,
 `users/tmx/age_key` in `sops/hosts/rizos.yaml`, which is a recipient of
-`sops/users/tmx.yaml` and `sops/shared/cli-proxy-api.yaml`.
+`sops/users/tmx.yaml` and `sops/shared/cli-proxy-api-personal.yaml`.
 
 After the first deploy (or a reinstall):
 

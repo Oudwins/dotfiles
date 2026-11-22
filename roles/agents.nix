@@ -19,6 +19,8 @@
 let
   cfg = config.agents;
   user = config.my.username;
+  # The profile of the proxy this host's agents use, local or remote.
+  proxySecretsFile = config.services.cli-proxy-api.secretsFile;
   ownerEmail = "${user}@${config.my.domain}";
   # Agent Vault rejects IP-based service hosts, so the host must contain a letter.
   host = "[A-Za-z0-9.-]*[A-Za-z][A-Za-z0-9.-]*(:[0-9]+)?";
@@ -94,7 +96,7 @@ in
         sops.secrets."agent-vault/owner-password" = { };
         # The same key CLIProxyAPI accepts; Agent Vault injects it into llmproxy requests.
         sops.secrets."cli-proxy-api/client-key" = {
-          sopsFile = configLib.secretFile "sops/shared/cli-proxy-api.yaml";
+          sopsFile = proxySecretsFile;
           key = "client-key";
         };
 

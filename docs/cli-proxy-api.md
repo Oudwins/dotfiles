@@ -7,7 +7,9 @@ executing the proxy. Your login user is not a member of the service group.
 
 Ordinary settings in `home-files/tmx/.cli-proxy-api/config.yaml` are tracked and Stow-linked to
 `~/.cli-proxy-api/config.yaml`. Secrets live in **SOPS-encrypted**
-`sops/shared/cli-proxy-api.yaml` in nix-secrets. Only ciphertext and scripts enter the Nix store;
+`sops/shared/cli-proxy-api-<profile>.yaml` in nix-secrets, one profile per proxy:
+`personal` on rizos (which nixos uses) and `work` on macos, chosen per host with
+`services.cli-proxy-api.secretsFile`. Only ciphertext and scripts enter the Nix store;
 Nix never decrypts or interpolates secret values during evaluation/build.
 
 The launcher merges them at runtime (including login commands). Nested mappings
@@ -28,14 +30,14 @@ override; securing that file and its OAuth directory is then your responsibility
 
 ## Initial setup
 
-The encrypted file is shared by both machines. To import an existing local secrets
+To import an existing local secrets
 file without making another plaintext copy (do not overwrite an existing SOPS file):
 
 ```bash
 cd ~/nix-secrets
-test ! -e sops/shared/cli-proxy-api.yaml &&
-  sops --encrypt --filename-override sops/shared/cli-proxy-api.yaml \
-    ~/dotfiles/home-files/tmx/.cli-proxy-api/secrets.yaml > sops/shared/cli-proxy-api.yaml
+test ! -e sops/shared/cli-proxy-api-personal.yaml &&
+  sops --encrypt --filename-override sops/shared/cli-proxy-api-personal.yaml \
+    ~/dotfiles/home-files/tmx/.cli-proxy-api/secrets.yaml > sops/shared/cli-proxy-api-personal.yaml
 ```
 
 For a fresh setup, use `~/dotfiles/home-files/tmx/.cli-proxy-api/secrets.example.yaml` as the input instead,
@@ -49,8 +51,8 @@ RAM disk as `TMPDIR`, or use `sops set --value-stdin` to avoid editor temporary 
 Do not pass secret values as command-line arguments or put them in shell history.
 
 The daemon converts `~/.ssh/id_ed25519` to an age identity at runtime by default.
-Both machines' SSH-derived recipients are in nix-secrets' `.sops.yaml`; add other machines'
-recipients and run `sops updatekeys sops/shared/cli-proxy-api.yaml` there before rebuilding.
+Each profile's recipients are in nix-secrets' `.sops.yaml`; add other machines'
+recipients and run `sops updatekeys sops/shared/cli-proxy-api-<profile>.yaml` there before rebuilding.
 For manual SOPS commands, if you do not already have an age identity configured,
 use `export SOPS_AGE_KEY="$(ssh-to-age -private-key -i ~/.ssh/id_ed25519)"` first.
 
