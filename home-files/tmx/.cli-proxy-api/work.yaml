@@ -1,4 +1,4 @@
-# Tracked settings. Put real keys in nix-secrets sops/shared/cli-proxy-api-<profile>.yaml (just secrets cli-proxy-api-personal) using SOPS.
+# Work profile (macos). Put real keys in nix-secrets sops/shared/cli-proxy-api-work.yaml (just secrets cli-proxy-api-work) using SOPS.
 # https://help.router-for.me/configuration/options.html
 config-version: 8
 

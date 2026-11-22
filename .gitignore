@@ -32,7 +32,8 @@ home-files/tmx/.claude/*
 !home-files/tmx/.claude/CLAUDE.md
 !home-files/tmx/.claude/settings.json
 home-files/tmx/.cli-proxy-api/*
-!home-files/tmx/.cli-proxy-api/config.yaml
+!home-files/tmx/.cli-proxy-api/personal.yaml
+!home-files/tmx/.cli-proxy-api/work.yaml
 !home-files/tmx/.cli-proxy-api/secrets.example.yaml
 thoughts/shared/plan/
 home-files/tmx/.config/btca/

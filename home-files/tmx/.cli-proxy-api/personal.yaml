@@ -1,0 +1,120 @@
+# Personal profile (rizos). Put real keys in nix-secrets sops/shared/cli-proxy-api-personal.yaml (just secrets cli-proxy-api-personal) using SOPS.
+# https://help.router-for.me/configuration/options.html
+config-version: 8
+
+server:
+  host: "127.0.0.1"
+  port: 8317
+
+access:
+  # Overridden by SOPS secrets. This placeholder disables proxy endpoints until configured.
+  api-keys:
+    - "your-api-key-1"
+
+api-keys:
+  # Native Responses upstream, using an ordinary OpenAI API key (not OAuth).
+  codex:
+    - name: openai
+      base-url: "https://api.openai.com/v1"
+      models:
+        # Latest non-deprecated text LLMs per family/tier, checked 2026-10-08.
+        # https://developers.openai.com/api/docs/models
+        # Requests stay on /v1/responses upstream for reasoning and tool support.
+        - name: "gpt-6-astra"
+          alias: "gpt-6-astra"
+          thinking:
+            levels: ["low", "medium", "high", "xhigh", "max"]
+        - name: "gpt-6.1-sol"
+          alias: "gpt-6.1-sol"
+          thinking:
+            levels: ["low", "medium", "high", "xhigh", "max"]
+        - name: "gpt-6-luna"
+          alias: "gpt-6-luna"
+          thinking:
+            levels: ["none", "low", "medium", "high", "xhigh", "max"]
+        - name: "gpt-5.6-terra"
+          alias: "gpt-5.6-terra"
+          thinking:
+            levels: ["none", "low", "medium", "high", "xhigh", "max"]
+
+  # OpenCode Go subscription, Chat Completions upstream. Key lives in SOPS.
+  openai-compatibility:
+    - name: opencode-go
+      base-url: "https://opencode.ai/inference/go/openai/v1"
+      headers:
+        # Go rejects requests without a stable per-conversation session ID.
+        x-opencode-session: "$CPA-SESSION-ID"
+      models:
+        # Models whose native API is chat-completions, checked 2026-11-22.
+        # curl https://opencode.ai/inference/go/v1/models
+        - name: "kimi-k3.1-pro"
+          alias: "kimi-k3.1-pro"
+          thinking:
+            levels: ["low", "high", "max"]
+        - name: "kimi-k3"
+          alias: "kimi-k3"
+          thinking:
+            levels: ["max"]
+        - name: "kimi-k2.7-code"
+          alias: "kimi-k2.7-code"
+        - name: "glm-5.3"
+          alias: "glm-5.3"
+          thinking:
+            levels: ["low", "high", "max"]
+        - name: "glm-5.3-flash"
+          alias: "glm-5.3-flash"
+          thinking:
+            levels: ["low", "high", "max"]
+        - name: "deepseek-v4-pro"
+          alias: "deepseek-v4-pro"
+          thinking:
+            levels: ["high", "max"]
+        - name: "deepseek-v4.1-flash"
+          alias: "deepseek-v4.1-flash"
+          thinking:
+            levels: ["low", "high", "max"]
+        - name: "minimax-m3.1-flash"
+          alias: "minimax-m3.1-flash"
+          thinking:
+            levels: ["low", "medium", "high", "xhigh", "max"]
+        - name: "mimo-v2.6-pro"
+          alias: "mimo-v2.6-pro"
+        - name: "hy4"
+          alias: "hy4"
+          thinking:
+            levels: ["none", "high"]
+
+multimedia:
+  # Do not inject an image-generation tool into text/coding requests.
+  disable-image-generation: "passthrough"
+
+oauth:
+  # The launcher sets auth-dir to the service account's private persistent state directory.
+  providers:
+    aistudio:
+      ws-auth: true
+
+management:
+  allow-remote: true
+  # Keep the real management key in SOPS; empty disables the management API.
+  secret-key: ""
+  disable-control-panel: false
+
+routing:
+  strategy: "round-robin"
+  # Keep a conversation on the same credential for prompt-cache reuse.
+  session-affinity: true
+  session-affinity-ttl: "1h"
+
+requests:
+  streaming:
+    keepalive-seconds: 15
+    bootstrap-retries: 1
+
+observability:
+  logs:
+    debug: false
+    request-log: false
+    logging-to-file: true
+    logs-max-total-size-mb: 100
+    error-logs-max-files: 10

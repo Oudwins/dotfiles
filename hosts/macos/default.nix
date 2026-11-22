@@ -11,6 +11,7 @@
   ];
   # services.aerospace.enable = false;
   services.cli-proxy-api.secretsFile = configLib.secretFile "sops/shared/cli-proxy-api-work.yaml";
+  services.cli-proxy-api.configFile = "${config.users.users.tmx.home}/.cli-proxy-api/work.yaml";
 
   home-manager = {
     useGlobalPkgs = true;

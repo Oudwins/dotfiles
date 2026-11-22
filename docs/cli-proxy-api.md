@@ -5,8 +5,8 @@ account: `cli-proxy-api` on NixOS, `_cliproxyapi` on macOS. A root launcher decr
 SOPS and prepares private runtime files, then permanently drops UID/GID before
 executing the proxy. Your login user is not a member of the service group.
 
-Ordinary settings in `home-files/tmx/.cli-proxy-api/config.yaml` are tracked and Stow-linked to
-`~/.cli-proxy-api/config.yaml`. Secrets live in **SOPS-encrypted**
+Ordinary settings in `home-files/tmx/.cli-proxy-api/<profile>.yaml` are tracked and Stow-linked to
+`~/.cli-proxy-api/<profile>.yaml`, chosen per host with `services.cli-proxy-api.configFile`. Secrets live in **SOPS-encrypted**
 `sops/shared/cli-proxy-api-<profile>.yaml` in nix-secrets, one profile per proxy:
 `personal` on rizos (which nixos uses) and `work` on macos, chosen per host with
 `services.cli-proxy-api.secretsFile`. Only ciphertext and scripts enter the Nix store;
@@ -112,7 +112,7 @@ mutable settings out of your login user's control. Never use a Nix path literal 
 `readFile` for the identity. RAM-backed storage can still reach swap/hibernation; configure those
 separately for a strict no-physical-storage guarantee. Core dumps are disabled.
 
-For example, keep the OpenAI URL and model list in `config.yaml`:
+For example, keep the OpenAI URL and model list in the profile config:
 
 Use `api-keys.codex` for the official OpenAI Responses API with ordinary API keys;
 this keeps reasoning and tool calls on upstream `/v1/responses`. The generic
@@ -192,17 +192,17 @@ across restarts and disappears on reboot.
   before streaming starts. Both are included in the tracked config.
 - Management is disabled by default. To use the web panel, set a **different**
   random `management.secret-key` in SOPS and set
-  `management.disable-control-panel: false` in `config.yaml`;
+  `management.disable-control-panel: false` in the profile config;
   visit `http://127.0.0.1:8317/management.html`. The application downloads the panel
   at runtime, separately from the Nix-built server. Plaintext management keys are
   hashed and written back to the private RAM-backed config on startup.
   Web panel settings changes also affect only the runtime file and are lost at the
-  next launch; make persistent settings changes in the tracked `config.yaml` instead.
+  next launch; make persistent settings changes in the tracked profile config instead.
 - Optional: `observability.usage.usage-statistics-enabled: true` enables in-memory
   usage totals for management. Leave request/debug logging off unless troubleshooting;
   request logs can contain prompts and responses. Application logs are capped at 100 MB.
 - Rebuild after editing the SOPS file, then restart the service to use its new
-  encrypted store copy. Restart after editing `config.yaml` to regenerate
+  encrypted store copy. Restart after editing the profile config to regenerate
   the merged runtime config. OAuth credential files still support hot reload.
 - Check provider subscription terms before using subscription OAuth credentials
   with third-party clients; API-key upstreams are also supported.
