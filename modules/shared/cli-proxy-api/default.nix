@@ -80,7 +80,7 @@ let
       # shellcheck disable=SC2016
       ${lib.getExe pkgs.yq-go} eval-all '
         # An empty api-keys key (e.g. a bare "api-keys:" in secrets.yaml) is null;
-        # drop it so it does not replace the provider groups from config.yaml.
+        # drop it so it does not replace the provider groups from the tracked config.
         (select(has("api-keys") and .api-keys == null) |= del(.api-keys)) |
         (with(select(has("api-keys"));
           .api-keys |= with_entries(.value |= ([.[] | {"key": .name, "value": .}] | from_entries))
@@ -115,8 +115,8 @@ in
     };
     configFile = lib.mkOption {
       type = lib.types.str;
-      default = "${config.users.users.tmx.home}/.cli-proxy-api/config.yaml";
-      description = "Mutable YAML configuration, managed outside Nix (for example with Stow).";
+      example = "/home/tmx/.cli-proxy-api/personal.yaml";
+      description = "Mutable YAML configuration of the host's CLIProxyAPI profile, managed outside Nix (for example with Stow).";
     };
     secretsFile = lib.mkOption {
       type = lib.types.path;

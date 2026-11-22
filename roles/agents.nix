@@ -36,7 +36,7 @@ let
   # http://127.0.0.1:28760/<name>, which injects its credential. The entries in
   # home-files/tmx/.config/agent-vault/config.json read these variables.
   services = {
-    # The port matches home-files/tmx/.cli-proxy-api/config.yaml.
+    # The port matches home-files/tmx/.cli-proxy-api/{personal,work}.yaml.
     llmproxy = {
       local = "http://llmproxy.localhost:8317";
       variable = "LLM_PROXY_URL";

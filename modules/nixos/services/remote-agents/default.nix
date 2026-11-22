@@ -7,7 +7,7 @@ let
   hm = config.home-manager.users.${config.my.username};
   services = {
     llmproxy = {
-      # Matches home-files/tmx/.cli-proxy-api/config.yaml.
+      # Matches home-files/tmx/.cli-proxy-api/{personal,work}.yaml.
       port = 8317;
       dashboard = {
         label = "LLM proxy";
