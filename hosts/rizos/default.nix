@@ -46,6 +46,14 @@
   # Agent Vault, Executor and T3 Code are user services; run them without a login.
   users.users.${config.my.username}.linger = true;
 
+  # A long-lived `t3 auth session issue --token-only`.
+  sops.secrets."t3code/nginx_token" = {
+    sopsFile = configLib.secretFile "sops/shared/t3code.yaml";
+    owner = config.services.nginx.user;
+    restartUnits = [ "nginx.service" ];
+  };
+  my.remoteAgents.t3code.tokenFile = config.sops.secrets."t3code/nginx_token".path;
+
   agents.executor.cloudflare.enable = true;
   agents.github.enable = true;
 
