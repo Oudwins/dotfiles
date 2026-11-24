@@ -60,6 +60,10 @@ routing:
   session-affinity-ttl: "1h"
 
 requests:
+  # Forward the anthropic-ratelimit-unified-* headers CPA builds on a cooldown 429;
+  # Claude Code takes its reset time only from these, and only in gateway mode
+  # (CLAUDE_CODE_USE_GATEWAY in ~/.claude/settings.json).
+  passthrough-headers: true
   streaming:
     keepalive-seconds: 15
     bootstrap-retries: 1
