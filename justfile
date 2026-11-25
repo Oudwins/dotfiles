@@ -3,7 +3,7 @@
 # Secrets come from the private nix-secrets flake, pinned in flake.lock.
 # Set SECRETS to a local checkout path to include uncommitted edits instead.
 # `bootstrap` always uses the locked revision (nixos-anywhere can't override
-# inputs), so push nix-secrets and run `just update secrets` before bootstrapping.
+# inputs), so run `just secrets-push` before bootstrapping.
 
 set shell := ["bash", "-euo", "pipefail", "-c"]
 set positional-arguments
@@ -32,11 +32,13 @@ help:
       just secrets <name>      edit a sops file: a host (tubby), user (tmx) or shared
                                (wifi-control) name, or a path such as hosts/new-host
       just soft                edit the soft secrets (plain values merged into my.*)
+      just secrets-push [msg]  commit pending edits (msg defaults to the changed files),
+                               push nix-secrets and lock flake.lock to the pushed revision
       Builds and deploys use the revision locked in flake.lock by default.
       Set SECRETS to a checkout path to include uncommitted edits instead:
         SECRETS=~/nix-secrets just switch
       Editing commands use ~/nix-secrets unless SECRETS is set.
-      After editing: commit and push nix-secrets, then `just update secrets`.
+      After editing: just secrets-push ["<message>"]
 
     Inputs
       just update              update every flake input
@@ -44,7 +46,7 @@ help:
 
     New machines
       just bootstrap <vm|vps|encrypted> <host> <user@address> [script options]
-      Uses the pinned secrets, so push nix-secrets and `just update secrets` first.
+      Uses the pinned secrets, so run `just secrets-push` first.
       Reads the master key with sudo (override with MASTER_KEY=/path/to/key).
 
     Good to know
@@ -132,6 +134,20 @@ secrets name:
 # Edit the soft secrets (plain values merged into my.*)
 soft:
     "${EDITOR:-vi}" "{{secrets_dir}}/soft/default.nix"
+
+# Commit pending edits and push nix-secrets, then lock flake.lock to it
+secrets-push message="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cd "{{secrets_dir}}"
+    # Tracked and intent-to-add files only (what `just secrets` registers).
+    if [[ -n $(git status --porcelain --untracked-files=no) ]]; then
+      files=$(git diff --name-only HEAD)
+      git commit -a -m "${1:-Update ${files//$'\n'/, }}"
+    fi
+    git pull --rebase
+    git push
+    nix flake update --flake "{{repo}}" secrets
 
 # Update flake inputs (all, or the ones given)
 update *inputs:
