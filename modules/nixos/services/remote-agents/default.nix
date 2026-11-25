@@ -62,12 +62,14 @@ in
 
     # A client's own credentials (the desktop app, the CLI) pass through. The
     # token goes only to requests from the site itself or typed into the address
-    # bar, so pages on other sites can't use it through the browser.
+    # bar, so pages on other sites can't use it through the browser. Chromium
+    # sends no Sec-Fetch-Site on WebSocket handshakes, so those match on Origin.
     services.nginx.appendHttpConfig = ''
-      map "$http_authorization:$http_sec_fetch_site" $t3code_authorization {
+      map "$http_authorization|$http_sec_fetch_site|$http_origin|$scheme://$http_host" $t3code_authorization {
         default $http_authorization;
-        "~^:(same-origin|none)$" "Bearer $t3code_token";
-        "~^:" "";
+        "~^\|(same-origin|none)\|" "Bearer $t3code_token";
+        "~^\|[^|]*\|([^|]+)\|\1$" "Bearer $t3code_token";
+        "~^\|" "";
       }
     '';
 
