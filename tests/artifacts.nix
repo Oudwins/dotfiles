@@ -116,6 +116,9 @@ pkgs.testers.runNixOSTest {
         assert status == "401", status
         status = machine.succeed("curl -s -o /dev/null -w '%{http_code}' -X PUT --data x -H 'Host: ${host}' http://127.0.0.1/_upload/x/index.html")
         assert status == "401", f"PUT to the site's /_upload/ without the token: {status}"
+        # nginx refuses on the declared length, before reading any body.
+        status = machine.succeed("curl -s -o /dev/null -w '%{http_code}' -X PUT --data x -H 'Content-Length: 300000000' -H 'Host: ${host}' http://127.0.0.1/_upload/x/big.bin || true")
+        assert status == "413", f"oversized PUT to the site's /_upload/: {status}"
         status = machine.succeed("curl -s --path-as-is -o /dev/null -w '%{http_code}' -X PUT -H 'Authorization: Bearer ${token}' --data x http://127.0.0.1:8095/x/../y")
         assert status == "400", status
 

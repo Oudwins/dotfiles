@@ -14,6 +14,8 @@
 let
   cfg = config.services.artifacts;
   bucket = "artifacts";
+  # Largest file accepted, in bytes; nginx and the upload server both enforce it.
+  maxSize = 256 * 1024 * 1024;
   rustfs = config.services.rustfs.settings.RUSTFS_ADDRESS;
   host = "${config.my.services.artifacts.subdomain}.${config.my.server.location}.${config.my.domain}";
 in
@@ -117,6 +119,8 @@ in
           "%d/secret-key"
           "-token-file"
           "%d/token"
+          "-max-size"
+          (toString maxSize)
         ];
         LoadCredential = [
           "secret-key:${cfg.secretKeyFile}"
@@ -140,12 +144,14 @@ in
       useACMEHost = "${config.my.server.location}.${config.my.domain}";
       addSSL = true;
       locations."= /".return = "404";
-      # Artifact IDs can't start with "_", so this never shadows one. The
-      # upload server checks the token and the size.
+      # Artifact IDs can't start with "_", so this never shadows one. Bodies
+      # stream to the upload server, which rejects a missing token before
+      # reading them.
       locations."/_upload/" = {
         proxyPass = "http://127.0.0.1:${toString cfg.port}/";
         extraConfig = ''
-          client_max_body_size 0;
+          client_max_body_size ${toString maxSize};
+          proxy_request_buffering off;
         '';
       };
       locations."/" = {
