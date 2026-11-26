@@ -58,10 +58,7 @@
 
   agents.executor.cloudflare.enable = true;
   agents.github.enable = true;
-  agents.artifacts = {
-    enable = true;
-    publicUrl = "https://${config.my.services.artifacts.subdomain}.${config.my.server.location}.${config.my.domain}";
-  };
+  agents.artifacts.enable = true;
 
   # RustFS's root credentials (an env file) and the upload server's secrets;
   # the token is the one Agent Vault injects for agents.artifacts.

@@ -1,7 +1,8 @@
 # Files agents publish with `artifact publish` (pkgs/artifact): a RustFS bucket
-# served read-only at artifacts.<location>.<domain>, and the loopback upload
-# server Agent Vault's router forwards to with the bearer token (roles/agents.nix,
-# agents.artifacts). A directory's URL serves its index.html.
+# served read-only at artifacts.<location>.<domain>, whose /_upload/ goes to the
+# upload server. Agent Vault's router adds the bearer token it checks, for agents
+# on this or any other machine (roles/agents.nix, agents.artifacts). A
+# directory's URL serves its index.html.
 {
   config,
   configLib,
@@ -23,7 +24,12 @@ in
   ];
 
   options.services.artifacts = {
-    # Matches agents.artifacts.address's local default in roles/agents.nix.
+    url = lib.mkOption {
+      type = lib.types.str;
+      default = "https://${host}";
+      readOnly = true;
+      description = "Where artifacts are served and uploaded; agents.artifacts uses it when its address is null.";
+    };
     port = lib.mkOption {
       type = lib.types.port;
       default = 8095;
@@ -134,6 +140,14 @@ in
       useACMEHost = "${config.my.server.location}.${config.my.domain}";
       addSSL = true;
       locations."= /".return = "404";
+      # Artifact IDs can't start with "_", so this never shadows one. The
+      # upload server checks the token and the size.
+      locations."/_upload/" = {
+        proxyPass = "http://127.0.0.1:${toString cfg.port}/";
+        extraConfig = ''
+          client_max_body_size 0;
+        '';
+      };
       locations."/" = {
         proxyPass = "http://${rustfs}";
         extraConfig = ''

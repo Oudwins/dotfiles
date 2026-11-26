@@ -140,13 +140,14 @@ plus a T3 Code server. nginx serves the proxy, Executor and T3 Code at
 `llmproxy.r.<domain>`, `executor.r.<domain>` and `t3.r.<domain>` on the tailnet
 interface only. nixos uses the proxy and Executor from here.
 
-Agents publish HTML and other files with `artifact publish` (the
-`publish-artifact` skill). They go to a RustFS bucket and are served at
+Agents here and on nixos publish HTML and other files with `artifact publish`
+(the `publish-artifact` skill). They go to a RustFS bucket and are served at
 `artifacts.r.<domain>`, also tailnet-only. Each file is deleted 180 days after
 its last upload (`services.artifacts.expireDays`), so republishing an artifact
-keeps it. The CLI holds no credentials: it
-uploads through Agent Vault's router, which adds the upload server's token
-(`modules/nixos/services/artifacts`). Its secrets are in nix-secrets
+keeps it. The CLI holds no credentials: it uploads through Agent Vault's router,
+which adds the upload server's token and forwards to the site's `/_upload/`
+(`modules/nixos/services/artifacts`). Another machine publishes here with
+`agents.artifacts.address`, as nixos does. Its secrets are in nix-secrets
 `sops/hosts/rizos-rustfs.yaml` (RustFS root credentials and the upload
 server's S3 key) and `sops/shared/artifacts.yaml` (the upload token). Test it
 with `nix build -L --impure --expr 'import ./tests/artifacts.nix { }'`.

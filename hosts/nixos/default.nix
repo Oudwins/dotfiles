@@ -13,12 +13,17 @@
 
   sops.defaultSopsFile = args.configLib.secretFile "sops/hosts/nixos.yaml";
 
-  # Agents use rizos's LLM proxy and Executor ("r" is rizos's my.server.location).
+  # Agents use rizos's LLM proxy, Executor and artifacts site ("r" is rizos's
+  # my.server.location).
   agents = let
     rizos = name: "https://${config.my.services.${name}.subdomain}.r.${config.my.domain}";
   in {
     llmproxy.address = rizos "llmproxy";
     executor.address = "${rizos "executor"}/mcp";
+    artifacts = {
+      enable = true;
+      address = rizos "artifacts";
+    };
   };
   # rizos's proxy profile, for the client key Agent Vault sends it.
   services.cli-proxy-api.secretsFile = args.configLib.secretFile "sops/shared/cli-proxy-api-personal.yaml";

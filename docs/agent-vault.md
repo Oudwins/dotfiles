@@ -25,7 +25,7 @@ routing and Agent Vault's credential rules:
 | `http://127.0.0.1:28760/llmproxy/…` | `${LLM_PROXY_URL}` from Nix | CLIProxyAPI client key |
 | `http://127.0.0.1:28760/payload-staging` | `https://payload.eleven2.dev/api/mcp` | Staging IAP token |
 | `http://127.0.0.1:28760/payload-production` | `https://payload.elevenlabs.io/api/mcp` | Production IAP token |
-| `http://127.0.0.1:28760/artifacts/…` | `${ARTIFACTS_SERVER_URL}` from Nix | SOPS artifact upload token (Bearer), with `agents.artifacts.enable` |
+| `http://127.0.0.1:28760/artifacts/…` | `agents.artifacts.address`, or this host's artifacts site | SOPS artifact upload token (Bearer), with `agents.artifacts.enable` |
 
 Add a service to this map to expose `/<service-name>` through Caddy. Each entry
 has a `target` URL and optional credential `headers`; omit headers for a public

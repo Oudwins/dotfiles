@@ -1,7 +1,7 @@
 # VM test of modules/nixos/services/artifacts: RustFS with its provisioning,
-# the upload server and the nginx site, with `artifact publish` uploading
-# through a stand-in for Agent Vault's router (an nginx location adding the
-# token). Run from the repo root:
+# the upload server and the nginx site, with `artifact publish` uploading to the
+# site's /_upload/ through a stand-in for Agent Vault's router (an nginx
+# location adding the token). Run from the repo root:
 #
 #   nix build -L --impure --expr 'import ./tests/artifacts.nix { }'
 {
@@ -67,7 +67,8 @@ pkgs.testers.runNixOSTest {
         useACMEHost = lib.mkForce null;
         addSSL = lib.mkForce false;
       };
-      # Stands in for Agent Vault's router, which adds the token.
+      # Stands in for Agent Vault's router, which adds the token and forwards
+      # to the artifacts site (agents.artifacts in roles/agents.nix).
       services.nginx.virtualHosts.router = {
         listen = [
           {
@@ -76,8 +77,9 @@ pkgs.testers.runNixOSTest {
           }
         ];
         locations."/artifacts/" = {
-          proxyPass = "http://127.0.0.1:8095/";
+          proxyPass = "http://127.0.0.1/";
           extraConfig = ''
+            proxy_set_header Host ${host};
             proxy_set_header Authorization "Bearer ${token}";
             client_max_body_size 0;
           '';
@@ -86,7 +88,7 @@ pkgs.testers.runNixOSTest {
 
       environment.systemPackages = [ pkgs.artifact ];
       environment.variables = {
-        ARTIFACT_UPLOAD_URL = "http://127.0.0.1:28760/artifacts";
+        ARTIFACT_UPLOAD_URL = "http://127.0.0.1:28760/artifacts/_upload";
         ARTIFACT_PUBLIC_URL = "https://${host}";
       };
     };
@@ -112,6 +114,8 @@ pkgs.testers.runNixOSTest {
         assert status == "401", status
         status = machine.succeed("curl -s -o /dev/null -w '%{http_code}' -X PUT -H 'Authorization: Bearer wrong' --data x http://127.0.0.1:8095/x/index.html")
         assert status == "401", status
+        status = machine.succeed("curl -s -o /dev/null -w '%{http_code}' -X PUT --data x -H 'Host: ${host}' http://127.0.0.1/_upload/x/index.html")
+        assert status == "401", f"PUT to the site's /_upload/ without the token: {status}"
         status = machine.succeed("curl -s --path-as-is -o /dev/null -w '%{http_code}' -X PUT -H 'Authorization: Bearer ${token}' --data x http://127.0.0.1:8095/x/../y")
         assert status == "400", status
 

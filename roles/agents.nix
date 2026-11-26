@@ -45,21 +45,25 @@ let
       local = "http://executor.localhost:4788/mcp";
       variable = "EXECUTOR_MCP_URL";
     };
-    # The upload server of modules/nixos/services/artifacts, with agents.artifacts.
-    artifacts = {
-      local = "http://artifacts.localhost:8095";
-      variable = "ARTIFACTS_SERVER_URL";
-    };
   };
   endpoint =
     name: if cfg.${name}.address == null then services.${name}.local else cfg.${name}.address;
   origin = url: builtins.head (builtins.match "(https?://[^/]+).*" url);
   agentVaultConfig = lib.importJSON ../home-files/tmx/.config/agent-vault/config.json;
-  # `artifact publish` uploads through the router (agents.artifacts).
+  # The artifacts site agents publish to: this host's own, or another's.
+  artifactsUrl = lib.removeSuffix "/" (
+    if cfg.artifacts.address == null then
+      config.services.artifacts.url
+        or (throw "agents.artifacts.address is null, so this host must import modules/nixos/services/artifacts")
+    else
+      cfg.artifacts.address
+  );
+  # `artifact publish` uploads through the router (agents.artifacts), which
+  # forwards to the site's /_upload/.
   artifact = pkgs.runCommand "artifact" { nativeBuildInputs = [ pkgs.makeWrapper ]; } ''
     makeWrapper ${lib.getExe pkgs.artifact} $out/bin/artifact \
-      --set-default ARTIFACT_UPLOAD_URL http://127.0.0.1:28760/artifacts \
-      --set-default ARTIFACT_PUBLIC_URL ${lib.escapeShellArg cfg.artifacts.publicUrl}
+      --set-default ARTIFACT_UPLOAD_URL http://127.0.0.1:28760/artifacts/_upload \
+      --set-default ARTIFACT_PUBLIC_URL ${lib.escapeShellArg artifactsUrl}
   '';
 in
 {
@@ -76,11 +80,13 @@ in
     # Needs a token in nix-secrets sops/shared/artifacts.yaml, the one the upload server checks.
     artifacts = {
       enable = lib.mkEnableOption "`artifact publish`, with Agent Vault injecting the upload server's token";
-      address = address "/?" "https://artifacts-upload.example.ts.net";
-      publicUrl = lib.mkOption {
-        type = lib.types.str;
+      # Null publishes to this host's own artifacts site, so the host must import
+      # modules/nixos/services/artifacts.
+      address = lib.mkOption {
+        type = lib.types.nullOr (lib.types.strMatching "https?://${host}/?");
+        default = null;
         example = "https://artifacts.r.example.com";
-        description = "Where the upload server's artifacts are served; `artifact publish` prints links under it.";
+        description = "Another machine's artifacts site to publish to, instead of this host's own. Must be a hostname, not an IP.";
       };
     };
   };
@@ -145,7 +151,7 @@ in
         services.agent-vault.settings = lib.mkIf cfg.artifacts.enable {
           credentials.ARTIFACTS_TOKEN.file = config.sops.secrets."artifacts/token".path;
           services.artifacts = {
-            target = "\${ARTIFACTS_SERVER_URL}";
+            target = artifactsUrl;
             headers.Authorization = "Bearer {{ ARTIFACTS_TOKEN }}";
           };
         };
