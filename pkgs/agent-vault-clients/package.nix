@@ -22,8 +22,6 @@ let
     "GIT_SSL_CAINFO"
     "DENO_CERT"
     "AGENT_VAULT_HEALTH_URL"
-    # Placeholder from config.json's environment, only valid through the vault.
-    "GH_TOKEN"
   ];
 in
 symlinkJoin {
