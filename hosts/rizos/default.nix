@@ -22,6 +22,8 @@
     (configLib.relativeToRoot "roles/agents.nix")
     # Serves them to agents on nixos as <subdomain>.r.<domain>
     (configLib.relativeToRoot "modules/nixos/services/remote-agents")
+    # Files agents publish with `artifact publish`, at artifacts.r.<domain>
+    (configLib.relativeToRoot "modules/nixos/services/artifacts")
     (configLib.relativeToRoot "modules/nixos/core/dotfiles-bootstrap.nix")
     ./home.nix
   ] ++ lib.optional (builtins.pathExists ./hardware-configuration.nix)
@@ -56,6 +58,21 @@
 
   agents.executor.cloudflare.enable = true;
   agents.github.enable = true;
+  agents.artifacts = {
+    enable = true;
+    publicUrl = "https://${config.my.services.artifacts.subdomain}.${config.my.server.location}.${config.my.domain}";
+  };
+
+  # RustFS's root credentials (an env file) and the upload server's secrets;
+  # the token is the one Agent Vault injects for agents.artifacts.
+  sops.secrets."rustfs/env".sopsFile = configLib.secretFile "sops/hosts/rizos-rustfs.yaml";
+  sops.secrets."rustfs/artifacts-secret-key".sopsFile = configLib.secretFile "sops/hosts/rizos-rustfs.yaml";
+  sops.secrets."artifacts/token".sopsFile = configLib.secretFile "sops/shared/artifacts.yaml";
+  services.rustfs.environmentFile = config.sops.secrets."rustfs/env".path;
+  services.artifacts = {
+    tokenFile = config.sops.secrets."artifacts/token".path;
+    secretKeyFile = config.sops.secrets."rustfs/artifacts-secret-key".path;
+  };
 
   # Root decrypts the proxy's keys with the master key, not tmx's SSH key.
   services.cli-proxy-api.sshKeyFile = config.my.networking.sshMasterKeyPath;

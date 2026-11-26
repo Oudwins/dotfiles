@@ -45,11 +45,22 @@ let
       local = "http://executor.localhost:4788/mcp";
       variable = "EXECUTOR_MCP_URL";
     };
+    # The upload server of modules/nixos/services/artifacts, with agents.artifacts.
+    artifacts = {
+      local = "http://artifacts.localhost:8095";
+      variable = "ARTIFACTS_SERVER_URL";
+    };
   };
   endpoint =
     name: if cfg.${name}.address == null then services.${name}.local else cfg.${name}.address;
   origin = url: builtins.head (builtins.match "(https?://[^/]+).*" url);
   agentVaultConfig = lib.importJSON ../home-files/tmx/.config/agent-vault/config.json;
+  # `artifact publish` uploads through the router (agents.artifacts).
+  artifact = pkgs.runCommand "artifact" { nativeBuildInputs = [ pkgs.makeWrapper ]; } ''
+    makeWrapper ${lib.getExe pkgs.artifact} $out/bin/artifact \
+      --set-default ARTIFACT_UPLOAD_URL http://127.0.0.1:28760/artifacts \
+      --set-default ARTIFACT_PUBLIC_URL ${lib.escapeShellArg cfg.artifacts.publicUrl}
+  '';
 in
 {
   imports = [ ../modules/shared/cli-proxy-api ];
@@ -62,6 +73,16 @@ in
     executor.cloudflare.enable = lib.mkEnableOption "the Cloudflare MCP in Executor, authenticated with an API token";
     # Needs a token in nix-secrets sops/shared/github.yaml.
     github.enable = lib.mkEnableOption "gh and git over https for every program, signed in with the shared GitHub token";
+    # Needs a token in nix-secrets sops/shared/artifacts.yaml, the one the upload server checks.
+    artifacts = {
+      enable = lib.mkEnableOption "`artifact publish`, with Agent Vault injecting the upload server's token";
+      address = address "/?" "https://artifacts-upload.example.ts.net";
+      publicUrl = lib.mkOption {
+        type = lib.types.str;
+        example = "https://artifacts.r.example.com";
+        description = "Where the upload server's artifacts are served; `artifact publish` prints links under it.";
+      };
+    };
   };
 
   config = {
@@ -118,6 +139,19 @@ in
         };
         programs.git.settings.credential."https://github.com".helper =
           lib.mkIf cfg.github.enable "!${lib.getExe pkgs.gh} auth git-credential";
+
+        # Artifacts: `artifact publish` holds no credentials; it uploads
+        # through the router, which adds the token.
+        services.agent-vault.settings = lib.mkIf cfg.artifacts.enable {
+          credentials.ARTIFACTS_TOKEN.file = config.sops.secrets."artifacts/token".path;
+          services.artifacts = {
+            target = "\${ARTIFACTS_SERVER_URL}";
+            headers.Authorization = "Bearer {{ ARTIFACTS_TOKEN }}";
+          };
+        };
+        sops.secrets."artifacts/token" = lib.mkIf cfg.artifacts.enable {
+          sopsFile = configLib.secretFile "sops/shared/artifacts.yaml";
+        };
 
         # Executor MCP gateway
         sops.secrets."executor/token" = { };
@@ -211,15 +245,18 @@ in
 
         # OpenCode's stable runtime gates Responses WebSockets behind this flag.
         home.sessionVariables.OPENCODE_EXPERIMENTAL_WEBSOCKETS = "1";
-        home.packages = with pkgs; [
-          jq
-          bun
-          btca
-          jsonc2json
-          # Opencode for code linting
-          typescript-language-server
-          glab
-        ];
+        home.packages =
+          with pkgs;
+          [
+            jq
+            bun
+            btca
+            jsonc2json
+            # Opencode for code linting
+            typescript-language-server
+            glab
+          ]
+          ++ lib.optional cfg.artifacts.enable artifact;
 
         # Local AI
         # ollama

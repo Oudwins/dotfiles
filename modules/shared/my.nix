@@ -76,6 +76,7 @@ in
       executor = "executor";
       llmproxy = "llmproxy";
       t3code = "t3";
+      artifacts = "artifacts";
       firecrawl = "firecrawl";
       wifiControl = "wifi";
       gitea = "gitea";

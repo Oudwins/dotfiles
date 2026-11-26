@@ -2,6 +2,7 @@
 # You can build them using 'nix build .#example'
 pkgs: rec {
   # example = pkgs.callPackage ./example { };
+  artifact = pkgs.callPackage ./artifact/package.nix { };
   beads = pkgs.callPackage ./beads/package.nix { };
   btca = pkgs.callPackage ./btca/package.nix { };
   cli-proxy-api = pkgs.callPackage ./cli-proxy-api/package.nix { };
