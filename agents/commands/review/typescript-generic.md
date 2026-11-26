@@ -32,3 +32,8 @@ swtich (x.discriminator) {
         console.log("THIS SHOULD NEVER HAPPEN, X HAS A STRANGE VALUE", x)
 }
 ```
+
+## Banned APIs
+- Object.create()
+- "x" in object
+- variable as any

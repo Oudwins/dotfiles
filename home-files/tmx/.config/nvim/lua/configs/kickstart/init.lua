@@ -417,17 +417,29 @@ require('lazy').setup({
             }
           end
         end,
+        formatters = {
+          oxfmt = {
+            -- Only use oxfmt in projects that use it, detected the same way as nvim-lspconfig's oxfmt server
+            condition = function(_, ctx)
+              local uses_oxfmt = false
+              vim.lsp.config.oxfmt.root_dir(ctx.buf, function()
+                uses_oxfmt = true
+              end)
+              return uses_oxfmt
+            end,
+          },
+        },
         formatters_by_ft = {
           lua = { 'stylua' },
           python = { 'ruff' },
           nix = { 'nixfmt' },
-          -- runs one then the other
-          json = { 'prettierd' },
-          jsonc = { 'prettierd' },
-          javascript = { 'prettierd' },
-          typescript = { 'prettierd' },
-          javascriptreact = { 'prettierd' },
-          typescriptreact = { 'prettierd' },
+          -- oxfmt in projects that use it, prettierd otherwise
+          json = { 'oxfmt', 'prettierd', stop_after_first = true },
+          jsonc = { 'oxfmt', 'prettierd', stop_after_first = true },
+          javascript = { 'oxfmt', 'prettierd', stop_after_first = true },
+          typescript = { 'oxfmt', 'prettierd', stop_after_first = true },
+          javascriptreact = { 'oxfmt', 'prettierd', stop_after_first = true },
+          typescriptreact = { 'oxfmt', 'prettierd', stop_after_first = true },
           sql = { 'sqlfmt' },
           -- You can use 'stop_after_first' to run the first available formatter from the list
           -- javascript = { "prettierd", "prettier", stop_after_first = true },

@@ -16,7 +16,7 @@ The general flow you should follow for this exploration is:
 6. Once we have picked a strategy, validate it with deeper research. Confirm that it is viable, that the assumptions are correct, and that the approach should work. Present the findings with sources, such as file references, documentation, websites, or comparable codebases.
 
 
-In this it is recommended that once context is gathered and clear you fan out to multiple subagents using different models and dedup their suggestions to come out with the strongest list of ideas. Here are the models you should use:
+In this it is recommended that once context is gathered and clear, you fan out to multiple subagents using different models and dedup their suggestions to come out with the strongest list of ideas. Here are the models you should use:
 
 - opus 5.5 (high) 
 - gpt 6.1 sol (high)

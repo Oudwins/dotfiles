@@ -412,6 +412,10 @@ return {
             })
           end,
         },
+        oxlint = {
+          -- lspconfig falls back to single-file mode; only attach in projects that use oxlint
+          workspace_required = true,
+        },
 
         -- NOTE: Python
         basedpyright = {},
@@ -485,6 +489,7 @@ return {
         -- FORMATTERS
         'stylua', -- Used to format Lua code
         'prettierd',
+        'oxfmt',
         'sqlfmt',
         -- LINTERS
         'jsonlint',

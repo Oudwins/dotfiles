@@ -1,3 +1,3 @@
 - use the web-design-guidelines skill
 - when working with tailwind we should try to minimize arbitrary values. Instead we should look for existing alternatives even if they are not 100% exact. If that doesn't work update the tailwind config to support the new value. Using arbitrary values everywhere explodes the css bundle. So avoid w-[7px] instead use w-2 or whatever the equivalent value is
-- We should use rem values for everything which allows the entire site to scale up and down in a coherent way
+- We should use rem values for everything which allows the entire site to scale up and down in a coherent way. Never use pixels.
