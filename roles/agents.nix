@@ -61,7 +61,7 @@ in
     # Needs executor/cloudflare-token in the user's sops file.
     executor.cloudflare.enable = lib.mkEnableOption "the Cloudflare MCP in Executor, authenticated with an API token";
     # Needs a token in nix-secrets sops/shared/github.yaml.
-    github.enable = lib.mkEnableOption "gh and git over https in agent sessions, with Agent Vault injecting a GitHub token";
+    github.enable = lib.mkEnableOption "gh and git over https for every program, signed in with the shared GitHub token";
   };
 
   config = {
@@ -102,30 +102,22 @@ in
           key = "client-key";
         };
 
-        # Agent Vault injects it into GitHub requests (gh and git over https);
-        # agent sessions only see a placeholder GH_TOKEN, because gh won't run
-        # without one.
+        # gh reads the token from hosts.yml whoever runs it (agents, the T3 Code
+        # server, any service), and git over https gets it from gh.
         sops.secrets."github/token" = lib.mkIf cfg.github.enable {
           sopsFile = configLib.secretFile "sops/shared/github.yaml";
           key = "token";
         };
-        services.agent-vault.settings = lib.mkIf cfg.github.enable {
-          environment.GH_TOKEN = "agent-vault";
-          credentials.GITHUB_TOKEN.file = config.sops.secrets."github/token".path;
-          services = {
-            github-api = {
-              target = "https://api.github.com";
-              headers.Authorization = "Bearer {{ GITHUB_TOKEN }}";
-            };
-            github = {
-              target = "https://github.com";
-              auth = {
-                type = "basic";
-                username = "GITHUB_TOKEN";
-              };
-            };
-          };
+        sops.templates."gh-hosts.yml" = lib.mkIf cfg.github.enable {
+          path = "${config.xdg.configHome}/gh/hosts.yml";
+          content = ''
+            github.com:
+                oauth_token: ${config.sops.placeholder."github/token"}
+                git_protocol: https
+          '';
         };
+        programs.git.settings.credential."https://github.com".helper =
+          lib.mkIf cfg.github.enable "!${lib.getExe pkgs.gh} auth git-credential";
 
         # Executor MCP gateway
         sops.secrets."executor/token" = { };
