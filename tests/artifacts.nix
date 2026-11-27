@@ -171,18 +171,31 @@ pkgs.testers.runNixOSTest {
         for hidden in [".env", ".git/config"]:
             get(f"/{site}/{hidden}", expect=404)
 
+    def publish(path, id=None):
+        flag = f"-id {id} " if id else ""
+        url = machine.succeed(f"artifact publish {flag}{path}").strip()
+        return url.removeprefix("https://${host}/").split("/")[0]
+
     with subtest("a single file is published at its own name, and -id replaces it"):
         machine.succeed("echo one > /tmp/notes.html")
-        url = machine.succeed("artifact publish -id notes /tmp/notes.html").strip()
-        assert url == "https://${host}/notes/notes.html", url
+        url = machine.succeed("artifact publish /tmp/notes.html").strip()
+        match = re.fullmatch(r"https://${host}/(notes-[0-9a-f]{8})/notes.html", url)
+        assert match, url
+        notes = match.group(1)
         machine.succeed("echo two > /tmp/notes.html")
-        machine.succeed("artifact publish -id notes /tmp/notes.html")
-        body, _ = get("/notes/notes.html")
+        assert publish("/tmp/notes.html", notes) == notes
+        body, _ = get(f"/{notes}/notes.html")
         assert body.strip() == "two", body
+
+    with subtest("only generated IDs are accepted, so agents can't share one by name"):
+        machine.fail("artifact publish -id notes /tmp/notes.html")
+        status = machine.succeed("curl -s -o /dev/null -w '%{http_code}' -X PUT --data x http://127.0.0.1:28760/artifacts/_upload/notes/notes.html")
+        assert status == "400", f"PUT with an invented ID through the router: {status}"
+        get("/notes/notes.html", expect=404)
 
     with subtest("nothing can enumerate or change artifacts anonymously"):
         get("/", expect=404)
-        get("/notes/missing.html", expect=404)
+        get(f"/{notes}/missing.html", expect=404)
         status = machine.succeed(f"curl -s -o /dev/null -w '%{{http_code}}' -X PUT --data x -H 'Host: ${host}' http://127.0.0.1/{site}/index.html")
         assert status == "403", f"PUT through the site: {status}"
         listing = machine.succeed("curl -s -w ' %{http_code}' http://127.0.0.1:9000/artifacts/")
@@ -202,7 +215,7 @@ pkgs.testers.runNixOSTest {
         machine.succeed("systemctl restart rustfs-provision.service")
         machine.succeed("systemctl restart artifact-upload.service")
         machine.wait_for_open_port(8095)
-        machine.succeed("artifact publish -id notes /tmp/notes.html")
+        publish("/tmp/notes.html", notes)
 
     # Last, since jumping the clock expires everything uploaded before.
     with subtest("files expire 180 days after their last upload"):
@@ -210,20 +223,20 @@ pkgs.testers.runNixOSTest {
             "mkdir -p /tmp/stale /tmp/fresh",
             "echo stale > /tmp/stale/index.html",
             "echo fresh > /tmp/fresh/index.html",
-            "artifact publish -id stale /tmp/stale",
-            "artifact publish -id fresh /tmp/fresh",
         )
+        stale = publish("/tmp/stale")
+        fresh = publish("/tmp/fresh")
         machine.succeed("date -s @$(( $(date +%s) + 179 * 86400 ))")
-        get("/stale/")
-        machine.succeed("artifact publish -id fresh /tmp/fresh")
+        get(f"/{stale}/")
+        publish("/tmp/fresh", fresh)
         machine.succeed("date -s @$(( $(date +%s) + 2 * 86400 ))")
         machine.wait_until_succeeds(
-            "test $(curl -s -o /dev/null -w '%{http_code}' -H 'Host: ${host}' http://127.0.0.1/stale/) = 404",
+            f"test $(curl -s -o /dev/null -w '%{{http_code}}' -H 'Host: ${host}' http://127.0.0.1/{stale}/) = 404",
             timeout=120,
         )
         # Deleted from disk, not just hidden.
-        machine.wait_until_succeeds("test -e /var/lib/rustfs/artifacts/fresh && test ! -e /var/lib/rustfs/artifacts/stale", timeout=120)
-        body, _ = get("/fresh/")
+        machine.wait_until_succeeds(f"test -e /var/lib/rustfs/artifacts/{fresh} && test ! -e /var/lib/rustfs/artifacts/{stale}", timeout=120)
+        body, _ = get(f"/{fresh}/")
         assert body.strip() == "fresh", body
   '';
 }

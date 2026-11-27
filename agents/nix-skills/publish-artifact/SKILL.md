@@ -27,6 +27,8 @@ artifact publish -id report-1a2b3c4d ./report
 - Artifacts are visible to anyone who can reach the URL. Don't publish
   secrets, credentials or private data the user hasn't asked to share.
 - There is no listing or delete command. Republish with `-id` to replace a file.
+- IDs are always generated. `-id` only accepts one from a URL you were given,
+  never a name you make up; publish without it to start a new artifact.
 - Files are deleted about six months after they were last published;
   republishing with `-id` keeps an artifact longer. Don't use artifacts as
   permanent storage.

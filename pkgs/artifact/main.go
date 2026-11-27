@@ -38,8 +38,8 @@ const usage = `Usage:
   artifact publish [-id ID] PATH
       Upload a file or a directory (recursively, skipping hidden files) and
       print its URL. A directory's URL serves its index.html. Without -id a
-      new ID is generated from PATH; with -id, files replace those of the same
-      name in that artifact.
+      new ID is generated from PATH; -id takes an existing artifact's ID, from
+      its URL, and replaces files of the same name in it.
   artifact serve [flags]
       Run the upload server (see artifact serve -h).
 `
@@ -67,11 +67,13 @@ func main() {
 	}
 }
 
-var validID = regexp.MustCompile(`^[a-z0-9][a-z0-9_-]{0,63}$`)
+// The form newID generates. Uploads accept no other IDs, so agents can't pick
+// a name another agent also uses; -id only reuses an ID it was given.
+var validID = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,39}-[0-9a-f]{8}$`)
 
 func publish(args []string) error {
 	flags := flag.NewFlagSet("publish", flag.ExitOnError)
-	id := flags.String("id", "", "artifact ID to publish into (default: generated from PATH)")
+	id := flags.String("id", "", "existing artifact ID to publish into, from its URL (default: a new one generated from PATH)")
 	flags.Usage = func() { fmt.Fprint(flags.Output(), usage) }
 	flags.Parse(args)
 	if flags.NArg() != 1 {
@@ -91,7 +93,7 @@ func publish(args []string) error {
 	if *id == "" {
 		*id = newID(root)
 	} else if !validID.MatchString(*id) {
-		return fmt.Errorf("invalid -id %q: use lowercase letters, digits, - and _", *id)
+		return fmt.Errorf("invalid -id %q: pass the ID of an existing artifact, from its URL (like report-1a2b3c4d)", *id)
 	}
 
 	// Keys relative to the artifact, mapped to local paths.
@@ -322,6 +324,9 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // validKey accepts slash-separated object keys without empty, "." or ".." segments.
 func validKey(key string) bool {
 	if key == "" || len(key) > 1024 || strings.ContainsAny(key, "\\\x00") {
+		return false
+	}
+	if id, _, ok := strings.Cut(key, "/"); !ok || !validID.MatchString(id) {
 		return false
 	}
 	for _, segment := range strings.Split(key, "/") {
