@@ -17,6 +17,67 @@ let
   watchDir = "${mediaDir}/torrents/.watch";
 
   mediaGroup = "media";
+
+  # Moves every series/movie, import list and Jellyseerr default onto the
+  # profiles Recyclarr syncs. Run once with sudo after Recyclarr's first sync.
+  arrApplyProfiles = pkgs.writeShellApplication {
+    name = "arr-apply-profiles";
+    runtimeInputs = [ pkgs.curl pkgs.jq ];
+    text = ''
+      [[ $EUID -eq 0 ]] || { echo "run with sudo (reads the API keys)" >&2; exit 1; }
+      # Writes the Sonarr/Radarr keys to /run/recyclarr-api-keys (gone after a reboot until Recyclarr runs)
+      systemctl start recyclarr-api-keys.service
+
+      api() { # api <base url> <key> <path> [curl args...]
+        local base=$1 key=$2 path=$3; shift 3
+        curl -fsS -H "X-Api-Key: $key" -H "Content-Type: application/json" "$base/$path" "$@"
+      }
+
+      # apply_arr <app> <port> <profile name> <library endpoint> <editor ids field>
+      apply_arr() {
+        local app=$1 base="http://localhost:$2/api/v3" name=$3 library=$4 ids_field=$5 key ids
+        key=$(< "/run/recyclarr-api-keys/$app")
+        profile_id=$(api "$base" "$key" qualityprofile | jq -e --arg n "$name" '.[] | select(.name == $n) | .id') \
+          || { echo "$app: no '$name' profile yet; run 'systemctl start recyclarr' first" >&2; exit 1; }
+
+        ids=$(api "$base" "$key" "$library" | jq -c '[.[].id]')
+        if [[ $ids != "[]" ]]; then
+          api "$base" "$key" "$library/editor" -X PUT -o /dev/null \
+            --data "$(jq -n --arg f "$ids_field" --argjson ids "$ids" --argjson p "$profile_id" '{($f): $ids, qualityProfileId: $p}')"
+        fi
+        echo "$app: $(jq length <<<"$ids") items now use '$name'"
+
+        api "$base" "$key" importlist | jq -c --argjson p "$profile_id" '.[] | .qualityProfileId = $p' \
+          | while read -r list; do
+              api "$base" "$key" "importlist/$(jq .id <<<"$list")?forceSave=true" -X PUT -o /dev/null --data "$list"
+              echo "$app: import list '$(jq -r .name <<<"$list")' now uses '$name'"
+            done
+      }
+
+      # Default profile for Jellyseerr requests (4K servers have their own profiles).
+      # Only servers using this host's instance (matched by API key): profile ids are per instance.
+      apply_seerr() { # apply_seerr <app> <profile name>
+        local app=$1 name=$2 base="http://localhost:${toString config.services.jellyseerr.port}/api/v1/settings" key
+        key=$(jq -r .main.apiKey "${config.services.jellyseerr.configDir}/settings.json")
+        api "$base" "$key" "$app" | jq -c --argjson p "$profile_id" --arg n "$name" --arg k "$(< "/run/recyclarr-api-keys/$app")" '
+          .[] | select((.is4k | not) and .apiKey == $k)
+          | .activeProfileId = $p | .activeProfileName = $n
+          | if has("activeAnimeProfileId") then .activeAnimeProfileId = $p | .activeAnimeProfileName = $n else . end' \
+          | while read -r server; do
+              # The id goes in the URL; Seerr rejects it in the body
+              api "$base" "$key" "$app/$(jq .id <<<"$server")" -X PUT -o /dev/null --data "$(jq -c 'del(.id)' <<<"$server")"
+              echo "jellyseerr: '$(jq -r .name <<<"$server")' now defaults to '$name'"
+            done
+      }
+
+      # Names of the profiles Recyclarr creates from the trash_ids in services.recyclarr
+      apply_arr sonarr ${toString sonarrPort} "WEB-1080p" series seriesIds
+      apply_seerr sonarr "WEB-1080p"
+      apply_arr radarr ${toString radarrPort} "HD Bluray + WEB" movie movieIds
+      apply_seerr radarr "HD Bluray + WEB"
+    '';
+  };
+
   radarrPort = 7878;
   sonarrPort = 8989;
   bazarrPort = 6767;
@@ -184,6 +245,7 @@ in {
       jellyfin
       jellyfin-web
       jellyfin-ffmpeg
+      arrApplyProfiles
     ];
 
     systemd.services.jellyfin.environment.LIBVA_DRIVER_NAME =
