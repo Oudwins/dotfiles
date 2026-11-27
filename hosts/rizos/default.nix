@@ -60,17 +60,6 @@
   agents.github.enable = true;
   agents.artifacts.enable = true;
 
-  # RustFS's root credentials (an env file) and the upload server's secrets;
-  # the token is the one Agent Vault injects for agents.artifacts.
-  sops.secrets."rustfs/env".sopsFile = configLib.secretFile "sops/hosts/rizos-rustfs.yaml";
-  sops.secrets."rustfs/artifacts-secret-key".sopsFile = configLib.secretFile "sops/hosts/rizos-rustfs.yaml";
-  sops.secrets."artifacts/token".sopsFile = configLib.secretFile "sops/shared/artifacts.yaml";
-  services.rustfs.environmentFile = config.sops.secrets."rustfs/env".path;
-  services.artifacts = {
-    tokenFile = config.sops.secrets."artifacts/token".path;
-    secretKeyFile = config.sops.secrets."rustfs/artifacts-secret-key".path;
-  };
-
   # Root decrypts the proxy's keys with the master key, not tmx's SSH key.
   services.cli-proxy-api.sshKeyFile = config.my.networking.sshMasterKeyPath;
   services.cli-proxy-api.secretsFile = configLib.secretFile "sops/shared/cli-proxy-api-personal.yaml";

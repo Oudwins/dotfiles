@@ -3,6 +3,10 @@
 # upload server. Agent Vault's router adds the bearer token it checks, for agents
 # on this or any other machine (roles/agents.nix, agents.artifacts). A
 # directory's URL serves its index.html.
+#
+# Unlike other modules, this one declares its own sops secrets: every host that
+# runs it uses the same ones, from nix-secrets sops/shared/artifacts.yaml. The
+# token there is also the one agents.artifacts has Agent Vault send.
 {
   config,
   configLib,
@@ -17,6 +21,7 @@ let
   # Largest file accepted, in bytes; nginx and the upload server both enforce it.
   maxSize = 256 * 1024 * 1024;
   rustfs = config.services.rustfs.settings.RUSTFS_ADDRESS;
+  secret = name: config.sops.secrets."artifacts/${name}".path;
   host = "${config.my.services.artifacts.subdomain}.${config.my.server.location}.${config.my.domain}";
 in
 {
@@ -42,19 +47,19 @@ in
       default = 180;
       description = "Days after its last upload that an artifact's file is deleted.";
     };
-    tokenFile = lib.mkOption {
-      type = lib.types.str;
-      description = "File holding the bearer token uploads must carry; Agent Vault injects it.";
-    };
-    secretKeyFile = lib.mkOption {
-      type = lib.types.str;
-      description = "File holding the secret key of the RustFS user the upload server writes as.";
-    };
   };
 
   config = {
+    sops.secrets =
+      lib.genAttrs [ "artifacts/rustfs-env" "artifacts/rustfs-secret-key" "artifacts/token" ]
+        (_: {
+          sopsFile = configLib.secretFile "sops/shared/artifacts.yaml";
+        });
+
     services.rustfs = {
       enable = true;
+      # RUSTFS_ACCESS_KEY and RUSTFS_SECRET_KEY, the root credentials.
+      environmentFile = secret "rustfs-env";
       buckets.${bucket} = {
         # Anyone can read an object, but not list the bucket.
         policy = {
@@ -80,7 +85,7 @@ in
       };
       # Write-only: uploads can't read, list or delete other artifacts.
       users.${bucket} = {
-        inherit (cfg) secretKeyFile;
+        secretKeyFile = secret "rustfs-secret-key";
         policy = {
           Version = "2012-10-17";
           Statement = [
@@ -123,8 +128,9 @@ in
           (toString maxSize)
         ];
         LoadCredential = [
-          "secret-key:${cfg.secretKeyFile}"
-          "token:${cfg.tokenFile}"
+          "secret-key:${secret "rustfs-secret-key"}"
+          # The bearer token uploads must carry; Agent Vault injects it.
+          "token:${secret "token"}"
         ];
         DynamicUser = true;
         Restart = "always";

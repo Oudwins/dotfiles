@@ -15,11 +15,35 @@ let
     overlays = builtins.attrValues flake.outputs.overlays;
   };
   inherit (pkgs) lib;
-  configLib = import ../lib { inherit lib; };
+  configLib = import ../lib {
+    inherit lib;
+    inherit (flake.inputs) secrets;
+  };
   host = "artifacts.r.test";
   token = "test-upload-token";
-  rootSecret = "test-root-secret";
   artifactsSecret = "test-artifacts-secret";
+  # The shared secrets file, encrypted to a throwaway age key.
+  testSecrets =
+    pkgs.runCommand "artifacts-test-secrets"
+      {
+        nativeBuildInputs = [
+          pkgs.age
+          pkgs.sops
+        ];
+      }
+      ''
+            mkdir $out
+            age-keygen -o $out/key.txt 2>/dev/null
+            cat > artifacts.yaml <<'EOF'
+        artifacts:
+          token: ${token}
+          rustfs-secret-key: ${artifactsSecret}
+          rustfs-env: |
+            RUSTFS_ACCESS_KEY=test-root
+            RUSTFS_SECRET_KEY=test-root-secret
+        EOF
+            sops encrypt --age "$(age-keygen -y $out/key.txt)" artifacts.yaml > $out/artifacts.yaml
+      '';
 in
 pkgs.testers.runNixOSTest {
   name = "artifacts";
@@ -35,6 +59,7 @@ pkgs.testers.runNixOSTest {
     imports = [
       ../modules/shared/my.nix
       ../modules/nixos/services/artifacts
+      flake.inputs.sops-nix.nixosModules.sops
     ];
     # Declared by roles/server on real hosts.
     options.my.server.location = lib.mkOption { type = lib.types.str; };
@@ -43,12 +68,17 @@ pkgs.testers.runNixOSTest {
       my.server.location = "r";
       virtualisation.memorySize = 2048;
 
-      services.rustfs.environmentFile = toString (
-        pkgs.writeText "rustfs.env" ''
-          RUSTFS_ACCESS_KEY=test-root
-          RUSTFS_SECRET_KEY=${rootSecret}
-        ''
-      );
+      # sops-nix won't read a key from the store, so it's installed to /etc first.
+      environment.etc."sops-test-key.txt".source = "${testSecrets}/key.txt";
+      system.activationScripts.setupSecrets.deps = [ "etc" ];
+      sops.age.keyFile = "/etc/sops-test-key.txt";
+      sops.age.sshKeyPaths = [ ];
+      sops.gnupg.sshKeyPaths = [ ];
+      sops.secrets =
+        lib.genAttrs [ "artifacts/rustfs-env" "artifacts/rustfs-secret-key" "artifacts/token" ]
+          (_: {
+            sopsFile = lib.mkForce "${testSecrets}/artifacts.yaml";
+          });
       # Run the scanner, which applies lifecycle expiry, every second.
       services.rustfs.settings = {
         RUSTFS_SCANNER_CYCLE = "1";
@@ -57,10 +87,6 @@ pkgs.testers.runNixOSTest {
       };
       # Covers provisioning a bucket without a policy or lifecycle rules.
       services.rustfs.buckets.private = { };
-      services.artifacts = {
-        tokenFile = toString (pkgs.writeText "token" token);
-        secretKeyFile = toString (pkgs.writeText "secret-key" artifactsSecret);
-      };
 
       # No certificates in the test: serve the site over plain HTTP.
       services.nginx.virtualHosts.${host} = {

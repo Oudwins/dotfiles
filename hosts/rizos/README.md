@@ -147,9 +147,9 @@ its last upload (`services.artifacts.expireDays`), so republishing an artifact
 keeps it. The CLI holds no credentials: it uploads through Agent Vault's router,
 which adds the upload server's token and forwards to the site's `/_upload/`
 (`modules/nixos/services/artifacts`). Another machine publishes here with
-`agents.artifacts.address`, as nixos does. Its secrets are in nix-secrets
-`sops/hosts/rizos-rustfs.yaml` (RustFS root credentials and the upload
-server's S3 key) and `sops/shared/artifacts.yaml` (the upload token). Test it
+`agents.artifacts.address`, as nixos does. The module reads all its secrets
+(RustFS root credentials, the upload server's S3 key and the upload token) from
+nix-secrets `sops/shared/artifacts.yaml`, so the host passes none. Test it
 with `nix build -L --impure --expr 'import ./tests/artifacts.nix { }'`.
 
 tmx's home-manager secrets are decrypted with a dedicated age key,
