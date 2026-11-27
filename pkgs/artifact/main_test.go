@@ -24,16 +24,18 @@ func TestSignMatchesAWSExample(t *testing.T) {
 
 func TestValidKey(t *testing.T) {
 	for key, want := range map[string]bool{
-		"report-1/index.html":   true,
-		"report-1/a b/c.css":    true,
-		"":                      false,
-		"report-1/":             false,
-		"/report-1/index.html":  false,
-		"report-1//index.html":  false,
-		"report-1/../secret":    false,
-		"report-1/./index.html": false,
-		"report-1/a\\b":         false,
-		"report-1/a\nb":         false,
+		"report-1a2b3c4d/index.html":   true,
+		"report-1a2b3c4d/a b/c.css":    true,
+		"":                             false,
+		"notes/index.html":             false,
+		"report-1a2b3c4d":              false,
+		"report-1a2b3c4d/":             false,
+		"/report-1a2b3c4d/index.html":  false,
+		"report-1a2b3c4d//index.html":  false,
+		"report-1a2b3c4d/../secret":    false,
+		"report-1a2b3c4d/./index.html": false,
+		"report-1a2b3c4d/a\\b":         false,
+		"report-1a2b3c4d/a\nb":         false,
 	} {
 		if got := validKey(key); got != want {
 			t.Errorf("validKey(%q) = %v, want %v", key, got, want)
@@ -54,5 +56,8 @@ func TestNewID(t *testing.T) {
 	}
 	if id := newID("/tmp/.html"); !strings.HasPrefix(id, "artifact-") {
 		t.Fatalf("newID for an empty name = %q", id)
+	}
+	if id := newID(strings.Repeat("long name ", 10)); !validID.MatchString(id) {
+		t.Fatalf("newID for a long name = %q", id)
 	}
 }
