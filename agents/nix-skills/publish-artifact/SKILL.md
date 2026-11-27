@@ -5,8 +5,7 @@ description: Publish an HTML page, report or other file at a URL the user can op
 
 # Publish artifact
 
-Use the `artifact` CLI. If `command -v artifact` finds nothing, this machine
-has no artifact backend; say so instead of hosting the file another way.
+Use the `artifact` CLI.
 
 ```bash
 # A directory: every file is uploaded, hidden files are skipped, and the

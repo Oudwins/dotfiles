@@ -158,6 +158,13 @@ in
         sops.secrets."artifacts/token" = lib.mkIf cfg.artifacts.enable {
           sopsFile = configLib.secretFile "sops/shared/artifacts.yaml";
         };
+        # Only hosts with `artifact` get its skill, in the same skills
+        # directories updateSymlinks.sh links agents/skills into.
+        home.file = lib.mkIf cfg.artifacts.enable (
+          lib.genAttrs [ ".agents/skills/publish-artifact" ".claude/skills/publish-artifact" ] (_: {
+            source = ../agents/nix-skills/publish-artifact;
+          })
+        );
 
         # Executor MCP gateway
         sops.secrets."executor/token" = { };
