@@ -22,6 +22,10 @@ with `/name` in Claude Code or `$name` in Codex. Pi's prompts link points only t
 the commands folder through `home-files/tmx/.agents/commands`; its directory-prompts
 extension provides `/name` commands with companion-file support.
 
+Skills in `agents/nix-skills/<name>/` are skipped by the script. Home Manager
+links each into the same two directories on hosts that install the tool it
+needs: `publish-artifact` comes with `agents.artifacts.enable` (`roles/agents.nix`).
+
 Edit the source folder directly; nothing is generated or copied. Use matching
 kebab-case directory and skill names, unique across both folders. After adding or
 removing an entry, run `./updateSymlinks.sh`.

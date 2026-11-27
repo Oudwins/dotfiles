@@ -22,6 +22,8 @@
     (configLib.relativeToRoot "roles/agents.nix")
     # Serves them to agents on nixos as <subdomain>.r.<domain>
     (configLib.relativeToRoot "modules/nixos/services/remote-agents")
+    # Files agents publish with `artifact publish`, at artifacts.r.<domain>
+    (configLib.relativeToRoot "modules/nixos/services/artifacts")
     (configLib.relativeToRoot "modules/nixos/core/dotfiles-bootstrap.nix")
     ./home.nix
   ] ++ lib.optional (builtins.pathExists ./hardware-configuration.nix)
@@ -56,6 +58,7 @@
 
   agents.executor.cloudflare.enable = true;
   agents.github.enable = true;
+  agents.artifacts.enable = true;
 
   # Root decrypts the proxy's keys with the master key, not tmx's SSH key.
   services.cli-proxy-api.sshKeyFile = config.my.networking.sshMasterKeyPath;

@@ -50,6 +50,21 @@ let
     name: if cfg.${name}.address == null then services.${name}.local else cfg.${name}.address;
   origin = url: builtins.head (builtins.match "(https?://[^/]+).*" url);
   agentVaultConfig = lib.importJSON ../home-files/tmx/.config/agent-vault/config.json;
+  # The artifacts site agents publish to: this host's own, or another's.
+  artifactsUrl = lib.removeSuffix "/" (
+    if cfg.artifacts.address == null then
+      config.services.artifacts.url
+        or (throw "agents.artifacts.address is null, so this host must import modules/nixos/services/artifacts")
+    else
+      cfg.artifacts.address
+  );
+  # `artifact publish` uploads through the router (agents.artifacts), which
+  # forwards to the site's /_upload/.
+  artifact = pkgs.runCommand "artifact" { nativeBuildInputs = [ pkgs.makeWrapper ]; } ''
+    makeWrapper ${lib.getExe pkgs.artifact} $out/bin/artifact \
+      --set-default ARTIFACT_UPLOAD_URL http://127.0.0.1:28760/artifacts/_upload \
+      --set-default ARTIFACT_PUBLIC_URL ${lib.escapeShellArg artifactsUrl}
+  '';
 in
 {
   imports = [ ../modules/shared/cli-proxy-api ];
@@ -62,6 +77,18 @@ in
     executor.cloudflare.enable = lib.mkEnableOption "the Cloudflare MCP in Executor, authenticated with an API token";
     # Needs a token in nix-secrets sops/shared/github.yaml.
     github.enable = lib.mkEnableOption "gh and git over https for every program, signed in with the shared GitHub token";
+    # Needs a token in nix-secrets sops/shared/artifacts.yaml, the one the upload server checks.
+    artifacts = {
+      enable = lib.mkEnableOption "`artifact publish`, with Agent Vault injecting the upload server's token";
+      # Null publishes to this host's own artifacts site, so the host must import
+      # modules/nixos/services/artifacts.
+      address = lib.mkOption {
+        type = lib.types.nullOr (lib.types.strMatching "https?://${host}/?");
+        default = null;
+        example = "https://artifacts.r.example.com";
+        description = "Another machine's artifacts site to publish to, instead of this host's own. Must be a hostname, not an IP.";
+      };
+    };
   };
 
   config = {
@@ -118,6 +145,26 @@ in
         };
         programs.git.settings.credential."https://github.com".helper =
           lib.mkIf cfg.github.enable "!${lib.getExe pkgs.gh} auth git-credential";
+
+        # Artifacts: `artifact publish` holds no credentials; it uploads
+        # through the router, which adds the token.
+        services.agent-vault.settings = lib.mkIf cfg.artifacts.enable {
+          credentials.ARTIFACTS_TOKEN.file = config.sops.secrets."artifacts/token".path;
+          services.artifacts = {
+            target = artifactsUrl;
+            headers.Authorization = "Bearer {{ ARTIFACTS_TOKEN }}";
+          };
+        };
+        sops.secrets."artifacts/token" = lib.mkIf cfg.artifacts.enable {
+          sopsFile = configLib.secretFile "sops/shared/artifacts.yaml";
+        };
+        # Only hosts with `artifact` get its skill, in the same skills
+        # directories updateSymlinks.sh links agents/skills into.
+        home.file = lib.mkIf cfg.artifacts.enable (
+          lib.genAttrs [ ".agents/skills/publish-artifact" ".claude/skills/publish-artifact" ] (_: {
+            source = ../agents/nix-skills/publish-artifact;
+          })
+        );
 
         # Executor MCP gateway
         sops.secrets."executor/token" = { };
@@ -211,15 +258,18 @@ in
 
         # OpenCode's stable runtime gates Responses WebSockets behind this flag.
         home.sessionVariables.OPENCODE_EXPERIMENTAL_WEBSOCKETS = "1";
-        home.packages = with pkgs; [
-          jq
-          bun
-          btca
-          jsonc2json
-          # Opencode for code linting
-          typescript-language-server
-          glab
-        ];
+        home.packages =
+          with pkgs;
+          [
+            jq
+            bun
+            btca
+            jsonc2json
+            # Opencode for code linting
+            typescript-language-server
+            glab
+          ]
+          ++ lib.optional cfg.artifacts.enable artifact;
 
         # Local AI
         # ollama

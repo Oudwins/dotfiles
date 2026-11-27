@@ -67,6 +67,9 @@ justfile
   `disable-model-invocation: true` in its frontmatter and
   `policy.allow_implicit_invocation: false` in `agents/openai.yaml`. Keep
   directory names and skill names identical and unique across both folders.
+  A skill only some hosts should have (because it needs a tool only they
+  install) goes in `agents/nix-skills/<name>/` instead, which updateSymlinks.sh
+  skips; the module that installs the tool links it with `home.file`.
 - Keep mutable settings in the Stow-managed files rather than generating them
   with Nix/Home Manager, unless that application's configuration is explicitly
   Nix-managed already. Do not manage the same path with both Stow and Nix.
