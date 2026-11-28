@@ -21,7 +21,9 @@ home-files/tmx/*
 # automatic skills and manually invoked commands, linked into ~/.agents/skills
 # and ~/.claude/skills by updateSymlinks.sh
 agents/{skills,commands}/*
-# everyday commands: switch, deploy, build, bootstrap, secrets, update, check
+# architecture rules checked by `just lint` (ast-grep), explained in docs/lint.md
+sgconfig.yml lint/{rules,rule-tests}/
+# everyday commands: switch, deploy, build, bootstrap, secrets, update, check, lint
 justfile
 ```
 
@@ -78,3 +80,7 @@ justfile
   OAuth credentials outside the Stow tree.
 - Paths to files in this repo inside configs use `$HOME/dotfiles/...` style
   absolute paths rather than relative ones.
+- `just lint` enforces the rules above that a linter can check; `docs/lint.md`
+  lists them with examples. Run it after changing Nix files, agent entries or
+  shell scripts. A file in a check's baseline already fails it: fix the file and
+  remove the entry, never add one.

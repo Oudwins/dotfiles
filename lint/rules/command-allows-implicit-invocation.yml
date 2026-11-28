@@ -1,0 +1,13 @@
+id: command-allows-implicit-invocation
+language: yaml
+severity: error
+message: A command's agents/openai.yaml needs `policy.allow_implicit_invocation` set to false.
+files:
+  - agents/commands/*/agents/openai.yaml
+rule:
+  kind: stream
+  not:
+    has:
+      stopBy: end
+      kind: block_mapping_pair
+      regex: '^allow_implicit_invocation:\s*false\s*$'

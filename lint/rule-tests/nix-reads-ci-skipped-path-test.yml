@@ -1,0 +1,11 @@
+id: nix-reads-ci-skipped-path
+valid:
+  - |
+    { networking.extraHosts = builtins.readFile ../../docs/hosts-file; }
+  - |
+    { imports = [ ./docs/collabora ]; }
+invalid:
+  - |
+    { lib, ... }: { port = (lib.importJSON ../home-files/tmx/.config/agent-vault/config.json).serverPort; }
+  - |
+    { configLib, ... }: { script = builtins.readFile (configLib.relativeToRoot "scripts/tmux-sessionizer.sh"); }

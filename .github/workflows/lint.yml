@@ -1,0 +1,22 @@
+name: lint
+
+# Unlike check.yml this runs for every path: the rules also cover agents/,
+# scripts/ and home-files/. Nothing here evaluates the private nix-secrets
+# input, so there is no deploy key to load and nothing to mask.
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+concurrency:
+  group: lint-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v31
+      - name: Lint
+        run: nix shell --inputs-from . nixpkgs#just -c just lint

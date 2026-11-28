@@ -1,0 +1,41 @@
+id: my-option-outside-my-nix
+language: nix
+severity: error
+message: Declare `my.*` options in modules/shared/my.nix; a module's own options go under `services.<name>` or `programs.<name>`.
+files:
+  - hosts/**
+  - modules/**
+  - roles/**
+  - users/**
+ignores:
+  - modules/shared/my.nix
+  # Baseline: files that already broke this rule when it was added. Only remove entries.
+  - modules/nixos/core/restic-backup.nix
+  - modules/nixos/core/server-base/hardware-acceleration.nix
+  - modules/nixos/core/smtp-env.nix
+  - modules/nixos/core/sops/default.nix
+  - modules/nixos/core/tailscale.nix
+  - modules/nixos/services/hermes-agent/matrix.nix
+  - modules/nixos/services/matrix/default.nix
+  - modules/nixos/services/matrix/whatsapp.nix
+  - modules/nixos/services/media-server/custom.nix
+  - modules/nixos/services/memos/default.nix
+  - modules/nixos/services/timetracking/solidtime/default.nix
+  - modules/nixos/services/wifi-control/default.nix
+  - modules/nixos/services/wordpress/default.nix
+  - modules/nixos/services/wordpress/lightspeed-proxy.nix
+  - modules/nixos/services/wordpress/lightspeed.nix
+  - modules/nixos/services/wordpress/nginx-proxy.nix
+  - modules/shared/dashboard/default.nix
+  - roles/server/default.nix
+  - roles/server/security.nix
+rule:
+  kind: binding
+  any:
+    - has: { field: attrpath, regex: '^options\.my(\.|$)' }
+    - all:
+        - has: { field: attrpath, regex: '^my(\.|$)' }
+        - inside:
+            kind: binding
+            stopBy: { kind: binding }
+            has: { field: attrpath, regex: '^options$' }

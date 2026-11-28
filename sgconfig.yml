@@ -1,0 +1,5 @@
+# Architecture rules for `just lint`; each one is explained in docs/lint.md.
+ruleDirs:
+  - lint/rules
+testConfigs:
+  - testDir: lint/rule-tests

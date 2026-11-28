@@ -1,0 +1,14 @@
+id: home-identity-set
+language: nix
+severity: error
+message: home-manager derives `home.username` and `home.homeDirectory` from `users.users.<name>`; don't set them.
+rule:
+  kind: binding
+  any:
+    - has: { field: attrpath, regex: '^home\.(username|homeDirectory)$' }
+    - all:
+        - has: { field: attrpath, regex: '^(username|homeDirectory)$' }
+        - inside:
+            kind: binding
+            stopBy: { kind: binding }
+            has: { field: attrpath, regex: '^home$' }

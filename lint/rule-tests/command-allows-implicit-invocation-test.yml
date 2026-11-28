@@ -1,0 +1,12 @@
+id: command-allows-implicit-invocation
+valid:
+  - |
+    policy:
+      allow_implicit_invocation: false
+invalid:
+  - |
+    policy:
+      allow_implicit_invocation: true
+  - |
+    interface:
+      display_name: Commit

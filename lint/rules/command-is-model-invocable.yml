@@ -1,0 +1,12 @@
+id: command-is-model-invocable
+language: markdown
+severity: error
+message: A command's SKILL.md needs `disable-model-invocation` set to true in its frontmatter; otherwise it belongs in agents/skills.
+files:
+  - agents/commands/*/SKILL.md
+rule:
+  kind: document
+  not:
+    has:
+      kind: minus_metadata
+      regex: '(^|\n)disable-model-invocation:\s*true\s*(\n|$)'

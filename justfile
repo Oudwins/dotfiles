@@ -27,6 +27,8 @@ help:
       just build <host>        build a host without activating it
       just check               evaluate every host and package (what CI runs)
       just check-build         build every host and package
+      just lint                check the architecture rules, formatting, dead code and
+                               shell scripts (see docs/lint.md)
 
     Secrets (private repo, checked out at ~/nix-secrets)
       just secrets <name>      edit a sops file: a host (tubby), user (tmx) or shared
@@ -163,3 +165,20 @@ check flake=repo:
 # Build every host and package
 check-build:
     nix flake check "{{repo}}" {{override}}
+
+# The linters come from this flake's locked inputs without evaluating the flake,
+# so this needs no secrets. Only nixpkgs-unstable's ast-grep reads Markdown.
+# Check the architecture rules, formatting, dead code and shell scripts (see docs/lint.md)
+lint:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cd "{{repo}}"
+    nix shell --inputs-from . nixpkgs-unstable#ast-grep nixpkgs#statix nixpkgs#treefmt \
+      nixpkgs#nixfmt nixpkgs#deadnix nixpkgs#shellcheck -c bash -c '
+        status=0
+        ast-grep test --skip-snapshot-tests || status=1
+        ast-grep scan || status=1
+        statix check || status=1
+        treefmt --ci || status=1
+        exit $status
+      '

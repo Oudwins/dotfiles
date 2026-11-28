@@ -1,0 +1,11 @@
+id: my-option-outside-my-nix
+valid:
+  - |
+    { lib, ... }: { options.services.memos.environmentFile = lib.mkOption { type = lib.types.path; }; }
+  - |
+    { my.server.location = "r"; }
+invalid:
+  - |
+    { lib, ... }: { options.my.memos.environmentFile = lib.mkOption { type = lib.types.path; }; }
+  - |
+    { lib, ... }: { options = { my.memos.environmentFile = lib.mkOption { type = lib.types.path; }; }; }

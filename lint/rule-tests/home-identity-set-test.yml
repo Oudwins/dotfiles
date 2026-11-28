@@ -1,0 +1,11 @@
+id: home-identity-set
+valid:
+  - |
+    { users.users.tmx.home = "/home/tmx"; }
+  - |
+    { config, ... }: { home.file.".foo".text = config.home.homeDirectory; }
+invalid:
+  - |
+    { home.username = "tmx"; }
+  - |
+    { home = { homeDirectory = "/home/tmx"; }; }

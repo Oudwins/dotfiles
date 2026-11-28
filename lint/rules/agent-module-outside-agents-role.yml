@@ -1,0 +1,14 @@
+id: agent-module-outside-agents-role
+language: nix
+severity: error
+message: roles/agents.nix is the only place the agent modules are imported; import that role instead.
+ignores:
+  - roles/agents.nix
+rule:
+  any:
+    - kind: path_expression
+    - kind: string_expression
+      inside:
+        kind: apply_expression
+        has: { field: function, regex: 'relativeToRoot$' }
+  regex: '(shared/cli-proxy-api|home/common/(executor|agent-vault|pr-review-server|npm-global|t3code))/?"?$'

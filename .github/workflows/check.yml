@@ -21,6 +21,10 @@ on:
       - '!*.md'
       - '!updateSymlinks.sh'
       - '!renovate.json'
+      - '!lint/**'
+      - '!sgconfig.yml'
+      - '!statix.toml'
+      - '!treefmt.toml'
       - '!.gitignore'
       - '!.envrc'
   pull_request:
