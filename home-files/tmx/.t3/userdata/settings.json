@@ -51,7 +51,7 @@
   },
   "storageCleanup": {
     "worktreeAfterDays": 5,
-    "worktreeSettledAfterDays": 3,
+    "worktreeSettledAfterDays": 0,
     "worktreeOnMerge": true,
     "worktreeOnDelete": true,
     "worktreeUnchanged": true

@@ -1,5 +1,35 @@
 [
   {
+    "key": "mod+shift+d",
+    "command": "composer.dictation",
+    "when": "!terminalFocus"
+  },
+  {
+    "key": "mod+f",
+    "command": "preview.find",
+    "when": "previewFocus"
+  },
+  {
+    "key": "cmd+shift+[",
+    "command": "terminal.previous",
+    "when": "terminalFocus && isMac"
+  },
+  {
+    "key": "ctrl+alt+[",
+    "command": "terminal.previous",
+    "when": "terminalFocus && !isMac"
+  },
+  {
+    "key": "ctrl+alt+]",
+    "command": "terminal.next",
+    "when": "terminalFocus && !isMac"
+  },
+  {
+    "key": "cmd+shift+]",
+    "command": "terminal.next",
+    "when": "terminalFocus && isMac"
+  },
+  {
     "key": "f6",
     "command": "workspace.focusNext"
   },

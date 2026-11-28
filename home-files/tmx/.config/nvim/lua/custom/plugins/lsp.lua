@@ -299,9 +299,13 @@ return {
 
         -- NOTE: WEB
         --
-        -- Native TypeScript language server
+        -- Native TypeScript language server, using the project's tsrs (Rust port, same protocol) when installed
         tsc = {
-          cmd = { 'tsc', '--lsp', '--stdio' },
+          cmd = function(dispatchers, config)
+            local tsrs = vim.fs.joinpath(config.root_dir, 'node_modules/.bin/tsrs')
+            local cmd = vim.fn.executable(tsrs) == 1 and tsrs or 'tsc'
+            return vim.lsp.rpc.start({ cmd, '--lsp', '--stdio' }, dispatchers)
+          end,
           filetypes = {
             'javascript',
             'javascriptreact',
