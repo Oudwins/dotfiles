@@ -64,6 +64,20 @@ in
 
   ];
 
+  # SSO from the caller's Tailscale identity, for every service that supports it.
+  my.sso = {
+    enable = true;
+    services = {
+      shiori = false;
+      grafana = false;
+    };
+  };
+  # tsidp joins the tailnet as its own node.
+  sops.templates."tsidp.env".content = ''
+    TS_AUTHKEY=${config.sops.placeholder."tailscale/auth_key"}
+  '';
+  services.tsidp.environmentFile = config.sops.templates."tsidp.env".path;
+
   sops.defaultSopsFile = configLib.secretFile "sops/hosts/tubby.yaml";
 
   # Database passwords and app keys for the containers, as env files.

@@ -34,6 +34,34 @@ in
       from = str "no-reply@${config.my.domain}";
       passwordFile = mkOption { type = types.str; };
     };
+    # MagicDNS suffix of the tailnet, e.g. "tailXXXX.ts.net".
+    tailnet = required;
+    # Single sign-on (modules/nixos/services/sso). Service modules that support
+    # it wire themselves up when it is enabled; services.<name> = false opts one out.
+    sso = {
+      enable = lib.mkEnableOption "SSO from the caller's Tailscale identity";
+      services = mkOption {
+        type = types.attrsOf types.bool;
+        default = { };
+        example = {
+          grafana = false;
+        };
+      };
+      # Named sets of service names. The built-in "admin" tag is every service.
+      tags = mkOption {
+        type = types.attrsOf (types.listOf types.str);
+        default = { };
+      };
+      # Keyed by Tailscale login name.
+      users = mkOption {
+        type = types.attrsOf (
+          types.submodule {
+            options.tags = mkOption { type = types.listOf types.str; };
+          }
+        );
+        default = { };
+      };
+    };
     username = str "tmx";
     initialPassword = str "nixos";
 

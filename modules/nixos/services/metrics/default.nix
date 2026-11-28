@@ -12,6 +12,7 @@ in
 {
   imports = [
     ./metricsClient.nix
+    ./sso.nix
   ];
 
   environment.etc = {
