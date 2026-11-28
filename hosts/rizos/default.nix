@@ -24,6 +24,9 @@
     (configLib.relativeToRoot "modules/nixos/services/remote-agents")
     # Files agents publish with `artifact publish`, at artifacts.r.<domain>
     (configLib.relativeToRoot "modules/nixos/services/artifacts")
+    # The llm-sessions database, and this proxy recording into it
+    (configLib.relativeToRoot "modules/nixos/services/llm-sessions")
+    (configLib.relativeToRoot "modules/shared/llm-session-recorder")
     (configLib.relativeToRoot "modules/nixos/core/dotfiles-bootstrap.nix")
     ./home.nix
   ] ++ lib.optional (builtins.pathExists ./hardware-configuration.nix)
@@ -68,6 +71,17 @@
   systemd.services.cli-proxy-api = {
     wants = [ "dotfiles-bootstrap.service" ];
     after = [ "dotfiles-bootstrap.service" ];
+  };
+
+  # Shared by the database and every proxy that records into it.
+  sops.secrets."llm-sessions/recorder-password" = {
+    sopsFile = configLib.secretFile "sops/shared/llm-sessions.yaml";
+    owner = "cli-proxy-api";
+  };
+  services.llm-sessions.recorderPasswordFile = config.sops.secrets."llm-sessions/recorder-password".path;
+  services.cli-proxy-api.sessionRecorder = {
+    url = "http://127.0.0.1:${toString config.my.clickhouse.httpPort}";
+    passwordFile = config.sops.secrets."llm-sessions/recorder-password".path;
   };
 
   # DNS points *.r.<domain> at the tailnet address; the services stay off the LAN.

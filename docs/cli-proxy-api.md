@@ -179,6 +179,59 @@ errors are in `/var/log/cli-proxy-api.error.log` on macOS or
 does not require a login session or lingering. On macOS the RAM disk is reused
 across restarts and disappears on reboot.
 
+## Recording sessions
+
+A proxy can record everything it serves into an llm-sessions database, using
+the `session-recorder` plugin (`pkgs/cpa-session-recorder`). The two halves are
+independent, so a proxy can write to a database on another host:
+
+- `modules/nixos/services/llm-sessions` runs the database: ClickHouse (database
+  `llm`) on loopback, served to other hosts by nginx at
+  `https://llm-sessions.<location>.<domain>`. Set
+  `services.llm-sessions.recorderPasswordFile`.
+- `modules/shared/llm-session-recorder` makes this machine's proxy record into
+  one. Set `services.cli-proxy-api.sessionRecorder.url` and `.passwordFile`
+  (readable by the proxy's service account).
+
+Both sides use the `llm-sessions/recorder-password` secret from
+`sops/shared/llm-sessions.yaml`, with the INSERT-only `recorder` user. rizos
+runs the database and records its own proxy into it over loopback. Another host
+would import the recorder, declare that secret owned by `cli-proxy-api`, and set
+`url = "https://llm-sessions.r.<domain>"`. The tables:
+
+- `usage`: one row per usage record (tokens, latency, TTFT, credential, model,
+  session ID).
+- `exchanges`: one row per model execution, with the client's request body and
+  the response as delivered to the client (`response_body`, or every stream
+  chunk or WebSocket event in `response_chunks`). Stored exactly as sent and
+  sorted by session. Executions over 64 MB are cut short and flagged `truncated`.
+
+Session IDs come from CLIProxyAPI, e.g. `claude:<uuid>` (sub-agents
+`claude:<uuid>:agent:<id>`, with `parent_session_id`), `codex:<id>` or
+`header:<X-Session-ID>`. Rows are dropped, not retried, while ClickHouse is
+down, and the data is not backed up. Grafana gets an "LLM sessions" data
+source with read-only access when Grafana runs on the same machine. Query as
+admin on the database host:
+
+```bash
+sudo sh -c 'CLICKHOUSE_PASSWORD="$(cat /var/lib/llm-sessions/default)" clickhouse client --port 9010'
+```
+
+```sql
+-- Tokens per model per day
+SELECT toDate(ts) AS day, model, sum(input_tokens) AS input, sum(output_tokens) AS output
+FROM llm.usage GROUP BY day, model ORDER BY day;
+-- The full conversation of each Claude Code session is its latest request
+SELECT session_id, argMax(request_body, ts) FROM llm.exchanges
+WHERE session_id LIKE 'claude:%' GROUP BY session_id
+INTO OUTFILE 'claude-sessions.parquet' FORMAT Parquet;
+```
+
+The admin and Grafana passwords are generated on the database host under
+`/var/lib/llm-sessions` and never leave it. `llm-sessions-schema` creates missing tables on start; change
+existing ones with `ALTER TABLE`. Other plugins can be loaded the same way with
+`services.cli-proxy-api.plugins.<id> = { package; settings; }`.
+
 ## Configuration notes and recommendations
 
 - Use the [v8 options](https://help.router-for.me/configuration/options.html) and
