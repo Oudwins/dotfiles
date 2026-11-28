@@ -19,7 +19,6 @@
       domain = "${config.my.services.nextcloud.subdomain}.${config.my.domain}";
       dnsProvider = "cloudflare";
       environmentFile = config.sops.secrets."cloudflare/cert_credentials".path;
-      dnsPropagationCheck = true;
     };
   };
 

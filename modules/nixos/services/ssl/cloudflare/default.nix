@@ -23,7 +23,6 @@
       extraDomainNames = [ "*.${config.my.server.location}.${config.my.domain}" ];
       dnsProvider = "cloudflare";
       environmentFile = config.sops.secrets."cloudflare/cert_credentials".path;
-      dnsPropagationCheck = true;
     };
   };
 }

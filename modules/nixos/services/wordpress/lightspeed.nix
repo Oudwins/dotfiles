@@ -721,7 +721,6 @@ let
         lib.nameValuePair siteInfo.site.domain {
           dnsProvider = cfg.hostAcme.dnsProvider;
           environmentFile = cfg.hostAcme.environmentFile;
-          dnsPropagationCheck = true;
           extraDomainNames = siteInfo.extraDomainNames;
           reloadServices = [ "${litespeedName}.service" ];
         }
