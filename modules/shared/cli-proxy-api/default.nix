@@ -125,7 +125,7 @@ in
     };
     sshKeyFile = lib.mkOption {
       type = lib.types.str;
-      default = "${config.users.users.tmx.home}/.ssh/id_ed25519";
+      default = "${config.users.users.${config.my.username}.home}/.ssh/id_ed25519";
       description = "SSH identity converted to an age key at runtime, unless ageKeyFile is set.";
     };
     ageKeyFile = lib.mkOption {

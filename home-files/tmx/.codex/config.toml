@@ -32,3 +32,10 @@ trust_level = "trusted"
 
 [projects."/home/tmx/nix-secrets"]
 trust_level = "trusted"
+
+# Temporary: this Mac's account is still `tristan` (see my.username in hosts/macos).
+[projects."/Users/tristan/dotfiles"]
+trust_level = "trusted"
+
+[projects."/Users/tristan/nix-secrets"]
+trust_level = "trusted"
