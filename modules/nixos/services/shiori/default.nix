@@ -17,7 +17,10 @@ let
 
 in
 {
-  imports = [ ./backup.nix ];
+  imports = [
+    ./backup.nix
+    ./sso.nix
+  ];
 
   # The host sets services.shiori.environmentFile to a sops env file with
   # SHIORI_HTTP_SECRET_KEY.

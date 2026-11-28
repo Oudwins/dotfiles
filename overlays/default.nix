@@ -10,6 +10,11 @@
     # example = prev.example.overrideAttrs (oldAttrs: rec {
     # ...
     # });
+
+    # Per-client user allowlist (modules/nixos/services/sso).
+    tsidp = prev.tsidp.overrideAttrs (old: {
+      patches = (old.patches or [ ]) ++ [ ../pkgs/tsidp/allowed-emails.patch ];
+    });
   };
 
   # When applied, the unstable nixpkgs set (declared in the flake inputs) will
