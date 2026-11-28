@@ -158,9 +158,11 @@ in {
   security.acme.defaults.dnsProvider = lib.mkDefault "cloudflare";
   security.acme.defaults.environmentFile =
     lib.mkDefault config.sops.secrets."cloudflare/cert_credentials".path;
-  security.acme.defaults.dnsPropagationCheck = lib.mkDefault true;
 
   networking.firewall.allowedTCPPorts = [ 25 143 465 587 993 ];
+
+  # nixos-mailserver requires a local DNSSEC-validating resolver
+  services.unbound.enable = true;
 
   mailserver = {
     enable = true;

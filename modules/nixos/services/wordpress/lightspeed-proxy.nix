@@ -963,7 +963,6 @@ let
     lib.nameValuePair siteInfo.site.domain {
       dnsProvider = cfg.hostAcme.dnsProvider;
       environmentFile = cfg.hostAcme.environmentFile;
-      dnsPropagationCheck = true;
       extraDomainNames = siteInfo.extraDomainNames;
       reloadServices = [ "nginx.service" ];
     }) siteList);
@@ -1281,7 +1280,6 @@ in {
         email = cfg.acmeEmail;
         dnsProvider = cfg.hostAcme.dnsProvider;
         environmentFile = cfg.hostAcme.environmentFile;
-        dnsPropagationCheck = true;
       };
       certs = acmeCerts;
     };

@@ -21,7 +21,6 @@
       email = "${config.my.email}";
       dnsProvider = "cloudflare";
       environmentFile = config.sops.secrets."cloudflare/cert_credentials".path;
-      dnsPropagationCheck = true;
     };
   };
 }

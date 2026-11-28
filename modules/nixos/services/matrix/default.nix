@@ -59,7 +59,6 @@ in
       domain = host;
       dnsProvider = "cloudflare";
       environmentFile = config.sops.secrets."cloudflare/cert_credentials".path;
-      dnsPropagationCheck = true;
     };
 
     my.dashboard.services.matrix = {
