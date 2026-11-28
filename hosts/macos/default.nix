@@ -10,8 +10,9 @@
     # ./config-files/aerospace.nix
   ];
   # services.aerospace.enable = false;
+
   services.cli-proxy-api.secretsFile = configLib.secretFile "sops/shared/cli-proxy-api-work.yaml";
-  services.cli-proxy-api.configFile = "${config.users.users.tmx.home}/.cli-proxy-api/work.yaml";
+  services.cli-proxy-api.configFile = "${config.users.users.${config.my.username}.home}/.cli-proxy-api/work.yaml";
 
   home-manager = {
     useGlobalPkgs = true;
@@ -20,7 +21,7 @@
   };
 
   nix-homebrew = {
-    user = "tmx";
+    user = config.my.username;
     enable = true;
     enableRosetta = true;
     taps = {
@@ -35,8 +36,8 @@
     autoMigrate = true;
   };
 
-  users.users.tmx.home = "/Users/tmx";
+  users.users.${config.my.username}.home = "/Users/${config.my.username}";
   home-manager.backupFileExtension = "backup";
   system.stateVersion = 6;
-  system.primaryUser = "tmx";
+  system.primaryUser = config.my.username;
 }

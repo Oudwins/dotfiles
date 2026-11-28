@@ -1,8 +1,11 @@
 # Home-manager users on this host.
-{ ... }:
+{ config, ... }:
 
+let
+  username = config.my.username;
+in
 {
-  home-manager.users.tmx =
+  home-manager.users.${username} =
     { config, pkgs, lib, ... }@args:
     {
       imports = [
