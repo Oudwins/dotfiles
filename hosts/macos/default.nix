@@ -12,6 +12,11 @@
   # services.aerospace.enable = false;
   services.cli-proxy-api.secretsFile = configLib.secretFile "sops/shared/cli-proxy-api-work.yaml";
   services.cli-proxy-api.configFile = "${config.users.users.tmx.home}/.cli-proxy-api/work.yaml";
+  # Publishes to Claude Artifacts; log in once with `artifact -claude-login`.
+  agents.artifacts = {
+    enable = true;
+    backend = "claude";
+  };
 
   home-manager = {
     useGlobalPkgs = true;

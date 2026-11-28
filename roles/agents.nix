@@ -58,12 +58,28 @@ let
     else
       cfg.artifacts.address
   );
-  # `artifact publish` uploads through the router (agents.artifacts), which
-  # forwards to the site's /_upload/.
+  s3 = cfg.artifacts.backend == "s3";
+  # The default backend; ARTIFACT_BACKEND overrides it. On s3, `artifact`
+  # uploads through the router (agents.artifacts), which forwards to the site's
+  # /_upload/.
   artifact = pkgs.runCommand "artifact" { nativeBuildInputs = [ pkgs.makeWrapper ]; } ''
-    makeWrapper ${lib.getExe pkgs.artifact} $out/bin/artifact \
-      --set-default ARTIFACT_UPLOAD_URL http://127.0.0.1:28760/artifacts/_upload \
-      --set-default ARTIFACT_PUBLIC_URL ${lib.escapeShellArg artifactsUrl}
+    makeWrapper ${lib.getExe pkgs.artifact} $out/bin/artifact ${
+      lib.escapeShellArgs (
+        [
+          "--set-default"
+          "ARTIFACT_BACKEND"
+          cfg.artifacts.backend
+        ]
+        ++ lib.optionals s3 [
+          "--set-default"
+          "ARTIFACT_UPLOAD_URL"
+          "http://127.0.0.1:28760/artifacts/_upload"
+          "--set-default"
+          "ARTIFACT_PUBLIC_URL"
+          artifactsUrl
+        ]
+      )
+    }
   '';
 in
 {
@@ -77,9 +93,18 @@ in
     executor.cloudflare.enable = lib.mkEnableOption "the Cloudflare MCP in Executor, authenticated with an API token";
     # Needs a token in nix-secrets sops/shared/github.yaml.
     github.enable = lib.mkEnableOption "gh and git over https for every program, signed in with the shared GitHub token";
-    # Needs a token in nix-secrets sops/shared/artifacts.yaml, the one the upload server checks.
+    # The s3 backend needs a token in nix-secrets sops/shared/artifacts.yaml, the
+    # one the upload server checks. The claude backend needs `artifact -claude-login`.
     artifacts = {
-      enable = lib.mkEnableOption "`artifact publish`, with Agent Vault injecting the upload server's token";
+      enable = lib.mkEnableOption "`artifact publish`, with Agent Vault injecting the upload server's token on s3";
+      backend = lib.mkOption {
+        type = lib.types.enum [
+          "s3"
+          "claude"
+        ];
+        default = "s3";
+        description = "Default backend of `artifact`: s3 (an artifacts site) or claude (Claude Artifacts). ARTIFACT_BACKEND overrides it.";
+      };
       # Null publishes to this host's own artifacts site, so the host must import
       # modules/nixos/services/artifacts.
       address = lib.mkOption {
@@ -148,14 +173,14 @@ in
 
         # Artifacts: `artifact publish` holds no credentials; it uploads
         # through the router, which adds the token.
-        services.agent-vault.settings = lib.mkIf cfg.artifacts.enable {
+        services.agent-vault.settings = lib.mkIf (cfg.artifacts.enable && s3) {
           credentials.ARTIFACTS_TOKEN.file = config.sops.secrets."artifacts/token".path;
           services.artifacts = {
             target = artifactsUrl;
             headers.Authorization = "Bearer {{ ARTIFACTS_TOKEN }}";
           };
         };
-        sops.secrets."artifacts/token" = lib.mkIf cfg.artifacts.enable {
+        sops.secrets."artifacts/token" = lib.mkIf (cfg.artifacts.enable && s3) {
           sopsFile = configLib.secretFile "sops/shared/artifacts.yaml";
         };
         # Only hosts with `artifact` get its skill, in the same skills
