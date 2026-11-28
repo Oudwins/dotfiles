@@ -1,20 +1,26 @@
 // Command artifact publishes files, such as HTML reports, at a URL others can open.
 //
-//	artifact publish [-id ID] PATH   upload a file or directory and print its URL
-//	artifact serve [flags]           accept authenticated uploads and write them to S3
+// It has two backends, chosen with ARTIFACT_BACKEND (each machine's Nix
+// config sets the default; the variable overrides it; one never falls back to
+// the other):
 //
-// publish holds no credentials. It sends plain PUTs to ARTIFACT_UPLOAD_URL
-// (Agent Vault's router), which adds the upload server's bearer token, and
-// prints links under ARTIFACT_PUBLIC_URL. Each machine sets both variables, so
-// machines can publish to different backends.
+//   - s3: publish holds no credentials. It sends plain requests to
+//     ARTIFACT_UPLOAD_URL (Agent Vault's router), which adds the upload
+//     server's bearer token, and prints links under ARTIFACT_PUBLIC_URL.
+//     `artifact serve` is that upload server.
+//   - claude: Claude Artifacts on claude.ai, with this CLI's own OAuth login
+//     (artifact -claude-login). See claude.go.
 package main
 
 import (
+	"context"
 	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/hex"
+	"encoding/json"
+	"encoding/xml"
 	"errors"
 	"flag"
 	"fmt"
@@ -26,6 +32,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/signal"
 	"path"
 	"path/filepath"
 	"regexp"
@@ -35,13 +42,28 @@ import (
 )
 
 const usage = `Usage:
-  artifact publish [-id ID] PATH
-      Upload a file or a directory (recursively, skipping hidden files) and
-      print its URL. A directory's URL serves its index.html. Without -id a
-      new ID is generated from PATH; -id takes an existing artifact's ID, from
-      its URL, and replaces files of the same name in it.
+  artifact -claude-login
+      Log in to claude.ai for the claude backend (separate from any agent's login).
+  artifact publish [-id ID-OR-URL] PATH
+      Upload a file or a directory (recursively, skipping hidden files, keeping
+      relative paths) and print its URL. -id updates an existing artifact in
+      place and keeps its URL. On claude, a directory needs a top-level
+      index.html, and the artifact is shared with your organization, with
+      comment access.
+  artifact pull ID-OR-URL DEST
+      Download an artifact's files into DEST, which must be new or empty.
+  artifact list [-json]
+      List artifacts, including ones published from other machines (on
+      claude: yours and the ones shared with you).
+  artifact comments list ID-OR-URL [-all] [-json]
+      Show open comment threads (-all: resolved ones too). claude only.
+  artifact watch ID-OR-URL [-interval S] [-count N] [-no-comments] [-json]
+      Print new versions, comments and resolved threads as they happen.
+      -count exits after N events. claude only.
   artifact serve [flags]
-      Run the upload server (see artifact serve -h).
+      Run the s3 backend's upload server (see artifact serve -h).
+
+ARTIFACT_BACKEND (s3 or claude) picks the backend.
 `
 
 func main() {
@@ -51,8 +73,18 @@ func main() {
 	}
 	var err error
 	switch os.Args[1] {
+	case "-claude-login", "--claude-login":
+		err = claudeLogin()
 	case "publish":
 		err = publish(os.Args[2:])
+	case "pull":
+		err = pull(os.Args[2:])
+	case "list":
+		err = list(os.Args[2:])
+	case "comments":
+		err = comments(os.Args[2:])
+	case "watch":
+		err = watch(os.Args[2:])
 	case "serve":
 		err = serve(os.Args[2:])
 	case "-h", "--help", "help":
@@ -62,9 +94,55 @@ func main() {
 		os.Exit(2)
 	}
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "artifact:", err)
+		if errors.Is(err, errLogin) {
+			fmt.Fprintln(os.Stderr, errClaudeLogin)
+		} else {
+			fmt.Fprintln(os.Stderr, "artifact:", err)
+		}
 		os.Exit(1)
 	}
+}
+
+func backend() (string, error) {
+	switch value := os.Getenv("ARTIFACT_BACKEND"); value {
+	case "", "s3":
+		return "s3", nil
+	case "claude":
+		return "claude", nil
+	default:
+		return "", fmt.Errorf("ARTIFACT_BACKEND must be s3 or claude, not %q", value)
+	}
+}
+
+// parseArgs parses flags anywhere among the arguments, as in
+// "watch ID -interval 5", and returns the positional ones. It exits with the
+// usage unless there are exactly want of them.
+func parseArgs(flags *flag.FlagSet, args []string, want int) []string {
+	flags.Usage = func() { fmt.Fprint(flags.Output(), usage) }
+	var positional []string
+	for {
+		flags.Parse(args)
+		if flags.NArg() == 0 {
+			break
+		}
+		positional = append(positional, flags.Arg(0))
+		args = flags.Args()[1:]
+	}
+	if len(positional) != want {
+		flags.Usage()
+		os.Exit(2)
+	}
+	return positional
+}
+
+func printJSON(value any) error {
+	encoder := json.NewEncoder(os.Stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(value)
+}
+
+func errNotSupported(command string) error {
+	return fmt.Errorf("%s is not supported by the s3 backend; it needs ARTIFACT_BACKEND=claude", command)
 }
 
 // The form newID generates. Uploads accept no other IDs, so agents can't pick
@@ -73,27 +151,27 @@ var validID = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,39}-[0-9a-f]{8}$`)
 
 func publish(args []string) error {
 	flags := flag.NewFlagSet("publish", flag.ExitOnError)
-	id := flags.String("id", "", "existing artifact ID to publish into, from its URL (default: a new one generated from PATH)")
-	flags.Usage = func() { fmt.Fprint(flags.Output(), usage) }
-	flags.Parse(args)
-	if flags.NArg() != 1 {
-		flags.Usage()
-		os.Exit(2)
+	id := flags.String("id", "", "existing artifact to publish into, as its ID or URL (default: a new one)")
+	root := parseArgs(flags, args, 1)[0]
+	name, err := backend()
+	if err != nil {
+		return err
 	}
-	uploadURL := strings.TrimRight(os.Getenv("ARTIFACT_UPLOAD_URL"), "/")
-	publicURL := strings.TrimRight(os.Getenv("ARTIFACT_PUBLIC_URL"), "/")
-	if uploadURL == "" || publicURL == "" {
-		return errors.New("ARTIFACT_UPLOAD_URL and ARTIFACT_PUBLIC_URL must be set")
+	if name == "claude" {
+		return claudePublish(*id, root)
 	}
-	root := flags.Arg(0)
+	uploadURL, publicURL, err := s3URLs()
+	if err != nil {
+		return err
+	}
 	info, err := os.Stat(root)
 	if err != nil {
 		return err
 	}
 	if *id == "" {
 		*id = newID(root)
-	} else if !validID.MatchString(*id) {
-		return fmt.Errorf("invalid -id %q: pass the ID of an existing artifact, from its URL (like report-1a2b3c4d)", *id)
+	} else if *id, err = s3ID(*id); err != nil {
+		return err
 	}
 
 	// Keys relative to the artifact, mapped to local paths.
@@ -143,6 +221,31 @@ func publish(args []string) error {
 	return nil
 }
 
+func s3URLs() (string, string, error) {
+	uploadURL := strings.TrimRight(os.Getenv("ARTIFACT_UPLOAD_URL"), "/")
+	publicURL := strings.TrimRight(os.Getenv("ARTIFACT_PUBLIC_URL"), "/")
+	if uploadURL == "" || publicURL == "" {
+		return "", "", errors.New("ARTIFACT_UPLOAD_URL and ARTIFACT_PUBLIC_URL must be set")
+	}
+	return uploadURL, publicURL, nil
+}
+
+// s3ID takes an artifact's ID, or its URL under ARTIFACT_PUBLIC_URL.
+func s3ID(value string) (string, error) {
+	id := value
+	if parsed, err := url.Parse(value); err == nil && parsed.Host != "" {
+		rest := parsed.Path
+		if public, err := url.Parse(strings.TrimRight(os.Getenv("ARTIFACT_PUBLIC_URL"), "/")); err == nil && public.Host == parsed.Host {
+			rest = strings.TrimPrefix(rest, public.Path)
+		}
+		id, _, _ = strings.Cut(strings.TrimPrefix(rest, "/"), "/")
+	}
+	if !validID.MatchString(id) {
+		return "", fmt.Errorf("invalid artifact ID %q: pass the ID of an existing artifact, or its URL (like report-1a2b3c4d)", value)
+	}
+	return id, nil
+}
+
 // newID derives a readable, unique ID from a path: "Q3 Report.html" -> "q3-report-1a2b3c4d".
 func newID(file string) string {
 	name := strings.TrimSuffix(filepath.Base(file), filepath.Ext(file))
@@ -190,6 +293,215 @@ func upload(target, file string) error {
 		return fmt.Errorf("%s: %s", response.Status, strings.TrimSpace(string(message)))
 	}
 	return nil
+}
+
+func pull(args []string) error {
+	positional := parseArgs(flag.NewFlagSet("pull", flag.ExitOnError), args, 2)
+	id, dest := positional[0], positional[1]
+	name, err := backend()
+	if err != nil {
+		return err
+	}
+	if name == "claude" {
+		err = claudePull(id, dest)
+	} else {
+		err = s3Pull(id, dest)
+	}
+	if err != nil {
+		return err
+	}
+	fmt.Fprintln(os.Stderr, "artifact: pulled into", dest)
+	return nil
+}
+
+// pullFiles writes each key's bytes under dest, which must be new or empty.
+// Keys come from the server, so each is checked before anything is written.
+func pullFiles(dest string, keys []string, fetch func(key string) ([]byte, error)) error {
+	for _, key := range keys {
+		if !validKey("a-00000000/" + key) {
+			return fmt.Errorf("refusing to write unsafe path %q", key)
+		}
+	}
+	entries, err := os.ReadDir(dest)
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return err
+	}
+	if len(entries) > 0 {
+		return fmt.Errorf("%s is not empty; pull into a new or empty directory", dest)
+	}
+	// Everything is downloaded before anything is written, so a failed pull
+	// leaves dest as it was.
+	contents := map[string][]byte{}
+	for _, key := range keys {
+		data, err := fetch(key)
+		if err != nil {
+			return fmt.Errorf("pull %s: %w", key, err)
+		}
+		contents[key] = data
+	}
+	for key, data := range contents {
+		file := filepath.Join(dest, filepath.FromSlash(key))
+		if err := os.MkdirAll(filepath.Dir(file), 0o755); err != nil {
+			return err
+		}
+		if err := os.WriteFile(file, data, 0o644); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// listedArtifact is one row of `artifact list`, from either backend.
+type listedArtifact struct {
+	ID      string       `json:"id"`
+	URL     string       `json:"url"`
+	Title   string       `json:"title,omitempty"`
+	Updated string       `json:"updated"`
+	Owner   string       `json:"owner,omitempty"`
+	Files   []listedFile `json:"files,omitempty"`
+}
+
+type listedFile struct {
+	Path     string `json:"path"`
+	Size     int64  `json:"size"`
+	Modified string `json:"modified"`
+}
+
+func list(args []string) error {
+	flags := flag.NewFlagSet("list", flag.ExitOnError)
+	asJSON := flags.Bool("json", false, "print JSON")
+	parseArgs(flags, args, 0)
+	name, err := backend()
+	if err != nil {
+		return err
+	}
+	var artifacts []listedArtifact
+	if name == "claude" {
+		artifacts, err = claudeList()
+	} else {
+		artifacts, err = s3List()
+	}
+	if err != nil {
+		return err
+	}
+	if *asJSON {
+		if artifacts == nil {
+			artifacts = []listedArtifact{}
+		}
+		return printJSON(artifacts)
+	}
+	if len(artifacts) == 0 {
+		fmt.Fprintln(os.Stderr, "No artifacts.")
+	}
+	for _, artifact := range artifacts {
+		detail := artifact.Title
+		if artifact.Files != nil {
+			detail = fmt.Sprintf("%d files", len(artifact.Files))
+		}
+		if artifact.Owner != "" {
+			detail += " (" + artifact.Owner + ")"
+		}
+		fmt.Printf("%s  %s  %s\n", artifact.URL, artifact.Updated, detail)
+	}
+	return nil
+}
+
+func comments(args []string) error {
+	flags := flag.NewFlagSet("comments", flag.ExitOnError)
+	all := flags.Bool("all", false, "include resolved threads")
+	asJSON := flags.Bool("json", false, "print JSON")
+	positional := parseArgs(flags, args, 2)
+	if positional[0] != "list" {
+		flags.Usage()
+		os.Exit(2)
+	}
+	name, err := backend()
+	if err != nil {
+		return err
+	}
+	if name != "claude" {
+		return errNotSupported("artifact comments")
+	}
+	return claudeCommentsList(positional[1], *all, *asJSON)
+}
+
+func watch(args []string) error {
+	flags := flag.NewFlagSet("watch", flag.ExitOnError)
+	interval := flags.Float64("interval", 30, "seconds between polls")
+	count := flags.Int("count", 0, "exit after this many events (0: never)")
+	noComments := flags.Bool("no-comments", false, "watch for new versions only")
+	asJSON := flags.Bool("json", false, "print one JSON object per event")
+	id := parseArgs(flags, args, 1)[0]
+	name, err := backend()
+	if err != nil {
+		return err
+	}
+	if name != "claude" {
+		return errNotSupported("artifact watch")
+	}
+	if *interval <= 0 || *count < 0 {
+		return errors.New("-interval must be positive and -count not negative")
+	}
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+	return claudeWatch(ctx, id, time.Duration(*interval*float64(time.Second)), *count, !*noComments, *asJSON)
+}
+
+// s3List asks the upload server, which lists the bucket with its own key.
+func s3List() ([]listedArtifact, error) {
+	uploadURL, publicURL, err := s3URLs()
+	if err != nil {
+		return nil, err
+	}
+	response, err := http.Get(uploadURL + "/")
+	if err != nil {
+		return nil, err
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		message, _ := io.ReadAll(io.LimitReader(response.Body, 4096))
+		return nil, fmt.Errorf("listing: %s: %s", response.Status, strings.TrimSpace(string(message)))
+	}
+	var artifacts []listedArtifact
+	if err := json.NewDecoder(response.Body).Decode(&artifacts); err != nil {
+		return nil, fmt.Errorf("listing: %w", err)
+	}
+	for index := range artifacts {
+		artifacts[index].URL = publicURL + "/" + artifacts[index].ID + "/"
+	}
+	return artifacts, nil
+}
+
+// s3Pull downloads an artifact's files from the public site.
+func s3Pull(value, dest string) error {
+	id, err := s3ID(value)
+	if err != nil {
+		return err
+	}
+	artifacts, err := s3List()
+	if err != nil {
+		return err
+	}
+	index := slices.IndexFunc(artifacts, func(artifact listedArtifact) bool { return artifact.ID == id })
+	if index < 0 {
+		return fmt.Errorf("no artifact %s", id)
+	}
+	var keys []string
+	for _, file := range artifacts[index].Files {
+		keys = append(keys, file.Path)
+	}
+	base := strings.TrimSuffix(artifacts[index].URL, "/")
+	return pullFiles(dest, keys, func(key string) ([]byte, error) {
+		response, err := http.Get(base + "/" + escapePath(key))
+		if err != nil {
+			return nil, err
+		}
+		defer response.Body.Close()
+		if response.StatusCode != http.StatusOK {
+			return nil, errors.New(response.Status)
+		}
+		return io.ReadAll(response.Body)
+	})
 }
 
 type server struct {
@@ -257,14 +569,18 @@ func readSecret(file string) (string, error) {
 }
 
 func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPut {
+	if r.Method != http.MethodPut && !(r.Method == http.MethodGet && r.URL.Path == "/") {
 		w.Header().Set("Allow", http.MethodPut)
-		http.Error(w, "only PUT is supported", http.StatusMethodNotAllowed)
+		http.Error(w, "only PUT, and GET / to list, are supported", http.StatusMethodNotAllowed)
 		return
 	}
 	token, ok := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer ")
 	if !ok || subtle.ConstantTimeCompare([]byte(token), []byte(s.token)) != 1 {
 		http.Error(w, "invalid or missing bearer token", http.StatusUnauthorized)
+		return
+	}
+	if r.Method == http.MethodGet {
+		s.list(w, r)
 		return
 	}
 	key := strings.TrimPrefix(r.URL.Path, "/")
@@ -319,6 +635,84 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Printf("stored %s (%d bytes)", key, r.ContentLength)
 	w.WriteHeader(http.StatusCreated)
+}
+
+// list answers every artifact in the bucket, its objects grouped by the ID
+// their key starts with, most recently updated first. Only the upload
+// server's key may list the bucket; anonymous listing stays disabled.
+func (s *server) list(w http.ResponseWriter, r *http.Request) {
+	byID := map[string]*listedArtifact{}
+	continuation := ""
+	for {
+		query := url.Values{"list-type": {"2"}}
+		if continuation != "" {
+			query.Set("continuation-token", continuation)
+		}
+		target := *s.endpoint
+		target.Path = "/" + s.bucket
+		// SigV4 signs the query with spaces as %20.
+		target.RawQuery = strings.ReplaceAll(query.Encode(), "+", "%20")
+		request, err := http.NewRequestWithContext(r.Context(), http.MethodGet, target.String(), nil)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		request.Header.Set("X-Amz-Content-Sha256", "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
+		sign(request, s.accessKey, s.secretKey, s.region, time.Now())
+		response, err := s.client.Do(request)
+		if err != nil {
+			log.Printf("list: %v", err)
+			http.Error(w, "storage unavailable", http.StatusBadGateway)
+			return
+		}
+		var page struct {
+			Contents []struct {
+				Key          string
+				Size         int64
+				LastModified string
+			}
+			IsTruncated           bool
+			NextContinuationToken string
+		}
+		if response.StatusCode != http.StatusOK {
+			message, _ := io.ReadAll(io.LimitReader(response.Body, 4096))
+			response.Body.Close()
+			log.Printf("list: storage answered %s: %s", response.Status, message)
+			http.Error(w, "storage refused the listing: "+response.Status, http.StatusBadGateway)
+			return
+		}
+		err = xml.NewDecoder(response.Body).Decode(&page)
+		response.Body.Close()
+		if err != nil {
+			log.Printf("list: %v", err)
+			http.Error(w, "storage answered an unreadable listing", http.StatusBadGateway)
+			return
+		}
+		for _, object := range page.Contents {
+			if !validKey(object.Key) {
+				continue
+			}
+			id, file, _ := strings.Cut(object.Key, "/")
+			artifact := byID[id]
+			if artifact == nil {
+				artifact = &listedArtifact{ID: id}
+				byID[id] = artifact
+			}
+			artifact.Files = append(artifact.Files, listedFile{Path: file, Size: object.Size, Modified: object.LastModified})
+			artifact.Updated = max(artifact.Updated, object.LastModified)
+		}
+		if !page.IsTruncated || page.NextContinuationToken == "" {
+			break
+		}
+		continuation = page.NextContinuationToken
+	}
+	artifacts := []listedArtifact{}
+	for _, artifact := range byID {
+		artifacts = append(artifacts, *artifact)
+	}
+	slices.SortFunc(artifacts, func(a, b listedArtifact) int { return strings.Compare(b.Updated, a.Updated) })
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(artifacts)
 }
 
 // validKey accepts slash-separated object keys without empty, "." or ".." segments.

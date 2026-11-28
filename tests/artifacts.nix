@@ -1,7 +1,8 @@
 # VM test of modules/nixos/services/artifacts: RustFS with its provisioning,
 # the upload server and the nginx site, with `artifact publish` uploading to the
 # site's /_upload/ through a stand-in for Agent Vault's router (an nginx
-# location adding the token). Run from the repo root:
+# location adding the token), and `artifact list` and `artifact pull` reading
+# the authenticated listing behind it. Run from the repo root:
 #
 #   nix build -L --impure --expr 'import ./tests/artifacts.nix { }'
 {
@@ -112,6 +113,9 @@ pkgs.testers.runNixOSTest {
         };
       };
 
+      # `artifact pull` downloads from the public site.
+      networking.hosts."127.0.0.1" = [ host ];
+
       environment.systemPackages = [ pkgs.artifact ];
       environment.variables = {
         ARTIFACT_UPLOAD_URL = "http://127.0.0.1:28760/artifacts/_upload";
@@ -121,6 +125,7 @@ pkgs.testers.runNixOSTest {
   };
 
   testScript = ''
+    import json
     import re
 
     machine.wait_for_unit("artifact-upload.service")
@@ -204,12 +209,34 @@ pkgs.testers.runNixOSTest {
         assert status == "403", f"anonymous PUT: {status}"
 
     # Objects are public, so reading them with the key is allowed anyway.
-    with subtest("the upload server's key can write but not list or delete"):
+    with subtest("the upload server's key can write and list but not delete"):
         machine.succeed("RC_CONFIG_DIR=/tmp/rc rc alias set up http://127.0.0.1:9000 artifacts ${artifactsSecret}")
         machine.succeed("echo x > /tmp/x.txt && RC_CONFIG_DIR=/tmp/rc rc put /tmp/x.txt up/artifacts/x.txt")
-        machine.fail("RC_CONFIG_DIR=/tmp/rc rc object list up/artifacts")
+        machine.succeed("RC_CONFIG_DIR=/tmp/rc rc object list up/artifacts")
         machine.fail(f"RC_CONFIG_DIR=/tmp/rc rc object remove up/artifacts/{site}/index.html")
         get(f"/{site}/")
+
+    with subtest("artifacts are listed only with the token, grouped by ID"):
+        status = machine.succeed("curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8095/")
+        assert status == "401", f"listing without the token: {status}"
+        status = machine.succeed("curl -s -o /dev/null -w '%{http_code}' -H 'Host: ${host}' http://127.0.0.1/_upload/")
+        assert status == "401", f"listing through the site without the token: {status}"
+        listing = json.loads(machine.succeed("artifact list -json"))
+        by_id = {a["id"]: a for a in listing}
+        assert set(by_id) == {site, notes}, listing
+        assert sorted(f["path"] for f in by_id[site]["files"]) == ["index.html", "style.css", "sub/a page.html"], listing
+        assert by_id[notes]["url"] == f"https://${host}/{notes}/", listing
+        assert f"https://${host}/{site}/" in machine.succeed("artifact list")
+
+    with subtest("an artifact is pulled with its directory structure"):
+        machine.succeed(f"ARTIFACT_PUBLIC_URL=http://${host} artifact pull https://${host}/{site}/ /tmp/pulled")
+        machine.succeed("diff -r -x .env -x .git /tmp/Site /tmp/pulled")
+        machine.fail(f"ARTIFACT_PUBLIC_URL=http://${host} artifact pull {site} /tmp/pulled")
+
+    with subtest("comments and watch say s3 doesn't support them"):
+        for command in [f"comments list {site}", f"watch {site}"]:
+            out = machine.fail(f"artifact {command} 2>&1")
+            assert "not supported" in out, out
 
     with subtest("provisioning can run again"):
         machine.succeed("systemctl restart rustfs-provision.service")

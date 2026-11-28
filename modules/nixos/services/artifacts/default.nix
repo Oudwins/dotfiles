@@ -2,7 +2,8 @@
 # served read-only at artifacts.<location>.<domain>, whose /_upload/ goes to the
 # upload server. Agent Vault's router adds the bearer token it checks, for agents
 # on this or any other machine (roles/agents.nix, agents.artifacts). A
-# directory's URL serves its index.html.
+# directory's URL serves its index.html. GET /_upload/ with the token lists
+# every artifact (`artifact list`); the bucket itself can't be listed anonymously.
 #
 # Unlike other modules, this one declares its own sops secrets: every host that
 # runs it uses the same ones, from nix-secrets sops/shared/artifacts.yaml. The
@@ -83,7 +84,8 @@ in
           }
         ];
       };
-      # Write-only: uploads can't read, list or delete other artifacts.
+      # Writes and lists for the upload server, which answers `artifact list`
+      # only to requests with the token; it can't delete artifacts.
       users.${bucket} = {
         secretKeyFile = secret "rustfs-secret-key";
         policy = {
@@ -97,6 +99,11 @@ in
                 "s3:ListMultipartUploadParts"
               ];
               Resource = [ "arn:aws:s3:::${bucket}/*" ];
+            }
+            {
+              Effect = "Allow";
+              Action = [ "s3:ListBucket" ];
+              Resource = [ "arn:aws:s3:::${bucket}" ];
             }
           ];
         };
