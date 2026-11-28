@@ -5,6 +5,8 @@
   ...
 }:
 {
+  # collabora-online is built on libreoffice
+  nixpkgs.config.permittedInsecurePackages = [ "libreoffice-25.04.9-4" ];
 
   # This configuration is based on the one described in this post: https://diogotc.com/blog/collabora-nextcloud-nixos/#deploy-collabora-with-nixos
   services.collabora-online = {
